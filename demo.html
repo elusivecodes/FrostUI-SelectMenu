@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../FrostUI/dist/frost-ui.css">
+    <link rel="stylesheet" href="dist/frost-ui-selectmenu.css">
+    <script src="../FrostUI/dist/frost-ui-bundle.js"></script>
+    <script src="dist/frost-ui-selectmenu.js"></script>
+</head>
+
+<body>
+    <div class="container pt-5">
+        <div class="mb-4">
+            <label for="selectDefault">Default</label>
+            <div class="form-input">
+                <select name="selectMulti[]" class="input-filled" type="text" id="selectDefault" multiple>
+                    <option value="1">Test 1</option>
+                    <option value="2">Test 2</option>
+                    <option value="3">Test 3</option>
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="reference">Reference</label>
+            <div class="form-input">
+                <input class="input-filled" type="text" id="reference" placeholder="Reference" />
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const selectDefault = dom.findOne('#selectDefault');
+
+        const selectMenu = UI.SelectMenu.init(selectDefault, {
+            allowClear: true
+        });
+        console.log(selectMenu);
+    </script>
+</body>
+
+</html>
