@@ -1,13 +1,9 @@
 // SelectMenu default options
 SelectMenu.defaults = {
     data: null,
-    maxSearch: 0,
-    maxSelect: 0,
-    minSearch: 0,
-    minResults: 0,
     placeholder: 'Nothing Selected',
     lang: {
-        loadMore: 'Loading..',
+        loading: 'Loading..',
         maxSelect: 'Selection limit reached.',
         noResults: 'No results'
     },
@@ -29,13 +25,16 @@ SelectMenu.defaults = {
 
         return aLower.localeCompare(bLower);
     }),
+    maxSearch: 0,
+    maxSelect: 0,
+    minSearch: 0,
     allowClear: false,
     closeOnSelect: true,
+    fullWidth: true,
     duration: 100,
     placement: 'bottom',
     position: 'start',
-    fixed: false,
-    fullWidth: true,
+    fixed: true,
     spacing: 3,
     minContact: false
 };

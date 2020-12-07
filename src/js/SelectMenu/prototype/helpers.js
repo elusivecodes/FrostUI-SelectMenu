@@ -1,20 +1,8 @@
 Object.assign(SelectMenu.prototype, {
 
     _findValue(value) {
-        for (const item of this._data) {
-            if (item.value == value) {
-                return item;
-            }
-
-            if (!item.children) {
-                continue;
-            }
-
-            for (const child of item.children) {
-                if (child.value == value) {
-                    return child;
-                }
-            }
+        if (value in this._lookupData) {
+            return this._lookupData[value];
         }
 
         return null;
@@ -22,11 +10,15 @@ Object.assign(SelectMenu.prototype, {
 
     _refresh() {
         dom.empty(this._node);
+        dom.detach(this._placeholder);
 
         const item = this._findValue(this._value);
 
         if (!item) {
-            return this._renderPlaceholder();
+            dom.empty(this._toggle);
+            dom.show(this._placeholder);
+            dom.append(this._toggle, this._placeholder);
+            return;
         }
 
         dom.append(this._node, item.element);
@@ -35,25 +27,51 @@ Object.assign(SelectMenu.prototype, {
         dom.setHTML(this._toggle, this._settings.sanitize(content));
     },
 
-    _refreshMulti() {
+    _refreshMulti(focus = false) {
+        if (this._settings.maxSelect && this._value.length > this._settings.maxSelect) {
+            this._value = this._value.slice(0, this._settings.maxSelect);
+        }
+
+        dom.detach(this._searchInput);
+        dom.detach(this._placeholder);
+
         dom.empty(this._node);
         dom.empty(this._toggle);
 
         if (!this._value.length) {
-            return this._renderPlaceholder();
+            this._refreshPlaceholder();
+        } else {
+            for (const value of this._value) {
+                const item = this._findValue(value);
+
+                if (!item) {
+                    continue;
+                }
+
+                dom.append(this._node, item.element);
+
+                const group = this._renderMultiSelection(item);
+                dom.append(this._toggle, group);
+            }
         }
 
-        for (const value of this._value) {
-            const item = this._findValue(value);
+        dom.append(this._toggle, this._searchInput);
 
-            if (!item) {
-                continue;
-            }
+        if (focus) {
+            dom.focus(this._searchInput);
+        }
+    },
 
-            dom.append(this._node, item.element);
+    _refreshPlaceholder() {
+        if (!this._multiple) {
+            return;
+        }
 
-            const group = this._renderMultiSelection(item);
-            dom.append(this._toggle, group);
+        if (!this._value.length) {
+            dom.show(this._placeholder);
+            dom.prepend(this._toggle, this._placeholder);
+        } else {
+            dom.hide(this._placeholder);
         }
     },
 
@@ -65,6 +83,22 @@ Object.assign(SelectMenu.prototype, {
         } else {
             this._refresh();
         }
+    },
+
+    _updateSearchWidth() {
+        const span = dom.create('span', {
+            text: dom.getValue(this._searchInput),
+            class: 'd-inline-block',
+            style: {
+                fontSize: dom.css(this._searchInput, 'fontSize'),
+                whiteSpace: 'pre-wrap'
+            }
+        });
+        dom.append(document.body, span);
+
+        const width = dom.width(span);
+        dom.setStyle(this._searchInput, 'width', width + 2);
+        dom.remove(span);
     }
 
 });

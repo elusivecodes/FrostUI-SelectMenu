@@ -1,68 +1,113 @@
 Object.assign(SelectMenu.prototype, {
 
-    _updateSearchWidth() {
-        const span = dom.create('span', {
-            text: dom.getValue(this._searchInput),
-            class: 'd-inline-block',
-            style: {
-                fontSize: dom.css(this._searchInput, 'fontSize')
-            }
-        });
-        dom.append(document.body, span);
-
-        const width = dom.width(span);
-        dom.setStyle(this._searchInput, 'width', width + 2);
-        dom.remove(span);
-    },
-
     _events() {
-        dom.addEvent(this._searchInput, 'input', _ => {
-            this._updateSearchWidth();
-
-            dom.empty(this._itemsList);
-            this._getData(response => {
-                this._renderResults(response.results);
-            }, {
-                term: dom.getValue(this._searchInput)
-            });
-        });
-
-        dom.addEvent(this._toggle, 'keydown', e => {
-            if (!dom.isConnected(this._searchInput)) {
-                dom.setValue(this._searchInput, '');
-                dom.append(this._toggle, this._searchInput);
-                this._updateSearchWidth();
-            }
-            dom.focus(this._searchInput);
-        });
-
-        dom.addEventDelegate(this._itemsList, 'click', '[data-action]', e => {
+        dom.addEventDelegate(this._itemsList, 'click.frost.selectmenu', '[data-action="select"]', e => {
             e.preventDefault();
 
             let value = dom.getDataset(e.currentTarget, 'value');
 
             if (this._multiple) {
-                value = this._value.concat([value]);
+                const index = this._value.indexOf(value);
+                if (index >= 0) {
+                    this._value.splice(index, 1)
+                    value = this._value;
+                } else {
+                    value = this._value.concat([value]);
+                }
             }
 
             this.setValue(value);
 
             if (this._settings.closeOnSelect) {
                 this.hide();
+            } else {
+                this._getData({});
             }
-        });
 
-        dom.addEvent(this._toggle, 'focus', _ => {
+            this._refreshPlaceholder();
+
+            dom.setValue(this._searchInput, '');
             dom.focus(this._searchInput);
         });
 
-        dom.addEventDelegate(this._toggle, 'click', '[data-action]', e => {
+        dom.addEvent(this._searchInput, 'input.frost.selectmenu', _ => {
+            if (this._multiple) {
+                this._updateSearchWidth();
+                this.show();
+            }
+
+            let term = dom.getValue(this._searchInput);
+
+            if (term.length < this._settings.minSearch) {
+                term = null
+            }
+
+            dom.empty(this._itemsList);
+            this._getData({ term });
+        });
+
+        if (this._settings.getResults) {
+            dom.addEvent(this._menuNode, 'scroll.frost.selectmenu', _ => {
+                if (this._request || !this._showMore) {
+                    return;
+                }
+
+                const height = dom.height(this._menuNode);
+                const scrollHeight = dom.height(this._menuNode, DOM.SCROLL_BOX);
+                const scrollTop = dom.getScrollY(this._menuNode);
+
+                if (scrollTop >= scrollHeight - height - 50) {
+                    const term = dom.getValue(this._searchInput);
+                    const offset = this._data.length;
+
+                    this._getData({ term, offset });
+                }
+            });
+        }
+
+        if (this._multiple) {
+            this._eventsMulti()
+        } else {
+            this._eventsSingle();
+        }
+    },
+
+    _eventsMulti() {
+        dom.addEvent(this._searchInput, 'focus.frost.selectmenu', _ => {
+            dom.hide(this._placeholder);
+            dom.detach(this._placeholder);
+            dom.addClass(this._toggle, 'focus');
+        });
+
+        dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
+            dom.show(this._placeholder);
+            dom.removeClass(this._toggle, 'focus');
+        });
+
+        dom.addEvent(this._toggle, 'mousedown.frost.selectmenu click.frost.selectmenu', _ => {
+            dom.focus(this._searchInput);
+        });
+
+        // remove selection
+        dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
             e.preventDefault();
 
             const element = dom.parent(e.currentTarget);
             const index = dom.index(element);
             this._value.splice(index, 1)
             this.setValue(this._value);
+            dom.focus(this._searchInput);
+        });
+    },
+
+    _eventsSingle() {
+        dom.addEvent(this._toggle, 'keydown.frost.selectmenu', _ => {
+            dom.focus(this._searchInput);
+        });
+
+        // remove selection
+        dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
+            this.setValue(null);
         });
     }
 

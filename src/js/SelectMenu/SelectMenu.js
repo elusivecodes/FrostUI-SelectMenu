@@ -16,28 +16,77 @@ class SelectMenu {
         this._getData = null;
 
         let data;
-        if (!this._settings.data) {
-            data = this.constructor._getDataFromDOM(this._node);
+        if (Core.isFunction(this._settings.getResults)) {
+            this._getData = ({ offset = 0, term = null }) => {
+                if (this._request && this._request.cancel) {
+                    this._request.cancel();
+                    this._request = null;
+                }
+
+                if (!offset) {
+                    this._data = [];
+                    dom.empty(this._itemsList);
+                }
+
+                if (this._multiple && this._settings.maxSelect && this._value.length >= this._settings.maxSelect) {
+                    const maxSelect = dom.create('li', {
+                        html: this._settings.sanitize(
+                            this._settings.lang.maxSelect
+                        ),
+                        class: 'selectmenu-item text-secondary'
+                    });
+                    dom.append(this._itemsList, maxSelect);
+                    return;
+                }
+
+                const loading = dom.create('li', {
+                    html: this._settings.sanitize(
+                        this._settings.lang.loading
+                    ),
+                    class: 'selectmenu-item text-secondary'
+                });
+                dom.append(this._itemsList, loading);
+
+                const request = this._settings.getResults({ offset, term });
+                this._request = request;
+
+                Promise.resolve(request).then(response => {
+                    const newData = this.constructor._parseData(response.results);
+                    this._data.push(...newData);
+                    this._showMore = response.showMore;
+
+                    Object.assign(
+                        this._lookupData,
+                        this.constructor._parseDataLookup(this._data)
+                    );
+
+                    this._renderResults(response.results);
+                }).catch(_ => {
+                    // error
+                }).finally(_ => {
+                    dom.remove(loading);
+
+                    if (this._request === request) {
+                        this._request = null;
+                    }
+                });
+            };
         } else if (Core.isPlainObject(this._settings.data)) {
             data = this.constructor._getDataFromObject(this._settings.data);
         } else if (Core.isArray(this._settings.data)) {
             data = this._settings.data;
-        } else if (Core.isFunction(this._settings.data)) {
-            this._getData = (callback, options) => {
-                // show loading
-                this._settings.data(options, response => {
-                    // hide loading
-                    this.constructor._parseData(response.results);
-
-                    callback(response);
-                });
-            };
+        } else {
+            data = this.constructor._getDataFromDOM(this._node);
         }
+
+        this._data = {};
+        this._lookupData = {};
 
         if (data) {
             this._data = this.constructor._parseData(data);
+            this._lookupData = this.constructor._parseDataLookup(data);
 
-            this._getData = (callback, { term = null }) => {
+            this._getData = ({ term = null }) => {
                 let results = this._data;
 
                 if (term) {
@@ -57,7 +106,7 @@ class SelectMenu {
                     ).filter(item => this._settings.isMatch(item, term));
                 }
 
-                callback({ results });
+                this._renderResults(results);
             };
         }
 
@@ -98,12 +147,14 @@ class SelectMenu {
 
         this._animating = true;
 
+        this._refreshPlaceholder();
+        dom.setValue(this._searchInput, '');
+
         dom.fadeOut(this._menuNode, {
             duration: this._settings.duration
         }).then(_ => {
             dom.empty(this._itemsList);
             dom.detach(this._menuNode);
-            dom.detach(this._searchInput);
             dom.setAttribute(this._toggle, 'aria-expanded', false);
             dom.triggerEvent(this._node, 'hidden.frost.selectmenu');
         }).catch(_ => { }).finally(_ => {
@@ -129,9 +180,7 @@ class SelectMenu {
         dom.append(document.body, this._menuNode);
         this._popper.update();
 
-        this._getData(response => {
-            this._renderResults(response.results);
-        }, {});
+        this._getData({});
 
         dom.fadeIn(this._menuNode, {
             duration: this._settings.duration

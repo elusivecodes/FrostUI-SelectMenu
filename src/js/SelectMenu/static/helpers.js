@@ -49,6 +49,17 @@ Object.assign(SelectMenu, {
         }
 
         return data;
+    },
+
+    _parseDataLookup(data, lookup = {}) {
+        for (const item of data) {
+            if (data.children) {
+                this._parseDataLookup(data.children, lookup);
+            } else {
+                lookup[item.value] = item;
+            }
+        }
+        return lookup;
     }
 
 });

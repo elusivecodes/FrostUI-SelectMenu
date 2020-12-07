@@ -13,35 +13,31 @@ Object.assign(SelectMenu.prototype, {
     },
 
     setValue(value) {
-        if (this._multiple) {
-            return this.setValueMulti(value);
+        if (!this._multiple) {
+            if (this._findValue(value)) {
+                return this._setValue(value);
+            }
+
+            return this._getData(_ => {
+                if (this._findValue(value)) {
+                    return this._setValue(value);
+                }
+            }, { value });
         }
 
-        if (this._findValue(value)) {
+        if (!value) {
+            return this._setValue([]);
+        }
+
+        if (value.every(val => this._findValue(val))) {
             return this._setValue(value);
         }
 
         this._getData(_ => {
-            if (this._findValue(value)) {
+            if (value.every(val => this._findValue(val))) {
                 return this._setValue(value);
             }
         }, { value });
-    },
-
-    setValueMulti(values) {
-        if (!values) {
-            return this._setValue([]);
-        }
-
-        if (values.every(value => this._findValue(value))) {
-            return this._setValue(values);
-        }
-
-        this._getData(_ => {
-            if (values.every(value => this._findValue(value))) {
-                return this._setValue(values);
-            }
-        }, { values });
-    },
+    }
 
 });

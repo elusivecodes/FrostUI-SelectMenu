@@ -6,6 +6,7 @@ Object.assign(SelectMenu.prototype, {
         } else {
             this._renderSelect();
         }
+        this._renderPlaceholder();
         this._renderMenu();
         dom.hide(this._node);
         dom.after(this._node, this._toggle);
@@ -16,7 +17,7 @@ Object.assign(SelectMenu.prototype, {
             html: this._settings.sanitize(
                 this._settings.renderResult(item)
             ),
-            class: 'selectmenu-item',
+            class: 'selectmenu-item selectmenu-action',
             dataset: {
                 action: 'select',
                 value: item.value
@@ -57,19 +58,29 @@ Object.assign(SelectMenu.prototype, {
         });
 
         if (!this._multiple) {
-            const searchContainer = dom.create('div', {
+            const searchItem = dom.create('div', {
                 class: 'p-1'
             });
-            dom.append(this._menuNode, searchContainer);
+            dom.append(this._menuNode, searchItem);
+
+            const searchContainer = dom.create('div', {
+                class: 'form-input'
+            });
+            dom.append(searchItem, searchContainer);
 
             this._searchInput = dom.create('input', {
                 class: 'input-filled'
             });
             dom.append(searchContainer, this._searchInput);
-        } else {
-            this._searchInput = dom.create('input', {
-                class: 'selectmenu-multi-input'
+
+            const ripple = dom.create('div', {
+                class: 'ripple-line'
             });
+            dom.append(searchContainer, ripple);
+
+            if (this._settings.maxSearch) {
+                dom.setAttribute(this._searchInput, 'maxlength', this._settings.maxSearch);
+            }
         }
 
         this._itemsList = dom.create('ul', {
@@ -77,18 +88,26 @@ Object.assign(SelectMenu.prototype, {
         });
         dom.append(this._menuNode, this._itemsList);
 
-        this._popper = new UI.Popper(
-            this._menuNode,
-            {
-                reference: this._toggle,
-                placement: this._settings.placement,
-                position: this._settings.position,
-                fixed: this._settings.fixed,
-                fullWidth: this._settings.fullWidth,
-                spacing: this._settings.spacing,
-                minContact: this._settings.minContact
-            }
-        );
+        const popperOptions = {
+            reference: this._toggle,
+            placement: this._settings.placement,
+            position: this._settings.position,
+            fixed: this._settings.fixed,
+            spacing: this._settings.spacing,
+            minContact: this._settings.minContact
+        };
+
+        if (this._settings.fullWidth) {
+            popperOptions.afterUpdate = (node, reference) => {
+                const width = dom.width(reference, DOM.BORDER_BOX);
+                dom.setStyle(node, 'width', width);
+            };
+            popperOptions.beforeUpdate = node => {
+                dom.setStyle(node, 'width', '');
+            };
+        }
+
+        this._popper = new UI.Popper(this._menuNode, popperOptions);
     },
 
     _renderMultiSelection(item) {
@@ -118,14 +137,24 @@ Object.assign(SelectMenu.prototype, {
     },
 
     _renderPlaceholder() {
-        const placeholder = dom.create('span', {
+        this._placeholder = dom.create('span', {
             html: this._settings.sanitize(this._settings.placeholder),
             class: 'selectmenu-placeholder'
         });
-        dom.append(this._toggle, placeholder);
     },
 
     _renderResults(results) {
+        if (!results.length) {
+            const noResults = dom.create('li', {
+                html: this._settings.sanitize(
+                    this._settings.lang.noResults
+                ),
+                class: 'selectmenu-item'
+            });
+            dom.append(this._itemsList, noResults);
+            return;
+        }
+
         for (const item of results) {
             const element = item.children ?
                 this._renderGroup(item) :
@@ -135,9 +164,9 @@ Object.assign(SelectMenu.prototype, {
     },
 
     _renderSelectMulti() {
-        this._toggle = dom.create('button', {
+        this._toggle = dom.create('div', {
             class: [
-                dom.getAttribute(this._node, 'class'),
+                dom.getAttribute(this._node, 'class') || '',
                 'selectmenu-multi d-flex flex-wrap position-relative text-left'
             ],
             dataset: {
@@ -146,12 +175,19 @@ Object.assign(SelectMenu.prototype, {
             }
         });
 
+        this._searchInput = dom.create('input', {
+            class: 'selectmenu-multi-input'
+        });
+
+        if (this._settings.maxSearch) {
+            dom.setAttribute(this._searchInput, 'maxlength', this._settings.maxSearch);
+        }
     },
 
     _renderSelect() {
         this._toggle = dom.create('button', {
             class: [
-                dom.getAttribute(this._node, 'class'),
+                dom.getAttribute(this._node, 'class') || '',
                 'selectmenu-toggle position-relative text-left'
             ],
             dataset: {

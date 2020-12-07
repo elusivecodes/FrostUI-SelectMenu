@@ -12,17 +12,19 @@
 
 .selectmenu-placeholder {
     color: gray;
+    pointer-events: none;
 }
 
 .selectmenu-multi-input {
-    height: 25px;
+    height: 1.5rem;
     background: transparent;
     outline: 0;
 }
 
 .selectmenu-multi .btn {
-    font-size: .75rem;
+    height: 1.5rem;
     padding: .125rem .5rem;
+    font-size: .75rem;
 }
 
 .selectmenu-multi > * {
@@ -41,6 +43,8 @@
     background-color: white;
     border: 1px solid rgba(0, 0, 0, .15);
     border-radius: .2rem;
+    overflow-y: auto;
+    max-height: 250px;
 }
 
 .selectmenu-items {
@@ -70,18 +74,17 @@
         border-bottom-right-radius: inherit;
     }
 
-    &:hover,
-    &:focus {
-        color: #121212;
-        text-decoration: none;
-        background-color: rgba(0, 0, 0, .1);
-    }
-
-    &.active {
-        color: white;
-        background-color: steelblue;
-
+    &.selectmenu-action {
+        &:hover,
         &:focus {
+            color: #121212;
+            text-decoration: none;
+            background-color: rgba(0, 0, 0, .1);
+        }
+
+        &.active {
+            color: white;
+            background-color: steelblue;
         }
     }
 

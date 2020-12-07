@@ -17,9 +17,6 @@
             <label for="selectDefault">Default</label>
             <div class="form-input">
                 <select name="selectMulti[]" class="input-filled" type="text" id="selectDefault" multiple>
-                    <option value="1">Test 1</option>
-                    <option value="2">Test 2</option>
-                    <option value="3">Test 3</option>
                 </select>
                 <div class="ripple-line"></div>
             </div>
@@ -36,7 +33,35 @@
         const selectDefault = dom.findOne('#selectDefault');
 
         const selectMenu = UI.SelectMenu.init(selectDefault, {
-            allowClear: true
+            getResults: options => {
+                let timer, outerReject;
+                const request = new Promise((resolve, reject) => {
+                    const data = new Array(20).fill().map((_, i) => {
+                        const num = i + 1 + (options.offset ? options.offset : 0);
+                        return {
+                            value: num,
+                            text: `Test ${num}`
+                        };
+                    });
+                    const results = data.filter(result =>
+                        !options.term || result.text.toLowerCase().indexOf(options.term.toLowerCase()) >= 0
+                    );
+                    timer = setTimeout(
+                        _ => {
+                            resolve({ results, showMore: true });
+                        },
+                        1000
+                    );
+                    outerReject = reject;
+                });
+                request.cancel = _ => {
+                    clearTimeout(timer);
+                    outerReject();
+                };
+                return request;
+            },
+            allowClear: true,
+            maxSelect: 1
         });
         console.log(selectMenu);
     </script>

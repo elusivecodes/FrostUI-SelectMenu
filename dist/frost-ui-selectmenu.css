@@ -10,15 +10,17 @@
 }
 .selectmenu-placeholder {
   color: gray;
+  pointer-events: none;
 }
 .selectmenu-multi-input {
-  height: 25px;
+  height: 1.5rem;
   background: transparent;
   outline: 0;
 }
 .selectmenu-multi .btn {
-  font-size: 0.75rem;
+  height: 1.5rem;
   padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
 }
 .selectmenu-multi > * {
   margin: 0.25rem 0.25rem 0 0;
@@ -35,6 +37,8 @@
   background-color: white;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.2rem;
+  overflow-y: auto;
+  max-height: 250px;
 }
 .selectmenu-items {
   margin: 0;
@@ -60,13 +64,13 @@
   border-bottom-left-radius: inherit;
   border-bottom-right-radius: inherit;
 }
-.selectmenu-item:hover,
-.selectmenu-item:focus {
+.selectmenu-item.selectmenu-action:hover,
+.selectmenu-item.selectmenu-action:focus {
   color: #121212;
   text-decoration: none;
   background-color: rgba(0, 0, 0, 0.1);
 }
-.selectmenu-item.active {
+.selectmenu-item.selectmenu-action.active {
   color: white;
   background-color: steelblue;
 }

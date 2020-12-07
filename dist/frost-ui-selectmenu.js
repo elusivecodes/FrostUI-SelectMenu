@@ -46,28 +46,77 @@
             this._getData = null;
 
             let data;
-            if (!this._settings.data) {
-                data = this.constructor._getDataFromDOM(this._node);
+            if (Core.isFunction(this._settings.getResults)) {
+                this._getData = ({ offset = 0, term = null }) => {
+                    if (this._request && this._request.cancel) {
+                        this._request.cancel();
+                        this._request = null;
+                    }
+
+                    if (!offset) {
+                        this._data = [];
+                        dom.empty(this._itemsList);
+                    }
+
+                    if (this._multiple && this._settings.maxSelect && this._value.length >= this._settings.maxSelect) {
+                        const maxSelect = dom.create('li', {
+                            html: this._settings.sanitize(
+                                this._settings.lang.maxSelect
+                            ),
+                            class: 'selectmenu-item text-secondary'
+                        });
+                        dom.append(this._itemsList, maxSelect);
+                        return;
+                    }
+
+                    const loading = dom.create('li', {
+                        html: this._settings.sanitize(
+                            this._settings.lang.loading
+                        ),
+                        class: 'selectmenu-item text-secondary'
+                    });
+                    dom.append(this._itemsList, loading);
+
+                    const request = this._settings.getResults({ offset, term });
+                    this._request = request;
+
+                    Promise.resolve(request).then(response => {
+                        const newData = this.constructor._parseData(response.results);
+                        this._data.push(...newData);
+                        this._showMore = response.showMore;
+
+                        Object.assign(
+                            this._lookupData,
+                            this.constructor._parseDataLookup(this._data)
+                        );
+
+                        this._renderResults(response.results);
+                    }).catch(_ => {
+                        // error
+                    }).finally(_ => {
+                        dom.remove(loading);
+
+                        if (this._request === request) {
+                            this._request = null;
+                        }
+                    });
+                };
             } else if (Core.isPlainObject(this._settings.data)) {
                 data = this.constructor._getDataFromObject(this._settings.data);
             } else if (Core.isArray(this._settings.data)) {
                 data = this._settings.data;
-            } else if (Core.isFunction(this._settings.data)) {
-                this._getData = (callback, options) => {
-                    // show loading
-                    this._settings.data(options, response => {
-                        // hide loading
-                        this.constructor._parseData(response.results);
-
-                        callback(response);
-                    });
-                };
+            } else {
+                data = this.constructor._getDataFromDOM(this._node);
             }
+
+            this._data = {};
+            this._lookupData = {};
 
             if (data) {
                 this._data = this.constructor._parseData(data);
+                this._lookupData = this.constructor._parseDataLookup(data);
 
-                this._getData = (callback, { term = null }) => {
+                this._getData = ({ term = null }) => {
                     let results = this._data;
 
                     if (term) {
@@ -87,7 +136,7 @@
                         ).filter(item => this._settings.isMatch(item, term));
                     }
 
-                    callback({ results });
+                    this._renderResults(results);
                 };
             }
 
@@ -128,12 +177,14 @@
 
             this._animating = true;
 
+            this._refreshPlaceholder();
+            dom.setValue(this._searchInput, '');
+
             dom.fadeOut(this._menuNode, {
                 duration: this._settings.duration
             }).then(_ => {
                 dom.empty(this._itemsList);
                 dom.detach(this._menuNode);
-                dom.detach(this._searchInput);
                 dom.setAttribute(this._toggle, 'aria-expanded', false);
                 dom.triggerEvent(this._node, 'hidden.frost.selectmenu');
             }).catch(_ => { }).finally(_ => {
@@ -159,9 +210,7 @@
             dom.append(document.body, this._menuNode);
             this._popper.update();
 
-            this._getData(response => {
-                this._renderResults(response.results);
-            }, {});
+            this._getData({});
 
             dom.fadeIn(this._menuNode, {
                 duration: this._settings.duration
@@ -223,7 +272,11 @@
 
     dom.addEventDelegate(document, 'click.frost.selectmenu', '[data-toggle="selectmenu"]', e => {
         const target = UI.getTarget(e.currentTarget);
-        SelectMenu.init(target).show();
+        if (dom.getProperty(target, 'multiple')) {
+            SelectMenu.init(target).show();
+        } else {
+            SelectMenu.init(target).toggle();
+        }
     });
 
     dom.addEvent(document, 'keyup.frost.selectmenu', e => {
@@ -240,69 +293,114 @@
 
     Object.assign(SelectMenu.prototype, {
 
-        _updateSearchWidth() {
-            const span = dom.create('span', {
-                text: dom.getValue(this._searchInput),
-                class: 'd-inline-block',
-                style: {
-                    fontSize: dom.css(this._searchInput, 'fontSize')
-                }
-            });
-            dom.append(document.body, span);
-
-            const width = dom.width(span);
-            dom.setStyle(this._searchInput, 'width', width + 2);
-            dom.remove(span);
-        },
-
         _events() {
-            dom.addEvent(this._searchInput, 'input', _ => {
-                this._updateSearchWidth();
-
-                dom.empty(this._itemsList);
-                this._getData(response => {
-                    this._renderResults(response.results);
-                }, {
-                    term: dom.getValue(this._searchInput)
-                });
-            });
-
-            dom.addEvent(this._toggle, 'keydown', e => {
-                if (!dom.isConnected(this._searchInput)) {
-                    dom.setValue(this._searchInput, '');
-                    dom.append(this._toggle, this._searchInput);
-                    this._updateSearchWidth();
-                }
-                dom.focus(this._searchInput);
-            });
-
-            dom.addEventDelegate(this._itemsList, 'click', '[data-action]', e => {
+            dom.addEventDelegate(this._itemsList, 'click.frost.selectmenu', '[data-action="select"]', e => {
                 e.preventDefault();
 
                 let value = dom.getDataset(e.currentTarget, 'value');
 
                 if (this._multiple) {
-                    value = this._value.concat([value]);
+                    const index = this._value.indexOf(value);
+                    if (index >= 0) {
+                        this._value.splice(index, 1)
+                        value = this._value;
+                    } else {
+                        value = this._value.concat([value]);
+                    }
                 }
 
                 this.setValue(value);
 
                 if (this._settings.closeOnSelect) {
                     this.hide();
+                } else {
+                    this._getData({});
                 }
-            });
 
-            dom.addEvent(this._toggle, 'focus', _ => {
+                this._refreshPlaceholder();
+
+                dom.setValue(this._searchInput, '');
                 dom.focus(this._searchInput);
             });
 
-            dom.addEventDelegate(this._toggle, 'click', '[data-action]', e => {
+            dom.addEvent(this._searchInput, 'input.frost.selectmenu', _ => {
+                if (this._multiple) {
+                    this._updateSearchWidth();
+                    this.show();
+                }
+
+                let term = dom.getValue(this._searchInput);
+
+                if (term.length < this._settings.minSearch) {
+                    term = null
+                }
+
+                dom.empty(this._itemsList);
+                this._getData({ term });
+            });
+
+            if (this._settings.getResults) {
+                dom.addEvent(this._menuNode, 'scroll.frost.selectmenu', _ => {
+                    if (this._request || !this._showMore) {
+                        return;
+                    }
+
+                    const height = dom.height(this._menuNode);
+                    const scrollHeight = dom.height(this._menuNode, DOM.SCROLL_BOX);
+                    const scrollTop = dom.getScrollY(this._menuNode);
+
+                    if (scrollTop >= scrollHeight - height - 50) {
+                        const term = dom.getValue(this._searchInput);
+                        const offset = this._data.length;
+
+                        this._getData({ term, offset });
+                    }
+                });
+            }
+
+            if (this._multiple) {
+                this._eventsMulti()
+            } else {
+                this._eventsSingle();
+            }
+        },
+
+        _eventsMulti() {
+            dom.addEvent(this._searchInput, 'focus.frost.selectmenu', _ => {
+                dom.hide(this._placeholder);
+                dom.detach(this._placeholder);
+                dom.addClass(this._toggle, 'focus');
+            });
+
+            dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
+                dom.show(this._placeholder);
+                dom.removeClass(this._toggle, 'focus');
+            });
+
+            dom.addEvent(this._toggle, 'mousedown.frost.selectmenu click.frost.selectmenu', _ => {
+                dom.focus(this._searchInput);
+            });
+
+            // remove selection
+            dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
                 e.preventDefault();
 
                 const element = dom.parent(e.currentTarget);
                 const index = dom.index(element);
                 this._value.splice(index, 1)
                 this.setValue(this._value);
+                dom.focus(this._searchInput);
+            });
+        },
+
+        _eventsSingle() {
+            dom.addEvent(this._toggle, 'keydown.frost.selectmenu', _ => {
+                dom.focus(this._searchInput);
+            });
+
+            // remove selection
+            dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
+                this.setValue(null);
             });
         }
 
@@ -312,20 +410,8 @@
     Object.assign(SelectMenu.prototype, {
 
         _findValue(value) {
-            for (const item of this._data) {
-                if (item.value == value) {
-                    return item;
-                }
-
-                if (!item.children) {
-                    continue;
-                }
-
-                for (const child of item.children) {
-                    if (child.value == value) {
-                        return child;
-                    }
-                }
+            if (value in this._lookupData) {
+                return this._lookupData[value];
             }
 
             return null;
@@ -333,11 +419,15 @@
 
         _refresh() {
             dom.empty(this._node);
+            dom.detach(this._placeholder);
 
             const item = this._findValue(this._value);
 
             if (!item) {
-                return this._renderPlaceholder();
+                dom.empty(this._toggle);
+                dom.show(this._placeholder);
+                dom.append(this._toggle, this._placeholder);
+                return;
             }
 
             dom.append(this._node, item.element);
@@ -346,25 +436,51 @@
             dom.setHTML(this._toggle, this._settings.sanitize(content));
         },
 
-        _refreshMulti() {
+        _refreshMulti(focus = false) {
+            if (this._settings.maxSelect && this._value.length > this._settings.maxSelect) {
+                this._value = this._value.slice(0, this._settings.maxSelect);
+            }
+
+            dom.detach(this._searchInput);
+            dom.detach(this._placeholder);
+
             dom.empty(this._node);
             dom.empty(this._toggle);
 
             if (!this._value.length) {
-                return this._renderPlaceholder();
+                this._refreshPlaceholder();
+            } else {
+                for (const value of this._value) {
+                    const item = this._findValue(value);
+
+                    if (!item) {
+                        continue;
+                    }
+
+                    dom.append(this._node, item.element);
+
+                    const group = this._renderMultiSelection(item);
+                    dom.append(this._toggle, group);
+                }
             }
 
-            for (const value of this._value) {
-                const item = this._findValue(value);
+            dom.append(this._toggle, this._searchInput);
 
-                if (!item) {
-                    continue;
-                }
+            if (focus) {
+                dom.focus(this._searchInput);
+            }
+        },
 
-                dom.append(this._node, item.element);
+        _refreshPlaceholder() {
+            if (!this._multiple) {
+                return;
+            }
 
-                const group = this._renderMultiSelection(item);
-                dom.append(this._toggle, group);
+            if (!this._value.length) {
+                dom.show(this._placeholder);
+                dom.prepend(this._toggle, this._placeholder);
+            } else {
+                dom.hide(this._placeholder);
             }
         },
 
@@ -376,6 +492,22 @@
             } else {
                 this._refresh();
             }
+        },
+
+        _updateSearchWidth() {
+            const span = dom.create('span', {
+                text: dom.getValue(this._searchInput),
+                class: 'd-inline-block',
+                style: {
+                    fontSize: dom.css(this._searchInput, 'fontSize'),
+                    whiteSpace: 'pre-wrap'
+                }
+            });
+            dom.append(document.body, span);
+
+            const width = dom.width(span);
+            dom.setStyle(this._searchInput, 'width', width + 2);
+            dom.remove(span);
         }
 
     });
@@ -389,6 +521,7 @@
             } else {
                 this._renderSelect();
             }
+            this._renderPlaceholder();
             this._renderMenu();
             dom.hide(this._node);
             dom.after(this._node, this._toggle);
@@ -399,7 +532,7 @@
                 html: this._settings.sanitize(
                     this._settings.renderResult(item)
                 ),
-                class: 'selectmenu-item',
+                class: 'selectmenu-item selectmenu-action',
                 dataset: {
                     action: 'select',
                     value: item.value
@@ -440,19 +573,29 @@
             });
 
             if (!this._multiple) {
-                const searchContainer = dom.create('div', {
+                const searchItem = dom.create('div', {
                     class: 'p-1'
                 });
-                dom.append(this._menuNode, searchContainer);
+                dom.append(this._menuNode, searchItem);
+
+                const searchContainer = dom.create('div', {
+                    class: 'form-input'
+                });
+                dom.append(searchItem, searchContainer);
 
                 this._searchInput = dom.create('input', {
                     class: 'input-filled'
                 });
                 dom.append(searchContainer, this._searchInput);
-            } else {
-                this._searchInput = dom.create('input', {
-                    class: 'selectmenu-multi-input'
+
+                const ripple = dom.create('div', {
+                    class: 'ripple-line'
                 });
+                dom.append(searchContainer, ripple);
+
+                if (this._settings.maxSearch) {
+                    dom.setAttribute(this._searchInput, 'maxlength', this._settings.maxSearch);
+                }
             }
 
             this._itemsList = dom.create('ul', {
@@ -460,18 +603,26 @@
             });
             dom.append(this._menuNode, this._itemsList);
 
-            this._popper = new UI.Popper(
-                this._menuNode,
-                {
-                    reference: this._toggle,
-                    placement: this._settings.placement,
-                    position: this._settings.position,
-                    fixed: this._settings.fixed,
-                    fullWidth: this._settings.fullWidth,
-                    spacing: this._settings.spacing,
-                    minContact: this._settings.minContact
-                }
-            );
+            const popperOptions = {
+                reference: this._toggle,
+                placement: this._settings.placement,
+                position: this._settings.position,
+                fixed: this._settings.fixed,
+                spacing: this._settings.spacing,
+                minContact: this._settings.minContact
+            };
+
+            if (this._settings.fullWidth) {
+                popperOptions.afterUpdate = (node, reference) => {
+                    const width = dom.width(reference, DOM.BORDER_BOX);
+                    dom.setStyle(node, 'width', width);
+                };
+                popperOptions.beforeUpdate = node => {
+                    dom.setStyle(node, 'width', '');
+                };
+            }
+
+            this._popper = new UI.Popper(this._menuNode, popperOptions);
         },
 
         _renderMultiSelection(item) {
@@ -501,14 +652,24 @@
         },
 
         _renderPlaceholder() {
-            const placeholder = dom.create('span', {
+            this._placeholder = dom.create('span', {
                 html: this._settings.sanitize(this._settings.placeholder),
                 class: 'selectmenu-placeholder'
             });
-            dom.append(this._toggle, placeholder);
         },
 
         _renderResults(results) {
+            if (!results.length) {
+                const noResults = dom.create('li', {
+                    html: this._settings.sanitize(
+                        this._settings.lang.noResults
+                    ),
+                    class: 'selectmenu-item'
+                });
+                dom.append(this._itemsList, noResults);
+                return;
+            }
+
             for (const item of results) {
                 const element = item.children ?
                     this._renderGroup(item) :
@@ -518,9 +679,9 @@
         },
 
         _renderSelectMulti() {
-            this._toggle = dom.create('button', {
+            this._toggle = dom.create('div', {
                 class: [
-                    dom.getAttribute(this._node, 'class'),
+                    dom.getAttribute(this._node, 'class') || '',
                     'selectmenu-multi d-flex flex-wrap position-relative text-left'
                 ],
                 dataset: {
@@ -529,12 +690,19 @@
                 }
             });
 
+            this._searchInput = dom.create('input', {
+                class: 'selectmenu-multi-input'
+            });
+
+            if (this._settings.maxSearch) {
+                dom.setAttribute(this._searchInput, 'maxlength', this._settings.maxSearch);
+            }
         },
 
         _renderSelect() {
             this._toggle = dom.create('button', {
                 class: [
-                    dom.getAttribute(this._node, 'class'),
+                    dom.getAttribute(this._node, 'class') || '',
                     'selectmenu-toggle position-relative text-left'
                 ],
                 dataset: {
@@ -562,36 +730,32 @@
         },
 
         setValue(value) {
-            if (this._multiple) {
-                return this.setValueMulti(value);
+            if (!this._multiple) {
+                if (this._findValue(value)) {
+                    return this._setValue(value);
+                }
+
+                return this._getData(_ => {
+                    if (this._findValue(value)) {
+                        return this._setValue(value);
+                    }
+                }, { value });
             }
 
-            if (this._findValue(value)) {
+            if (!value) {
+                return this._setValue([]);
+            }
+
+            if (value.every(val => this._findValue(val))) {
                 return this._setValue(value);
             }
 
             this._getData(_ => {
-                if (this._findValue(value)) {
+                if (value.every(val => this._findValue(val))) {
                     return this._setValue(value);
                 }
             }, { value });
-        },
-
-        setValueMulti(values) {
-            if (!values) {
-                return this._setValue([]);
-            }
-
-            if (values.every(value => this._findValue(value))) {
-                return this._setValue(values);
-            }
-
-            this._getData(_ => {
-                if (values.every(value => this._findValue(value))) {
-                    return this._setValue(values);
-                }
-            }, { values });
-        },
+        }
 
     });
 
@@ -647,6 +811,17 @@
             }
 
             return data;
+        },
+
+        _parseDataLookup(data, lookup = {}) {
+            for (const item of data) {
+                if (data.children) {
+                    this._parseDataLookup(data.children, lookup);
+                } else {
+                    lookup[item.value] = item;
+                }
+            }
+            return lookup;
         }
 
     });
@@ -655,13 +830,9 @@
     // SelectMenu default options
     SelectMenu.defaults = {
         data: null,
-        maxSearch: 0,
-        maxSelect: 0,
-        minSearch: 0,
-        minResults: 0,
         placeholder: 'Nothing Selected',
         lang: {
-            loadMore: 'Loading..',
+            loading: 'Loading..',
             maxSelect: 'Selection limit reached.',
             noResults: 'No results'
         },
@@ -683,13 +854,16 @@
 
             return aLower.localeCompare(bLower);
         }),
+        maxSearch: 0,
+        maxSelect: 0,
+        minSearch: 0,
         allowClear: false,
         closeOnSelect: true,
+        fullWidth: true,
         duration: 100,
         placement: 'bottom',
         position: 'start',
-        fixed: false,
-        fullWidth: true,
+        fixed: true,
         spacing: 3,
         minContact: false
     };

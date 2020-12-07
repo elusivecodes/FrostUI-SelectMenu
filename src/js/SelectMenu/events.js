@@ -5,7 +5,11 @@ dom.addEvent(document, 'click.frost.selectmenu', e => {
 
 dom.addEventDelegate(document, 'click.frost.selectmenu', '[data-toggle="selectmenu"]', e => {
     const target = UI.getTarget(e.currentTarget);
-    SelectMenu.init(target).show();
+    if (dom.getProperty(target, 'multiple')) {
+        SelectMenu.init(target).show();
+    } else {
+        SelectMenu.init(target).toggle();
+    }
 });
 
 dom.addEvent(document, 'keyup.frost.selectmenu', e => {
