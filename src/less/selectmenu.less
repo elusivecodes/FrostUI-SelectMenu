@@ -1,8 +1,10 @@
 .selectmenu-toggle::after {
     position: absolute;
+    top: 50%;
     right: 0;
     margin: 0 0.5rem;
     content: '\2b9f';
+    transform: translateY(-50%);
 }
 
 .selectmenu-multi {
@@ -19,6 +21,7 @@
     height: 1.5rem;
     background: transparent;
     outline: 0;
+    pointer-events: none;
 }
 
 .selectmenu-multi .btn {
@@ -102,4 +105,8 @@
     font-size: .875rem;
     color: darkslategray;
     white-space: nowrap;
+}
+
+.selectmenu-clear {
+    
 }

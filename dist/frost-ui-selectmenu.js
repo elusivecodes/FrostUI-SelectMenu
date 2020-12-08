@@ -44,9 +44,34 @@
             this._disabled = dom.getProperty(this._node, 'disabled')
 
             this._getData = null;
+            this._getResults = null;
 
             let data;
             if (Core.isFunction(this._settings.getResults)) {
+                this._getResults = options => {
+                    if (!options.offset) {
+                        this._data = [];
+                    }
+
+                    const request = this._settings.getResults(options);
+                    this._request = Promise.resolve(request);
+
+                    this._request.then(response => {
+                        const newData = this.constructor._parseData(response.results);
+                        this._data.push(...newData);
+                        this._showMore = response.showMore;
+
+                        Object.assign(
+                            this._lookupData,
+                            this.constructor._parseDataLookup(this._data)
+                        );
+
+                        return response;
+                    });
+
+                    return this._request;
+                };
+
                 this._getData = ({ offset = 0, term = null }) => {
                     if (this._request && this._request.cancel) {
                         this._request.cancel();
@@ -54,7 +79,6 @@
                     }
 
                     if (!offset) {
-                        this._data = [];
                         dom.empty(this._itemsList);
                     }
 
@@ -66,6 +90,7 @@
                             class: 'selectmenu-item text-secondary'
                         });
                         dom.append(this._itemsList, maxSelect);
+                        this._popper.update();
                         return;
                     }
 
@@ -76,25 +101,17 @@
                         class: 'selectmenu-item text-secondary'
                     });
                     dom.append(this._itemsList, loading);
+                    this._popper.update();
 
-                    const request = this._settings.getResults({ offset, term });
-                    this._request = request;
+                    const request = this._getResults({ offset, term });
 
-                    Promise.resolve(request).then(response => {
-                        const newData = this.constructor._parseData(response.results);
-                        this._data.push(...newData);
-                        this._showMore = response.showMore;
-
-                        Object.assign(
-                            this._lookupData,
-                            this.constructor._parseDataLookup(this._data)
-                        );
-
+                    request.then(response => {
                         this._renderResults(response.results);
                     }).catch(_ => {
                         // error
                     }).finally(_ => {
                         dom.remove(loading);
+                        this._popper.update();
 
                         if (this._request === request) {
                             this._request = null;
@@ -109,7 +126,7 @@
                 data = this.constructor._getDataFromDOM(this._node);
             }
 
-            this._data = {};
+            this._data = [];
             this._lookupData = {};
 
             if (data) {
@@ -117,6 +134,18 @@
                 this._lookupData = this.constructor._parseDataLookup(data);
 
                 this._getData = ({ term = null }) => {
+                    if (this._multiple && this._settings.maxSelect && this._value.length >= this._settings.maxSelect) {
+                        const maxSelect = dom.create('li', {
+                            html: this._settings.sanitize(
+                                this._settings.lang.maxSelect
+                            ),
+                            class: 'selectmenu-item text-secondary'
+                        });
+                        dom.append(this._itemsList, maxSelect);
+                        this._popper.update();
+                        return;
+                    }
+
                     let results = this._data;
 
                     if (term) {
@@ -137,6 +166,7 @@
                     }
 
                     this._renderResults(results);
+                    this._popper.update();
                 };
             }
 
@@ -208,9 +238,9 @@
 
             this._animating = true;
             dom.append(document.body, this._menuNode);
-            this._popper.update();
 
             this._getData({});
+            this._popper.update();
 
             dom.fadeIn(this._menuNode, {
                 duration: this._settings.duration
@@ -299,6 +329,10 @@
 
                 let value = dom.getDataset(e.currentTarget, 'value');
 
+                const item = this._findValue(value);
+
+                value = item.value;
+
                 if (this._multiple) {
                     const index = this._value.indexOf(value);
                     if (index >= 0) {
@@ -326,13 +360,16 @@
             dom.addEvent(this._searchInput, 'input.frost.selectmenu', _ => {
                 if (this._multiple) {
                     this._updateSearchWidth();
-                    this.show();
                 }
 
                 let term = dom.getValue(this._searchInput);
 
                 if (term.length < this._settings.minSearch) {
-                    term = null
+                    return;
+                }
+
+                if (this._multiple) {
+                    this.show();
                 }
 
                 dom.empty(this._itemsList);
@@ -366,6 +403,10 @@
         },
 
         _eventsMulti() {
+            dom.addEvent(this._node, 'focus.frost.selectmenu', _ => {
+                dom.focus(this._searchInput);
+            });
+
             dom.addEvent(this._searchInput, 'focus.frost.selectmenu', _ => {
                 dom.hide(this._placeholder);
                 dom.detach(this._placeholder);
@@ -373,12 +414,16 @@
             });
 
             dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
-                dom.show(this._placeholder);
+                this._refreshPlaceholder();
                 dom.removeClass(this._toggle, 'focus');
             });
 
-            dom.addEvent(this._toggle, 'mousedown.frost.selectmenu click.frost.selectmenu', _ => {
-                dom.focus(this._searchInput);
+            dom.addEvent(this._toggle, 'mousedown.frost.selectmenu', _ => {
+                dom.addClass(this._toggle, 'focus');
+
+                dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
+                    dom.focus(this._searchInput);
+                });
             });
 
             // remove selection
@@ -394,14 +439,21 @@
         },
 
         _eventsSingle() {
+            dom.addEvent(this._node, 'focus.frost.selectmenu', _ => {
+                dom.focus(this._toggle);
+            });
+
             dom.addEvent(this._toggle, 'keydown.frost.selectmenu', _ => {
+                this.show();
                 dom.focus(this._searchInput);
             });
 
             // remove selection
-            dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
-                this.setValue(null);
-            });
+            if (this._settings.allowClear) {
+                dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
+                    this.setValue(null);
+                });
+            }
         }
 
     });
@@ -434,9 +486,24 @@
 
             const content = this._settings.renderSelection(item);
             dom.setHTML(this._toggle, this._settings.sanitize(content));
+
+            if (this._settings.allowClear) {
+                const clear = dom.create('button', {
+                    html: '<small class="icon-cancel"></small>',
+                    class: 'close float-end me-5 lh-base',
+                    dataset: {
+                        action: 'clear'
+                    }
+                });
+                dom.append(this._toggle, clear);
+            }
         },
 
         _refreshMulti(focus = false) {
+            if (!this._value) {
+                this._value = [];
+            }
+
             if (this._settings.maxSelect && this._value.length > this._settings.maxSelect) {
                 this._value = this._value.slice(0, this._settings.maxSelect);
             }
@@ -523,14 +590,25 @@
             }
             this._renderPlaceholder();
             this._renderMenu();
-            dom.hide(this._node);
+            dom.addClass(this._node, 'visually-hidden');
             dom.after(this._node, this._toggle);
         },
 
         _renderItem(item) {
+            const active =
+                (
+                    this._multiple &&
+                    this._value.includes(item.value)
+                ) || (
+                    !this._multiple &&
+                    item.value == this._value
+                );
+
+            const { option, ...data } = item;
+
             const element = dom.create('li', {
                 html: this._settings.sanitize(
-                    this._settings.renderResult(item)
+                    this._settings.renderResult(data, active)
                 ),
                 class: 'selectmenu-item selectmenu-action',
                 dataset: {
@@ -539,16 +617,7 @@
                 }
             });
 
-            if (
-                (
-                    this._multiple &&
-                    this._value.includes(item.value)
-                ) ||
-                (
-                    !this._multiple &&
-                    item.value == this._value
-                )
-            ) {
+            if (active) {
                 dom.addClass(element, 'active');
             }
 
@@ -630,23 +699,21 @@
                 class: 'btn-group'
             });
 
+            const close = dom.create('div', {
+                html: '<small class="icon-cancel"></small>',
+                class: 'btn btn-sm btn-outline-secondary',
+                dataset: {
+                    action: 'clear'
+                }
+            });
+            dom.append(group, close);
+
             const content = this._settings.renderSelection(item);
             const tag = dom.create('div', {
                 html: this._settings.sanitize(content),
                 class: 'btn btn-sm btn-secondary'
             });
             dom.append(group, tag);
-
-            if (this._settings.allowClear) {
-                const close = dom.create('div', {
-                    html: '<small class="icon-cancel"></small>',
-                    class: 'btn btn-sm btn-outline-secondary',
-                    dataset: {
-                        action: 'clear'
-                    }
-                });
-                dom.append(group, close);
-            }
 
             return group;
         },
@@ -682,7 +749,7 @@
             this._toggle = dom.create('div', {
                 class: [
                     dom.getAttribute(this._node, 'class') || '',
-                    'selectmenu-multi d-flex flex-wrap position-relative text-left'
+                    'selectmenu-multi d-flex flex-wrap position-relative text-start'
                 ],
                 dataset: {
                     toggle: 'selectmenu',
@@ -703,7 +770,7 @@
             this._toggle = dom.create('button', {
                 class: [
                     dom.getAttribute(this._node, 'class') || '',
-                    'selectmenu-toggle position-relative text-left'
+                    'selectmenu-toggle position-relative text-start'
                 ],
                 dataset: {
                     toggle: 'selectmenu',
@@ -719,10 +786,16 @@
 
         data() {
             if (this._multiple) {
-                return this._value.map(value => this._findValue(value));
+                return this._value.map(value => {
+                    const { option, ...data } = this._findValue(value);
+
+                    return data;
+                });
             }
 
-            return this._findValue(this._value);
+            const { option, ...data } = this._findValue(this._value);
+
+            return data;
         },
 
         getValue() {
@@ -730,31 +803,22 @@
         },
 
         setValue(value) {
-            if (!this._multiple) {
-                if (this._findValue(value)) {
-                    return this._setValue(value);
-                }
-
-                return this._getData(_ => {
-                    if (this._findValue(value)) {
-                        return this._setValue(value);
-                    }
-                }, { value });
-            }
-
             if (!value) {
-                return this._setValue([]);
-            }
-
-            if (value.every(val => this._findValue(val))) {
                 return this._setValue(value);
             }
 
-            this._getData(_ => {
-                if (value.every(val => this._findValue(val))) {
-                    return this._setValue(value);
-                }
-            }, { value });
+            if (
+                !value ||
+                !this._getResults ||
+                (!this._multiple && this._findValue(value)) ||
+                (this._multiple && value.every(val => this._findValue(val)))
+            ) {
+                return this._setValue(value);
+            }
+
+            this._getResults({ value }).then(_ => {
+                this._setValue(value)
+            });
         }
 
     });
@@ -830,7 +894,7 @@
     // SelectMenu default options
     SelectMenu.defaults = {
         data: null,
-        placeholder: 'Nothing Selected',
+        placeholder: '&nbsp;',
         lang: {
             loading: 'Loading..',
             maxSelect: 'Selection limit reached.',
@@ -863,7 +927,7 @@
         duration: 100,
         placement: 'bottom',
         position: 'start',
-        fixed: true,
+        fixed: false,
         spacing: 3,
         minContact: false
     };

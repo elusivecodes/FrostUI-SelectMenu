@@ -14,9 +14,34 @@ class SelectMenu {
         this._disabled = dom.getProperty(this._node, 'disabled')
 
         this._getData = null;
+        this._getResults = null;
 
         let data;
         if (Core.isFunction(this._settings.getResults)) {
+            this._getResults = options => {
+                if (!options.offset) {
+                    this._data = [];
+                }
+
+                const request = this._settings.getResults(options);
+                this._request = Promise.resolve(request);
+
+                this._request.then(response => {
+                    const newData = this.constructor._parseData(response.results);
+                    this._data.push(...newData);
+                    this._showMore = response.showMore;
+
+                    Object.assign(
+                        this._lookupData,
+                        this.constructor._parseDataLookup(this._data)
+                    );
+
+                    return response;
+                });
+
+                return this._request;
+            };
+
             this._getData = ({ offset = 0, term = null }) => {
                 if (this._request && this._request.cancel) {
                     this._request.cancel();
@@ -24,7 +49,6 @@ class SelectMenu {
                 }
 
                 if (!offset) {
-                    this._data = [];
                     dom.empty(this._itemsList);
                 }
 
@@ -36,6 +60,7 @@ class SelectMenu {
                         class: 'selectmenu-item text-secondary'
                     });
                     dom.append(this._itemsList, maxSelect);
+                    this._popper.update();
                     return;
                 }
 
@@ -46,25 +71,17 @@ class SelectMenu {
                     class: 'selectmenu-item text-secondary'
                 });
                 dom.append(this._itemsList, loading);
+                this._popper.update();
 
-                const request = this._settings.getResults({ offset, term });
-                this._request = request;
+                const request = this._getResults({ offset, term });
 
-                Promise.resolve(request).then(response => {
-                    const newData = this.constructor._parseData(response.results);
-                    this._data.push(...newData);
-                    this._showMore = response.showMore;
-
-                    Object.assign(
-                        this._lookupData,
-                        this.constructor._parseDataLookup(this._data)
-                    );
-
+                request.then(response => {
                     this._renderResults(response.results);
                 }).catch(_ => {
                     // error
                 }).finally(_ => {
                     dom.remove(loading);
+                    this._popper.update();
 
                     if (this._request === request) {
                         this._request = null;
@@ -79,7 +96,7 @@ class SelectMenu {
             data = this.constructor._getDataFromDOM(this._node);
         }
 
-        this._data = {};
+        this._data = [];
         this._lookupData = {};
 
         if (data) {
@@ -87,6 +104,18 @@ class SelectMenu {
             this._lookupData = this.constructor._parseDataLookup(data);
 
             this._getData = ({ term = null }) => {
+                if (this._multiple && this._settings.maxSelect && this._value.length >= this._settings.maxSelect) {
+                    const maxSelect = dom.create('li', {
+                        html: this._settings.sanitize(
+                            this._settings.lang.maxSelect
+                        ),
+                        class: 'selectmenu-item text-secondary'
+                    });
+                    dom.append(this._itemsList, maxSelect);
+                    this._popper.update();
+                    return;
+                }
+
                 let results = this._data;
 
                 if (term) {
@@ -107,6 +136,7 @@ class SelectMenu {
                 }
 
                 this._renderResults(results);
+                this._popper.update();
             };
         }
 
@@ -178,9 +208,9 @@ class SelectMenu {
 
         this._animating = true;
         dom.append(document.body, this._menuNode);
-        this._popper.update();
 
         this._getData({});
+        this._popper.update();
 
         dom.fadeIn(this._menuNode, {
             duration: this._settings.duration

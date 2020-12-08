@@ -16,54 +16,227 @@
         <div class="mb-4">
             <label for="selectDefault">Default</label>
             <div class="form-input">
-                <select name="selectMulti[]" class="input-filled" type="text" id="selectDefault" multiple>
+                <select class="input-filled" type="text" id="selectDefault">
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                    <option value="4">Option 4</option>
                 </select>
                 <div class="ripple-line"></div>
             </div>
         </div>
         <div class="mb-4">
-            <label for="reference">Reference</label>
+            <label for="selectMulti">Multiple</label>
             <div class="form-input">
-                <input class="input-filled" type="text" id="reference" placeholder="Reference" />
+                <select class="input-filled" type="text" id="selectMulti" multiple>
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                    <option value="4">Option 4</option>
+                </select>
                 <div class="ripple-line"></div>
             </div>
         </div>
+
+        <h4>Placeholders</h4>
+        <div class="mb-4">
+            <label for="selectPlaceholder">Default</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectPlaceholder" data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectPlaceholderMulti">Multiple</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectPlaceholderMulti" multiple
+                    data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+
+        <h4>Queries</h4>
+        <div class="mb-4">
+            <label for="selectArray">Data Array</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectArray" data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectQuery">Query</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectQuery" multiple
+                    data-placeholder="Select an item"></select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectInfinite">Infinite Scrolling</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectInfinite" multiple
+                    data-placeholder="Select an item"></select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+
+        <h4>Rendering</h4>
+        <div class="mb-4">
+            <label for="selectRender">Default</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectRender" data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectRenderMulti">Multiple</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectRenderMulti" multiple
+                    data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+
+        <!-- minimum search length -->
+
+        <h4>Maximum Selections</h4>
+        <div class="mb-4">
+            <label for="selectMaxSelections">Multiple</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectMaxSelections" multiple
+                    data-placeholder="Select an item" data-max-select="3">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+
+        <!-- set value -->
+        <!-- disabled -->
+        <!-- disabled options -->
+        <!-- custom matching -->
+        <!-- custom sorting -->
     </div>
     <script>
-        const selectDefault = dom.findOne('#selectDefault');
+        const sampleData = {
+            1: 'Option 1',
+            2: 'Option 2',
+            3: 'Option 3',
+            4: 'Option 4'
+        };
 
-        const selectMenu = UI.SelectMenu.init(selectDefault, {
-            getResults: options => {
-                let timer, outerReject;
-                const request = new Promise((resolve, reject) => {
-                    const data = new Array(20).fill().map((_, i) => {
-                        const num = i + 1 + (options.offset ? options.offset : 0);
-                        return {
-                            value: num,
-                            text: `Test ${num}`
-                        };
-                    });
-                    const results = data.filter(result =>
-                        !options.term || result.text.toLowerCase().indexOf(options.term.toLowerCase()) >= 0
-                    );
-                    timer = setTimeout(
-                        _ => {
-                            resolve({ results, showMore: true });
-                        },
-                        1000
-                    );
-                    outerReject = reject;
-                });
-                request.cancel = _ => {
-                    clearTimeout(timer);
-                    outerReject();
-                };
-                return request;
+        const sampleDataArray = [
+            {
+                value: 1,
+                text: 'Option 1',
+                extra: 'Extra 1'
             },
-            allowClear: true,
-            maxSelect: 1
+            {
+                value: 2,
+                text: 'Option 2',
+                extra: 'Extra 2'
+            },
+            {
+                value: 3,
+                text: 'Option 3',
+                extra: 'Extra 3'
+            },
+            {
+                value: 4,
+                text: 'Option 4',
+                extra: 'Extra 4'
+            }
+        ];
+
+        const selectDefault = dom.findOne('#selectDefault');
+        const selectMulti = dom.findOne('#selectMulti');
+        const selectPlaceholder = dom.findOne('#selectPlaceholder');
+        const selectPlaceholderMulti = dom.findOne('#selectPlaceholderMulti');
+        const selectArray = dom.findOne('#selectArray');
+        const selectQuery = dom.findOne('#selectQuery');
+        const selectInfinite = dom.findOne('#selectInfinite');
+        const selectRender = dom.findOne('#selectRender');
+        const selectRenderMulti = dom.findOne('#selectRenderMulti');
+        const selectMaxSelections = dom.findOne('#selectMaxSelections');
+
+        UI.SelectMenu.init(selectDefault);
+
+        UI.SelectMenu.init(selectMulti);
+
+        UI.SelectMenu.init(selectPlaceholder, {
+            data: sampleData
         });
-        console.log(selectMenu);
+
+        UI.SelectMenu.init(selectPlaceholderMulti, {
+            data: sampleData
+        });
+
+        UI.SelectMenu.init(selectArray, {
+            data: sampleDataArray
+        });
+
+        UI.SelectMenu.init(selectQuery, {
+            getResults: ({ term = null }) => {
+                let results;
+
+                results = new Array(20).fill().map((_, i) => {
+                    const num = i + 1;
+                    return {
+                        value: num,
+                        text: `Test ${num}`
+                    };
+                });
+
+                if (term) {
+                    results = results.filter(result =>
+                        result.text.toLowerCase().indexOf(term.toLowerCase()) >= 0
+                    );
+                }
+
+                return { results };
+            }
+        });
+
+        UI.SelectMenu.init(selectInfinite, {
+            getResults: ({ offset = 0, term = null }) => {
+                let results = new Array(20).fill().map((_, i) => {
+                    const num = i + 1 + offset;
+                    return {
+                        value: num,
+                        text: `Test ${num}`
+                    };
+                });
+
+                if (term) {
+                    results = results.filter(result =>
+                        result.text.toLowerCase().indexOf(term.toLowerCase()) >= 0
+                    );
+                }
+
+                return { results, showMore: true };
+            }
+        });
+
+        UI.SelectMenu.init(selectRender, {
+            data: sampleDataArray,
+            renderResult: (item, active) => `${item.text} <small class="text-${active ? 'light' : 'secondary'}">${item.extra}</small>`,
+            renderSelection: item => `${item.text} <small class="text-secondary">${item.extra}</small>`
+        });
+
+        UI.SelectMenu.init(selectRenderMulti, {
+            data: sampleDataArray,
+            renderResult: (item, active) => `${item.text} <small class="text-${active ? 'light' : 'secondary'}">${item.extra}</small>`,
+            renderSelection: item => `${item.text} <small>${item.extra}</small>`
+        });
+
+        UI.SelectMenu.init(selectMaxSelections, {
+            data: sampleData
+        });
+
     </script>
 </body>
 

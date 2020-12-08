@@ -1,7 +1,7 @@
 // SelectMenu default options
 SelectMenu.defaults = {
     data: null,
-    placeholder: 'Nothing Selected',
+    placeholder: '&nbsp;',
     lang: {
         loading: 'Loading..',
         maxSelect: 'Selection limit reached.',
@@ -34,7 +34,7 @@ SelectMenu.defaults = {
     duration: 100,
     placement: 'bottom',
     position: 'start',
-    fixed: true,
+    fixed: false,
     spacing: 3,
     minContact: false
 };

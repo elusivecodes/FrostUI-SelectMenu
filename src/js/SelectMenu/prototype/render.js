@@ -8,14 +8,25 @@ Object.assign(SelectMenu.prototype, {
         }
         this._renderPlaceholder();
         this._renderMenu();
-        dom.hide(this._node);
+        dom.addClass(this._node, 'visually-hidden');
         dom.after(this._node, this._toggle);
     },
 
     _renderItem(item) {
+        const active =
+            (
+                this._multiple &&
+                this._value.includes(item.value)
+            ) || (
+                !this._multiple &&
+                item.value == this._value
+            );
+
+        const { option, ...data } = item;
+
         const element = dom.create('li', {
             html: this._settings.sanitize(
-                this._settings.renderResult(item)
+                this._settings.renderResult(data, active)
             ),
             class: 'selectmenu-item selectmenu-action',
             dataset: {
@@ -24,16 +35,7 @@ Object.assign(SelectMenu.prototype, {
             }
         });
 
-        if (
-            (
-                this._multiple &&
-                this._value.includes(item.value)
-            ) ||
-            (
-                !this._multiple &&
-                item.value == this._value
-            )
-        ) {
+        if (active) {
             dom.addClass(element, 'active');
         }
 
@@ -115,23 +117,21 @@ Object.assign(SelectMenu.prototype, {
             class: 'btn-group'
         });
 
+        const close = dom.create('div', {
+            html: '<small class="icon-cancel"></small>',
+            class: 'btn btn-sm btn-outline-secondary',
+            dataset: {
+                action: 'clear'
+            }
+        });
+        dom.append(group, close);
+
         const content = this._settings.renderSelection(item);
         const tag = dom.create('div', {
             html: this._settings.sanitize(content),
             class: 'btn btn-sm btn-secondary'
         });
         dom.append(group, tag);
-
-        if (this._settings.allowClear) {
-            const close = dom.create('div', {
-                html: '<small class="icon-cancel"></small>',
-                class: 'btn btn-sm btn-outline-secondary',
-                dataset: {
-                    action: 'clear'
-                }
-            });
-            dom.append(group, close);
-        }
 
         return group;
     },
@@ -167,7 +167,7 @@ Object.assign(SelectMenu.prototype, {
         this._toggle = dom.create('div', {
             class: [
                 dom.getAttribute(this._node, 'class') || '',
-                'selectmenu-multi d-flex flex-wrap position-relative text-left'
+                'selectmenu-multi d-flex flex-wrap position-relative text-start'
             ],
             dataset: {
                 toggle: 'selectmenu',
@@ -188,7 +188,7 @@ Object.assign(SelectMenu.prototype, {
         this._toggle = dom.create('button', {
             class: [
                 dom.getAttribute(this._node, 'class') || '',
-                'selectmenu-toggle position-relative text-left'
+                'selectmenu-toggle position-relative text-start'
             ],
             dataset: {
                 toggle: 'selectmenu',

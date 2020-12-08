@@ -25,9 +25,24 @@ Object.assign(SelectMenu.prototype, {
 
         const content = this._settings.renderSelection(item);
         dom.setHTML(this._toggle, this._settings.sanitize(content));
+
+        if (this._settings.allowClear) {
+            const clear = dom.create('button', {
+                html: '<small class="icon-cancel"></small>',
+                class: 'close float-end me-5 lh-base',
+                dataset: {
+                    action: 'clear'
+                }
+            });
+            dom.append(this._toggle, clear);
+        }
     },
 
     _refreshMulti(focus = false) {
+        if (!this._value) {
+            this._value = [];
+        }
+
         if (this._settings.maxSelect && this._value.length > this._settings.maxSelect) {
             this._value = this._value.slice(0, this._settings.maxSelect);
         }

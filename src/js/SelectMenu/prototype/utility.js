@@ -2,10 +2,16 @@ Object.assign(SelectMenu.prototype, {
 
     data() {
         if (this._multiple) {
-            return this._value.map(value => this._findValue(value));
+            return this._value.map(value => {
+                const { option, ...data } = this._findValue(value);
+
+                return data;
+            });
         }
 
-        return this._findValue(this._value);
+        const { option, ...data } = this._findValue(this._value);
+
+        return data;
     },
 
     getValue() {
@@ -13,31 +19,22 @@ Object.assign(SelectMenu.prototype, {
     },
 
     setValue(value) {
-        if (!this._multiple) {
-            if (this._findValue(value)) {
-                return this._setValue(value);
-            }
-
-            return this._getData(_ => {
-                if (this._findValue(value)) {
-                    return this._setValue(value);
-                }
-            }, { value });
-        }
-
         if (!value) {
-            return this._setValue([]);
-        }
-
-        if (value.every(val => this._findValue(val))) {
             return this._setValue(value);
         }
 
-        this._getData(_ => {
-            if (value.every(val => this._findValue(val))) {
-                return this._setValue(value);
-            }
-        }, { value });
+        if (
+            !value ||
+            !this._getResults ||
+            (!this._multiple && this._findValue(value)) ||
+            (this._multiple && value.every(val => this._findValue(val)))
+        ) {
+            return this._setValue(value);
+        }
+
+        this._getResults({ value }).then(_ => {
+            this._setValue(value)
+        });
     }
 
 });
