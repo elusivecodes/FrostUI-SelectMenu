@@ -102,14 +102,32 @@
             </div>
         </div>
 
-        <!-- minimum search length -->
+        <h4>Minimum Search Length</h4>
+        <div class="mb-4">
+            <label for="selectMinLength">Default</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectMinLength" data-placeholder="Select an item"
+                    data-min-search="3">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectMinLengthMulti">Multiple</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectMinLengthMulti" multiple
+                    data-placeholder="Select an item" data-min-search="3">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
 
         <h4>Maximum Selections</h4>
         <div class="mb-4">
             <label for="selectMaxSelections">Multiple</label>
             <div class="form-input">
                 <select class="input-filled" type="text" id="selectMaxSelections" multiple
-                    data-placeholder="Select an item" data-max-select="3">
+                    data-placeholder="Select an item" data-max-selections="3">
                 </select>
                 <div class="ripple-line"></div>
             </div>
@@ -161,6 +179,8 @@
         const selectInfinite = dom.findOne('#selectInfinite');
         const selectRender = dom.findOne('#selectRender');
         const selectRenderMulti = dom.findOne('#selectRenderMulti');
+        const selectMinLength = dom.findOne('#selectMinLength');
+        const selectMinLengthMulti = dom.findOne('#selectMinLengthMulti');
         const selectMaxSelections = dom.findOne('#selectMaxSelections');
 
         UI.SelectMenu.init(selectDefault);
@@ -231,6 +251,14 @@
             data: sampleDataArray,
             renderResult: (item, active) => `${item.text} <small class="text-${active ? 'light' : 'secondary'}">${item.extra}</small>`,
             renderSelection: item => `${item.text} <small>${item.extra}</small>`
+        });
+
+        UI.SelectMenu.init(selectMinLength, {
+            data: sampleData
+        });
+
+        UI.SelectMenu.init(selectMinLengthMulti, {
+            data: sampleData
         });
 
         UI.SelectMenu.init(selectMaxSelections, {

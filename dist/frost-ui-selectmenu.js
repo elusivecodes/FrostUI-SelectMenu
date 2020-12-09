@@ -82,26 +82,16 @@
                         dom.empty(this._itemsList);
                     }
 
-                    if (this._multiple && this._settings.maxSelect && this._value.length >= this._settings.maxSelect) {
-                        const maxSelect = dom.create('li', {
-                            html: this._settings.sanitize(
-                                this._settings.lang.maxSelect
-                            ),
-                            class: 'selectmenu-item text-secondary'
-                        });
-                        dom.append(this._itemsList, maxSelect);
+                    if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
                         this._popper.update();
                         return;
                     }
 
-                    const loading = dom.create('li', {
-                        html: this._settings.sanitize(
-                            this._settings.lang.loading
-                        ),
-                        class: 'selectmenu-item text-secondary'
-                    });
-                    dom.append(this._itemsList, loading);
-                    this._popper.update();
+                    if (this._multiple && this._settings.maxSelections && this._value.length >= this._settings.maxSelections) {
+                        return this._renderInfo(this._settings.lang.maxSelections);
+                    }
+
+                    const loading = this._renderInfo(this._settings.lang.loading);
 
                     const request = this._getResults({ offset, term });
 
@@ -134,16 +124,13 @@
                 this._lookupData = this.constructor._parseDataLookup(data);
 
                 this._getData = ({ term = null }) => {
-                    if (this._multiple && this._settings.maxSelect && this._value.length >= this._settings.maxSelect) {
-                        const maxSelect = dom.create('li', {
-                            html: this._settings.sanitize(
-                                this._settings.lang.maxSelect
-                            ),
-                            class: 'selectmenu-item text-secondary'
-                        });
-                        dom.append(this._itemsList, maxSelect);
+                    if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
                         this._popper.update();
                         return;
+                    }
+
+                    if (this._multiple && this._settings.maxSelections && this._value.length >= this._settings.maxSelections) {
+                        return this._renderInfo(this._settings.lang.maxSelections);
                     }
 
                     let results = this._data;
@@ -236,10 +223,15 @@
                 return;
             }
 
+            this._getData({});
+
+            if (this._multiple && !dom.hasChildren(this._itemsList)) {
+                return;
+            }
+
             this._animating = true;
             dom.append(document.body, this._menuNode);
 
-            this._getData({});
             this._popper.update();
 
             dom.fadeIn(this._menuNode, {
@@ -295,32 +287,6 @@
     }
 
 
-    // SelectMenu events
-    dom.addEvent(document, 'click.frost.selectmenu', e => {
-        SelectMenu.autoHide(e.target);
-    });
-
-    dom.addEventDelegate(document, 'click.frost.selectmenu', '[data-toggle="selectmenu"]', e => {
-        const target = UI.getTarget(e.currentTarget);
-        if (dom.getProperty(target, 'multiple')) {
-            SelectMenu.init(target).show();
-        } else {
-            SelectMenu.init(target).toggle();
-        }
-    });
-
-    dom.addEvent(document, 'keyup.frost.selectmenu', e => {
-        switch (e.key) {
-            case 'Tab':
-                SelectMenu.autoHide(e.target);
-                break;
-            case 'Escape':
-                SelectMenu.autoHide();
-                break;
-        }
-    });
-
-
     Object.assign(SelectMenu.prototype, {
 
         _events() {
@@ -343,7 +309,7 @@
                     }
                 }
 
-                this.setValue(value);
+                this._setValue(value);
 
                 if (this._settings.closeOnSelect) {
                     this.hide();
@@ -354,7 +320,88 @@
                 this._refreshPlaceholder();
 
                 dom.setValue(this._searchInput, '');
-                dom.focus(this._searchInput);
+
+                if (this._multiple) {
+                    dom.focus(this._searchInput);
+                } else {
+                    dom.focus(this._toggle);
+                }
+            });
+
+            dom.addEventDelegate(this._itemsList, 'mouseover.frost.selectmenu', '.selectmenu-action:not(.disabled)', e => {
+                const focusedNode = dom.findOne('.selectmenu-focus', this._itemsList);
+                dom.removeClass(focusedNode, 'selectmenu-focus');
+                dom.addClass(e.currentTarget, 'selectmenu-focus');
+            });
+
+            dom.addEvent(this._searchInput, 'keydown.frost.selectmenu', e => {
+                if (e.key === 'Backspace' && this._multiple && !dom.getValue(this._searchInput)) {
+                    const lastValue = this._value.pop();
+
+                    if (!lastValue) {
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    this._refreshMulti();
+                    const lastItem = this._findValue(lastValue);
+                    dom.setValue(this._searchInput, lastItem.text);
+                    this._updateSearchWidth();
+                    dom.focus(this._searchInput);
+                    dom.triggerEvent(this._searchInput, 'input.frost.selectmenu');
+                    return;
+                }
+
+                if (e.key === 'Escape') {
+                    dom.blur(this._searchInput);
+
+                    if (this._multiple) {
+                        dom.focus(this._searchInput);
+                    } else {
+                        dom.focus(this._toggle);
+                    }
+
+                    return;
+                }
+
+                if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                if (this._multiple && !dom.isConnected(this._menuNode)) {
+                    return this.show();
+                }
+
+                const focusedNode = dom.findOne('.selectmenu-focus', this._itemsList);
+
+                if (e.key === 'Enter') {
+                    return dom.click(focusedNode);
+                }
+
+                let focusNode;
+
+                if (!focusedNode) {
+                    focusNode = dom.findOne('.selectmenu-action:not(.disabled)', this._itemsList);
+                } else {
+                    switch (e.key) {
+                        case 'ArrowDown':
+                            focusNode = dom.nextAll(focusedNode, '.selectmenu-action:not(.disabled)').shift();
+                            break;
+                        case 'ArrowUp':
+                            focusNode = dom.prevAll(focusedNode, '.selectmenu-action:not(.disabled)').pop();
+                            break;
+                    }
+                }
+
+                if (!focusNode) {
+                    return;
+                }
+
+                dom.removeClass(focusedNode, 'selectmenu-focus');
+                dom.addClass(focusNode, 'selectmenu-focus');
             });
 
             dom.addEvent(this._searchInput, 'input.frost.selectmenu', _ => {
@@ -362,7 +409,7 @@
                     this._updateSearchWidth();
                 }
 
-                let term = dom.getValue(this._searchInput);
+                const term = dom.getValue(this._searchInput);
 
                 if (term.length < this._settings.minSearch) {
                     return;
@@ -377,14 +424,14 @@
             });
 
             if (this._settings.getResults) {
-                dom.addEvent(this._menuNode, 'scroll.frost.selectmenu', _ => {
+                dom.addEvent(this._itemsList, 'scroll.frost.selectmenu', _ => {
                     if (this._request || !this._showMore) {
                         return;
                     }
 
-                    const height = dom.height(this._menuNode);
-                    const scrollHeight = dom.height(this._menuNode, DOM.SCROLL_BOX);
-                    const scrollTop = dom.getScrollY(this._menuNode);
+                    const height = dom.height(this._itemsList);
+                    const scrollHeight = dom.height(this._itemsList, DOM.SCROLL_BOX);
+                    const scrollTop = dom.getScrollY(this._itemsList);
 
                     if (scrollTop >= scrollHeight - height - 50) {
                         const term = dom.getValue(this._searchInput);
@@ -414,14 +461,26 @@
             });
 
             dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
+                if (dom.getDataset(this._toggle, 'preFocus')) {
+                    return;
+                }
+
                 this._refreshPlaceholder();
+                dom.setValue(this._searchInput, '');
                 dom.removeClass(this._toggle, 'focus');
+                this.hide();
             });
 
             dom.addEvent(this._toggle, 'mousedown.frost.selectmenu', _ => {
-                dom.addClass(this._toggle, 'focus');
-
+                if (dom.hasClass(this._toggle, 'focus')) {
+                    dom.setDataset(this._toggle, 'preFocus', true);
+                } else {
+                    dom.hide(this._placeholder);
+                    dom.addClass(this._toggle, 'focus');
+                }
+                this.show();
                 dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
+                    dom.removeDataset(this._toggle, 'preFocus');
                     dom.focus(this._searchInput);
                 });
             });
@@ -441,6 +500,21 @@
         _eventsSingle() {
             dom.addEvent(this._node, 'focus.frost.selectmenu', _ => {
                 dom.focus(this._toggle);
+            });
+
+            dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
+                this.hide();
+            });
+
+            dom.addEvent(this._toggle, 'mousedown.frost.selectmenu', _ => {
+                if (dom.isConnected(this._menuNode)) {
+                    this.hide();
+                } else {
+                    this.show();
+                    dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
+                        dom.focus(this._searchInput);
+                    });
+                }
             });
 
             dom.addEvent(this._toggle, 'keydown.frost.selectmenu', _ => {
@@ -473,6 +547,16 @@
             dom.empty(this._node);
             dom.detach(this._placeholder);
 
+            if (this._settings.allowClear) {
+                dom.detach(this._clear);
+            }
+
+            if (this._disabled) {
+                dom.addClass(this._toggle, 'disabled');
+            } else {
+                dom.removeClass(this._toggle, 'disabled');
+            }
+
             const item = this._findValue(this._value);
 
             if (!item) {
@@ -488,24 +572,17 @@
             dom.setHTML(this._toggle, this._settings.sanitize(content));
 
             if (this._settings.allowClear) {
-                const clear = dom.create('button', {
-                    html: '<small class="icon-cancel"></small>',
-                    class: 'close float-end me-5 lh-base',
-                    dataset: {
-                        action: 'clear'
-                    }
-                });
-                dom.append(this._toggle, clear);
+                dom.append(this._toggle, this._clear);
             }
         },
 
-        _refreshMulti(focus = false) {
+        _refreshMulti() {
             if (!this._value) {
                 this._value = [];
             }
 
-            if (this._settings.maxSelect && this._value.length > this._settings.maxSelect) {
-                this._value = this._value.slice(0, this._settings.maxSelect);
+            if (this._settings.maxSelections && this._value.length > this._settings.maxSelections) {
+                this._value = this._value.slice(0, this._settings.maxSelections);
             }
 
             dom.detach(this._searchInput);
@@ -513,6 +590,12 @@
 
             dom.empty(this._node);
             dom.empty(this._toggle);
+
+            if (this._disabled) {
+                dom.addClass(this._toggle, 'disabled');
+            } else {
+                dom.removeClass(this._toggle, 'disabled');
+            }
 
             if (!this._value.length) {
                 this._refreshPlaceholder();
@@ -532,10 +615,6 @@
             }
 
             dom.append(this._toggle, this._searchInput);
-
-            if (focus) {
-                dom.focus(this._searchInput);
-            }
         },
 
         _refreshPlaceholder() {
@@ -586,12 +665,38 @@
             if (this._multiple) {
                 this._renderSelectMulti();
             } else {
+                if (this._settings.allowClear) {
+                    this._renderClear();
+                }
+
                 this._renderSelect();
             }
+
             this._renderPlaceholder();
             this._renderMenu();
+
             dom.addClass(this._node, 'visually-hidden');
             dom.after(this._node, this._toggle);
+        },
+
+        _renderClear() {
+            this._clear = dom.create('button', {
+                html: '<small class="icon-cancel"></small>',
+                class: 'close float-end me-5 lh-base',
+                dataset: {
+                    action: 'clear'
+                }
+            });
+        },
+
+        _renderInfo(text) {
+            const element = dom.create('button', {
+                html: this._settings.sanitize(text),
+                class: 'selectmenu-item text-secondary'
+            });
+            dom.append(this._itemsList, element);
+            this._popper.update();
+            return element;
         },
 
         _renderItem(item) {
@@ -606,7 +711,7 @@
 
             const { option, ...data } = item;
 
-            const element = dom.create('li', {
+            const element = dom.create('div', {
                 html: this._settings.sanitize(
                     this._settings.renderResult(data, active)
                 ),
@@ -667,7 +772,7 @@
                 }
             }
 
-            this._itemsList = dom.create('ul', {
+            this._itemsList = dom.create('div', {
                 class: 'selectmenu-items'
             });
             dom.append(this._menuNode, this._itemsList);
@@ -727,14 +832,7 @@
 
         _renderResults(results) {
             if (!results.length) {
-                const noResults = dom.create('li', {
-                    html: this._settings.sanitize(
-                        this._settings.lang.noResults
-                    ),
-                    class: 'selectmenu-item'
-                });
-                dom.append(this._itemsList, noResults);
-                return;
+                return this._renderInfo(this._settings.lang.noResults);
             }
 
             for (const item of results) {
@@ -742,6 +840,16 @@
                     this._renderGroup(item) :
                     this._renderItem(item);
                 dom.append(this._itemsList, element);
+            }
+
+            let focusNode = dom.findOne('.selectmenu-action.active', this._itemsList);
+
+            if (!focusNode) {
+                focusNode = dom.findOne('.selectmenu-action:not(.disabled)', this._itemsList);
+            }
+
+            if (focusNode) {
+                dom.addClass(focusNode, 'selectmenu-focus');
             }
         },
 
@@ -752,7 +860,6 @@
                     'selectmenu-multi d-flex flex-wrap position-relative text-start'
                 ],
                 dataset: {
-                    toggle: 'selectmenu',
                     target: '#' + dom.getAttribute(this._node, 'id')
                 }
             });
@@ -773,7 +880,6 @@
                     'selectmenu-toggle position-relative text-start'
                 ],
                 dataset: {
-                    toggle: 'selectmenu',
                     target: '#' + dom.getAttribute(this._node, 'id')
                 }
             });
@@ -787,15 +893,41 @@
         data() {
             if (this._multiple) {
                 return this._value.map(value => {
-                    const { option, ...data } = this._findValue(value);
+                    const data = Core.extend({}, this._findValue(value));
+
+                    delete data.option;
 
                     return data;
                 });
             }
 
-            const { option, ...data } = this._findValue(this._value);
+            const data = Core.extend({}, this._findValue(this._value));
+
+            delete data.option;
 
             return data;
+        },
+
+        disable() {
+            dom.setAttribute(this._node, 'disabled', true);
+            this._disabled = true;
+
+            if (this._multiple) {
+                this._refreshMulti();
+            } else {
+                this._refresh();
+            }
+        },
+
+        enable() {
+            dom.removeAttribute(this._node, 'disabled');
+            this._disabled = false;
+
+            if (this._multiple) {
+                this._refreshMulti();
+            } else {
+                this._refresh();
+            }
         },
 
         getValue() {
@@ -803,6 +935,10 @@
         },
 
         setValue(value) {
+            if (this._disabled) {
+                return;
+            }
+
             if (!value) {
                 return this._setValue(value);
             }
@@ -882,7 +1018,7 @@
                 if (data.children) {
                     this._parseDataLookup(data.children, lookup);
                 } else {
-                    lookup[item.value] = item;
+                    lookup[item.value] = Core.extend({}, item);
                 }
             }
             return lookup;
@@ -897,7 +1033,7 @@
         placeholder: '&nbsp;',
         lang: {
             loading: 'Loading..',
-            maxSelect: 'Selection limit reached.',
+            maxSelections: 'Selection limit reached.',
             noResults: 'No results'
         },
         isMatch: (item, term) => item.text.toLowerCase().indexOf(term.toLowerCase()) > -1,
@@ -919,7 +1055,7 @@
             return aLower.localeCompare(bLower);
         }),
         maxSearch: 0,
-        maxSelect: 0,
+        maxSelections: 0,
         minSearch: 0,
         allowClear: false,
         closeOnSelect: true,

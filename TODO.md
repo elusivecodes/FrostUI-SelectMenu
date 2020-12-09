@@ -1,15 +1,14 @@
 # FrostUI-SelectMenu
 
-[ ] Add renderClear method
-[ ] Add renderMax method
-[ ] Add renderLoading method
+[~] Add destroy method
+[~] Add disable method
+[~] Add enable method
+[~] Add update method (Popper)
+[ ] Add setPlaceholder method
+[ ] Add setMaxSelections method
+[ ] Add _refreshSingle method*
+[ ] Code cleanup
 
-[ ] Fix minimum search length handling -- don't load results at all until min length is reached
-[ ] Rename maxSelect to maxSelections
-
-[ ] Add keyboard events
-[ ] disable()
-[ ] enable()
-
-[~] destroy()
+[?] readonly
+[?] Add size handling
 [?] Fix styling of dropdown arrow

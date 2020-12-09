@@ -1,3 +1,7 @@
+.selectmenu-toggle:not(:disabled) {
+    cursor: default;
+}
+
 .selectmenu-toggle::after {
     position: absolute;
     top: 50%;
@@ -15,13 +19,16 @@
 .selectmenu-placeholder {
     color: gray;
     pointer-events: none;
+    user-select: none;
 }
 
 .selectmenu-multi-input {
+    width: 0;
     height: 1.5rem;
+    min-width: 20px;
     background: transparent;
     outline: 0;
-    pointer-events: none;
+    // pointer-events: none;
 }
 
 .selectmenu-multi .btn {
@@ -37,7 +44,7 @@
 .selectmenu-menu {
     position: absolute;
     z-index: 1000;
-    padding: .5rem 0;
+    padding: 0;
     margin: .125rem 0 0;
     font-size: 1rem;
     color: darkslategray;
@@ -46,13 +53,13 @@
     background-color: white;
     border: 1px solid rgba(0, 0, 0, .15);
     border-radius: .2rem;
-    overflow-y: auto;
-    max-height: 250px;
 }
 
 .selectmenu-items {
+    max-height: 250px;
     margin: 0;
     list-style-type: none;
+    overflow-y: auto;
 }
 
 .selectmenu-item {
@@ -77,25 +84,26 @@
         border-bottom-right-radius: inherit;
     }
 
-    &.selectmenu-action {
-        &:hover,
-        &:focus {
-            color: #121212;
-            text-decoration: none;
-            background-color: rgba(0, 0, 0, .1);
-        }
-
-        &.active {
-            color: white;
-            background-color: steelblue;
-        }
-    }
-
-    &:disabled,
     &.disabled {
         opacity: .5;
         pointer-events: none;
     }
+}
+
+.selectmenu-action {
+    cursor: default;
+
+    &.active:not(.selectmenu-focus) {
+        color: #121212;
+        text-decoration: none;
+        background-color: rgba(0, 0, 0, .1);
+    }
+}
+
+.selectmenu-focus,
+.selectmenu-action.active {
+    color: white;
+    background-color: steelblue;
 }
 
 .selectmenu-group {
@@ -105,8 +113,4 @@
     font-size: .875rem;
     color: darkslategray;
     white-space: nowrap;
-}
-
-.selectmenu-clear {
-    
 }

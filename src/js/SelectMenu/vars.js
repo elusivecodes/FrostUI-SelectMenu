@@ -4,7 +4,7 @@ SelectMenu.defaults = {
     placeholder: '&nbsp;',
     lang: {
         loading: 'Loading..',
-        maxSelect: 'Selection limit reached.',
+        maxSelections: 'Selection limit reached.',
         noResults: 'No results'
     },
     isMatch: (item, term) => item.text.toLowerCase().indexOf(term.toLowerCase()) > -1,
@@ -26,7 +26,7 @@ SelectMenu.defaults = {
         return aLower.localeCompare(bLower);
     }),
     maxSearch: 0,
-    maxSelect: 0,
+    maxSelections: 0,
     minSearch: 0,
     allowClear: false,
     closeOnSelect: true,

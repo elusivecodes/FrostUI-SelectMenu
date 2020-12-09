@@ -56,7 +56,7 @@ Object.assign(SelectMenu, {
             if (data.children) {
                 this._parseDataLookup(data.children, lookup);
             } else {
-                lookup[item.value] = item;
+                lookup[item.value] = Core.extend({}, item);
             }
         }
         return lookup;

@@ -52,26 +52,16 @@ class SelectMenu {
                     dom.empty(this._itemsList);
                 }
 
-                if (this._multiple && this._settings.maxSelect && this._value.length >= this._settings.maxSelect) {
-                    const maxSelect = dom.create('li', {
-                        html: this._settings.sanitize(
-                            this._settings.lang.maxSelect
-                        ),
-                        class: 'selectmenu-item text-secondary'
-                    });
-                    dom.append(this._itemsList, maxSelect);
-                    this._popper.update();
+                if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
+                    this.update();
                     return;
                 }
 
-                const loading = dom.create('li', {
-                    html: this._settings.sanitize(
-                        this._settings.lang.loading
-                    ),
-                    class: 'selectmenu-item text-secondary'
-                });
-                dom.append(this._itemsList, loading);
-                this._popper.update();
+                if (this._multiple && this._settings.maxSelections && this._value.length >= this._settings.maxSelections) {
+                    return this._renderInfo(this._settings.lang.maxSelections);
+                }
+
+                const loading = this._renderInfo(this._settings.lang.loading);
 
                 const request = this._getResults({ offset, term });
 
@@ -81,7 +71,7 @@ class SelectMenu {
                     // error
                 }).finally(_ => {
                     dom.remove(loading);
-                    this._popper.update();
+                    this.update();
 
                     if (this._request === request) {
                         this._request = null;
@@ -104,16 +94,13 @@ class SelectMenu {
             this._lookupData = this.constructor._parseDataLookup(data);
 
             this._getData = ({ term = null }) => {
-                if (this._multiple && this._settings.maxSelect && this._value.length >= this._settings.maxSelect) {
-                    const maxSelect = dom.create('li', {
-                        html: this._settings.sanitize(
-                            this._settings.lang.maxSelect
-                        ),
-                        class: 'selectmenu-item text-secondary'
-                    });
-                    dom.append(this._itemsList, maxSelect);
-                    this._popper.update();
+                if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
+                    this.update();
                     return;
+                }
+
+                if (this._multiple && this._settings.maxSelections && this._value.length >= this._settings.maxSelections) {
+                    return this._renderInfo(this._settings.lang.maxSelections);
                 }
 
                 let results = this._data;
@@ -136,7 +123,7 @@ class SelectMenu {
                 }
 
                 this._renderResults(results);
-                this._popper.update();
+                this.update();
             };
         }
 
@@ -206,11 +193,16 @@ class SelectMenu {
             return;
         }
 
+        this._getData({});
+
+        if (this._multiple && !dom.hasChildren(this._itemsList)) {
+            return;
+        }
+
         this._animating = true;
         dom.append(document.body, this._menuNode);
 
-        this._getData({});
-        this._popper.update();
+        this.update();
 
         dom.fadeIn(this._menuNode, {
             duration: this._settings.duration

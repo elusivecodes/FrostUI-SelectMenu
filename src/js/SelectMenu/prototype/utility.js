@@ -3,15 +3,41 @@ Object.assign(SelectMenu.prototype, {
     data() {
         if (this._multiple) {
             return this._value.map(value => {
-                const { option, ...data } = this._findValue(value);
+                const data = Core.extend({}, this._findValue(value));
+
+                delete data.option;
 
                 return data;
             });
         }
 
-        const { option, ...data } = this._findValue(this._value);
+        const data = Core.extend({}, this._findValue(this._value));
+
+        delete data.option;
 
         return data;
+    },
+
+    disable() {
+        dom.setAttribute(this._node, 'disabled', true);
+        this._disabled = true;
+
+        if (this._multiple) {
+            this._refreshMulti();
+        } else {
+            this._refresh();
+        }
+    },
+
+    enable() {
+        dom.removeAttribute(this._node, 'disabled');
+        this._disabled = false;
+
+        if (this._multiple) {
+            this._refreshMulti();
+        } else {
+            this._refresh();
+        }
     },
 
     getValue() {
@@ -19,6 +45,10 @@ Object.assign(SelectMenu.prototype, {
     },
 
     setValue(value) {
+        if (this._disabled) {
+            return;
+        }
+
         if (!value) {
             return this._setValue(value);
         }
@@ -35,6 +65,10 @@ Object.assign(SelectMenu.prototype, {
         this._getResults({ value }).then(_ => {
             this._setValue(value)
         });
+    },
+
+    update() {
+        this._popper.update();
     }
 
 });

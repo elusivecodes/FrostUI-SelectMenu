@@ -12,6 +12,16 @@ Object.assign(SelectMenu.prototype, {
         dom.empty(this._node);
         dom.detach(this._placeholder);
 
+        if (this._settings.allowClear) {
+            dom.detach(this._clear);
+        }
+
+        if (this._disabled) {
+            dom.addClass(this._toggle, 'disabled');
+        } else {
+            dom.removeClass(this._toggle, 'disabled');
+        }
+
         const item = this._findValue(this._value);
 
         if (!item) {
@@ -27,24 +37,17 @@ Object.assign(SelectMenu.prototype, {
         dom.setHTML(this._toggle, this._settings.sanitize(content));
 
         if (this._settings.allowClear) {
-            const clear = dom.create('button', {
-                html: '<small class="icon-cancel"></small>',
-                class: 'close float-end me-5 lh-base',
-                dataset: {
-                    action: 'clear'
-                }
-            });
-            dom.append(this._toggle, clear);
+            dom.append(this._toggle, this._clear);
         }
     },
 
-    _refreshMulti(focus = false) {
+    _refreshMulti() {
         if (!this._value) {
             this._value = [];
         }
 
-        if (this._settings.maxSelect && this._value.length > this._settings.maxSelect) {
-            this._value = this._value.slice(0, this._settings.maxSelect);
+        if (this._settings.maxSelections && this._value.length > this._settings.maxSelections) {
+            this._value = this._value.slice(0, this._settings.maxSelections);
         }
 
         dom.detach(this._searchInput);
@@ -52,6 +55,12 @@ Object.assign(SelectMenu.prototype, {
 
         dom.empty(this._node);
         dom.empty(this._toggle);
+
+        if (this._disabled) {
+            dom.addClass(this._toggle, 'disabled');
+        } else {
+            dom.removeClass(this._toggle, 'disabled');
+        }
 
         if (!this._value.length) {
             this._refreshPlaceholder();
@@ -71,10 +80,6 @@ Object.assign(SelectMenu.prototype, {
         }
 
         dom.append(this._toggle, this._searchInput);
-
-        if (focus) {
-            dom.focus(this._searchInput);
-        }
     },
 
     _refreshPlaceholder() {

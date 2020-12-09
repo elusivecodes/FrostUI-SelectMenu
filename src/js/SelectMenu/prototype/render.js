@@ -4,12 +4,38 @@ Object.assign(SelectMenu.prototype, {
         if (this._multiple) {
             this._renderSelectMulti();
         } else {
+            if (this._settings.allowClear) {
+                this._renderClear();
+            }
+
             this._renderSelect();
         }
+
         this._renderPlaceholder();
         this._renderMenu();
+
         dom.addClass(this._node, 'visually-hidden');
         dom.after(this._node, this._toggle);
+    },
+
+    _renderClear() {
+        this._clear = dom.create('button', {
+            html: '<small class="icon-cancel"></small>',
+            class: 'close float-end me-5 lh-base',
+            dataset: {
+                action: 'clear'
+            }
+        });
+    },
+
+    _renderInfo(text) {
+        const element = dom.create('button', {
+            html: this._settings.sanitize(text),
+            class: 'selectmenu-item text-secondary'
+        });
+        dom.append(this._itemsList, element);
+        this.update();
+        return element;
     },
 
     _renderItem(item) {
@@ -24,7 +50,7 @@ Object.assign(SelectMenu.prototype, {
 
         const { option, ...data } = item;
 
-        const element = dom.create('li', {
+        const element = dom.create('div', {
             html: this._settings.sanitize(
                 this._settings.renderResult(data, active)
             ),
@@ -85,7 +111,7 @@ Object.assign(SelectMenu.prototype, {
             }
         }
 
-        this._itemsList = dom.create('ul', {
+        this._itemsList = dom.create('div', {
             class: 'selectmenu-items'
         });
         dom.append(this._menuNode, this._itemsList);
@@ -145,14 +171,7 @@ Object.assign(SelectMenu.prototype, {
 
     _renderResults(results) {
         if (!results.length) {
-            const noResults = dom.create('li', {
-                html: this._settings.sanitize(
-                    this._settings.lang.noResults
-                ),
-                class: 'selectmenu-item'
-            });
-            dom.append(this._itemsList, noResults);
-            return;
+            return this._renderInfo(this._settings.lang.noResults);
         }
 
         for (const item of results) {
@@ -160,6 +179,16 @@ Object.assign(SelectMenu.prototype, {
                 this._renderGroup(item) :
                 this._renderItem(item);
             dom.append(this._itemsList, element);
+        }
+
+        let focusNode = dom.findOne('.selectmenu-action.active', this._itemsList);
+
+        if (!focusNode) {
+            focusNode = dom.findOne('.selectmenu-action:not(.disabled)', this._itemsList);
+        }
+
+        if (focusNode) {
+            dom.addClass(focusNode, 'selectmenu-focus');
         }
     },
 
@@ -170,7 +199,6 @@ Object.assign(SelectMenu.prototype, {
                 'selectmenu-multi d-flex flex-wrap position-relative text-start'
             ],
             dataset: {
-                toggle: 'selectmenu',
                 target: '#' + dom.getAttribute(this._node, 'id')
             }
         });
@@ -191,7 +219,6 @@ Object.assign(SelectMenu.prototype, {
                 'selectmenu-toggle position-relative text-start'
             ],
             dataset: {
-                toggle: 'selectmenu',
                 target: '#' + dom.getAttribute(this._node, 'id')
             }
         });
