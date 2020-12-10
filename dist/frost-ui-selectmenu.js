@@ -28,8 +28,38 @@
     const UI = window.UI;
     const document = window.document;
 
+    /**
+     * SelectMenu Class
+     * @class
+     */
     class SelectMenu {
 
+        /**
+         * New SelectMenu constructor.
+         * @param {HTMLElement} node The input node.
+         * @param {object} [settings] The options to create the SelectMenu with.
+         * @param {string} [settings.placeholder] The placeholder text.
+         * @param {object} [settings.lang] Language to use.
+         * @param {object|array} [settings.data] The selection data.
+         * @param {function} [settings.getResults] The query callback.
+         * @param {function} [settings.isMatch] The match test callback.
+         * @param {function} [settings.renderResult] The render result callback
+         * @param {function} [settings.renderSelection] The render selection callback.
+         * @param {function} [settings.sanitize] The sanitization callback.
+         * @param {function} [settings.sortResults] The sort results callback.
+         * @param {number} [settings.maxSelections] The maximum number of selected options.
+         * @param {number} [settings.minSearch] The minimum length to start searching.
+         * @param {Boolean} [settings.allowClear] Whether to allow clearing the selected value.
+         * @param {Boolean} [settings.closeOnSelect] Whether to close the menu after selecting an item.
+         * @param {Boolean} [settings.fullWidth] Whether the menu should be the full width of the toggle.
+         * @param {number} [settings.duration=100] The duration of the animation.
+         * @param {string} [settings.placement=bottom] The placement of the SelectMenu relative to the toggle.
+         * @param {string} [settings.position=start] The position of the SelectMenu relative to the toggle.
+         * @param {Boolean} [settings.fixed=false] Whether the SelectMenu position is fixed.
+         * @param {number} [settings.spacing=2] The spacing between the SelectMenu and the toggle.
+         * @param {number} [settings.minContact=false] The minimum amount of contact the SelectMenu must make with the toggle.
+         * @returns {SelectMenu} A new SelectMenu object.
+         */
         constructor(node, settings) {
             this._node = node;
 
@@ -40,74 +70,21 @@
                 settings
             );
 
+            this._placeholderText = this._settings.placeholder;
+            this._maxSelections = this._settings.maxSelections;
             this._multiple = dom.getProperty(this._node, 'multiple');
-            this._disabled = dom.getProperty(this._node, 'disabled')
+            this._disabled = dom.getProperty(this._node, 'disabled');
+
+            this._data = [];
+            this._lookup = {};
 
             this._getData = null;
             this._getResults = null;
 
             let data;
             if (Core.isFunction(this._settings.getResults)) {
-                this._getResults = options => {
-                    if (!options.offset) {
-                        this._data = [];
-                    }
-
-                    const request = this._settings.getResults(options);
-                    this._request = Promise.resolve(request);
-
-                    this._request.then(response => {
-                        const newData = this.constructor._parseData(response.results);
-                        this._data.push(...newData);
-                        this._showMore = response.showMore;
-
-                        Object.assign(
-                            this._lookupData,
-                            this.constructor._parseDataLookup(this._data)
-                        );
-
-                        return response;
-                    });
-
-                    return this._request;
-                };
-
-                this._getData = ({ offset = 0, term = null }) => {
-                    if (this._request && this._request.cancel) {
-                        this._request.cancel();
-                        this._request = null;
-                    }
-
-                    if (!offset) {
-                        dom.empty(this._itemsList);
-                    }
-
-                    if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
-                        this._popper.update();
-                        return;
-                    }
-
-                    if (this._multiple && this._settings.maxSelections && this._value.length >= this._settings.maxSelections) {
-                        return this._renderInfo(this._settings.lang.maxSelections);
-                    }
-
-                    const loading = this._renderInfo(this._settings.lang.loading);
-
-                    const request = this._getResults({ offset, term });
-
-                    request.then(response => {
-                        this._renderResults(response.results);
-                    }).catch(_ => {
-                        // error
-                    }).finally(_ => {
-                        dom.remove(loading);
-                        this._popper.update();
-
-                        if (this._request === request) {
-                            this._request = null;
-                        }
-                    });
-                };
+                this._getResultsCallbackInit();
+                this._getResultsInit();
             } else if (Core.isPlainObject(this._settings.data)) {
                 data = this.constructor._getDataFromObject(this._settings.data);
             } else if (Core.isArray(this._settings.data)) {
@@ -116,50 +93,15 @@
                 data = this.constructor._getDataFromDOM(this._node);
             }
 
-            this._data = [];
-            this._lookupData = {};
-
             if (data) {
                 this._data = this.constructor._parseData(data);
-                this._lookupData = this.constructor._parseDataLookup(data);
-
-                this._getData = ({ term = null }) => {
-                    if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
-                        this._popper.update();
-                        return;
-                    }
-
-                    if (this._multiple && this._settings.maxSelections && this._value.length >= this._settings.maxSelections) {
-                        return this._renderInfo(this._settings.lang.maxSelections);
-                    }
-
-                    let results = this._data;
-
-                    if (term) {
-                        results = this._settings.sortResults(
-                            results.reduce(
-                                (acc, result) => {
-                                    if (result.children) {
-                                        acc.push(...result.children)
-                                    } else {
-                                        acc.push(result);
-                                    }
-                                    return acc;
-                                },
-                                []
-                            ),
-                            term
-                        ).filter(item => this._settings.isMatch(item, term));
-                    }
-
-                    this._renderResults(results);
-                    this._popper.update();
-                };
+                this._lookup = this.constructor._parseDataLookup(data);
+                this._getDataInit();
             }
 
             const value = dom.getValue(this._node);
             this._render();
-            this.setValue(value);
+            this._loadValue(value);
             this._events();
 
             dom.setData(this._node, 'selectmenu', this);
@@ -173,9 +115,10 @@
                 this._popper.destroy();
             }
 
-            // remove menu
-            // remove button
-            // remove events
+            dom.removeEvent(this._node, 'focus.frost.selectmenu');
+            dom.removeClass(this._node, 'visually-hidden');
+            dom.remove(this._menuNode);
+            dom.remove(this._toggle);
             dom.removeData(this._node, 'selectmenu');
         }
 
@@ -184,7 +127,6 @@
          */
         hide() {
             if (
-                this._settings.inline ||
                 this._animating ||
                 !dom.isConnected(this._menuNode) ||
                 !dom.triggerOne(this._node, 'hide.frost.selectmenu')
@@ -193,7 +135,6 @@
             }
 
             this._animating = true;
-
             this._refreshPlaceholder();
             dom.setValue(this._searchInput, '');
 
@@ -214,10 +155,9 @@
          */
         show() {
             if (
-                this._settings.inline ||
+                this._disabled ||
                 this._animating ||
                 dom.isConnected(this._menuNode) ||
-                dom.is(this._node, ':disabled') ||
                 !dom.triggerOne(this._node, 'show.frost.selectmenu')
             ) {
                 return;
@@ -231,8 +171,7 @@
 
             this._animating = true;
             dom.append(document.body, this._menuNode);
-
-            this._popper.update();
+            this.update();
 
             dom.fadeIn(this._menuNode, {
                 duration: this._settings.duration
@@ -251,6 +190,13 @@
             dom.isConnected(this._menuNode) ?
                 this.hide() :
                 this.show();
+        }
+
+        /**
+         * Update the SelectMenu position.
+         */
+        update() {
+            this._popper.update();
         }
 
         /**
@@ -278,54 +224,73 @@
             }
         }
 
-        static init(node, settings, autoInit = false) {
+        /**
+         * Initialize a SelectMenu.
+         * @param {HTMLElement} node The input node.
+         * @param {object} [settings] The options to create the SelectMenu with.
+         * @param {string} [settings.placeholder] The placeholder text.
+         * @param {object} [settings.lang] Language to use.
+         * @param {object|array} [settings.data] The selection data.
+         * @param {function} [settings.getResults] The query callback.
+         * @param {function} [settings.isMatch] The match test callback.
+         * @param {function} [settings.renderResult] The render result callback
+         * @param {function} [settings.renderSelection] The render selection callback.
+         * @param {function} [settings.sanitize] The sanitization callback.
+         * @param {function} [settings.sortResults] The sort results callback.
+         * @param {number} [settings.maxSelections] The maximum number of selected options.
+         * @param {number} [settings.minSearch] The minimum length to start searching.
+         * @param {Boolean} [settings.allowClear] Whether to allow clearing the selected value.
+         * @param {Boolean} [settings.closeOnSelect] Whether to close the menu after selecting an item.
+         * @param {Boolean} [settings.fullWidth] Whether the menu should be the full width of the toggle.
+         * @param {number} [settings.duration=100] The duration of the animation.
+         * @param {string} [settings.placement=bottom] The placement of the SelectMenu relative to the toggle.
+         * @param {string} [settings.position=start] The position of the SelectMenu relative to the toggle.
+         * @param {Boolean} [settings.fixed=false] Whether the SelectMenu position is fixed.
+         * @param {number} [settings.spacing=2] The spacing between the SelectMenu and the toggle.
+         * @param {number} [settings.minContact=false] The minimum amount of contact the SelectMenu must make with the toggle.
+         * @returns {SelectMenu} A new SelectMenu object.
+         */
+        static init(node, settings) {
             return dom.hasData(node, 'selectmenu') ?
                 dom.getData(node, 'selectmenu') :
-                new this(node, settings, autoInit);
+                new this(node, settings);
         }
 
     }
 
 
+    /**
+     * SelectMenu Events
+     */
+
     Object.assign(SelectMenu.prototype, {
 
+        /**
+         * Attach events for the SelectMenu.
+         */
         _events() {
-            dom.addEventDelegate(this._itemsList, 'click.frost.selectmenu', '[data-action="select"]', e => {
-                e.preventDefault();
-
-                let value = dom.getDataset(e.currentTarget, 'value');
-
-                const item = this._findValue(value);
-
-                value = item.value;
-
-                if (this._multiple) {
-                    const index = this._value.indexOf(value);
-                    if (index >= 0) {
-                        this._value.splice(index, 1)
-                        value = this._value;
-                    } else {
-                        value = this._value.concat([value]);
-                    }
+            dom.addEvent(this._node, 'focus.frost.selectmenu', _ => {
+                if (this._disabled) {
+                    return;
                 }
-
-                this._setValue(value);
-
-                if (this._settings.closeOnSelect) {
-                    this.hide();
-                } else {
-                    this._getData({});
-                }
-
-                this._refreshPlaceholder();
-
-                dom.setValue(this._searchInput, '');
 
                 if (this._multiple) {
                     dom.focus(this._searchInput);
                 } else {
                     dom.focus(this._toggle);
                 }
+            });
+
+            dom.addEvent(this._menuNode, 'mousedown.frost.selectmenu', e => {
+                // prevent search input from triggering blur event
+                e.preventDefault();
+            });
+
+            dom.addEventDelegate(this._itemsList, 'mouseup.frost.selectmenu', '[data-action="select"]', e => {
+                e.preventDefault();
+
+                const value = dom.getDataset(e.currentTarget, 'value');
+                this._selectValue(value);
             });
 
             dom.addEventDelegate(this._itemsList, 'mouseover.frost.selectmenu', '.selectmenu-action:not(.disabled)', e => {
@@ -335,25 +300,36 @@
             });
 
             dom.addEvent(this._searchInput, 'keydown.frost.selectmenu', e => {
-                if (e.key === 'Backspace' && this._multiple && !dom.getValue(this._searchInput)) {
-                    const lastValue = this._value.pop();
-
-                    if (!lastValue) {
-                        return;
-                    }
-
-                    e.preventDefault();
-
-                    this._refreshMulti();
-                    const lastItem = this._findValue(lastValue);
-                    dom.setValue(this._searchInput, lastItem.text);
-                    this._updateSearchWidth();
-                    dom.focus(this._searchInput);
-                    dom.triggerEvent(this._searchInput, 'input.frost.selectmenu');
+                if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter', 'Escape'].includes(e.key)) {
                     return;
                 }
 
+                if (e.key === 'Backspace') {
+                    if (this._multiple && this._value.length && !dom.getValue(this._searchInput)) {
+                        e.preventDefault();
+
+                        // remove the last selected item and populate the search input with it's value
+                        const lastValue = this._value.pop();
+                        const lastItem = this._findValue(lastValue);
+
+                        this._refreshMulti();
+                        dom.setValue(this._searchInput, lastItem.text);
+                        dom.focus(this._searchInput);
+                        this._updateSearchWidth();
+
+                        // trigger input
+                        dom.triggerEvent(this._searchInput, 'input.frost.selectmenu');
+                    }
+
+                    return;
+                }
+
+                if (this._multiple && !dom.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
+                    return this.show();
+                }
+
                 if (e.key === 'Escape') {
+                    // close the menu
                     dom.blur(this._searchInput);
 
                     if (this._multiple) {
@@ -365,24 +341,21 @@
                     return;
                 }
 
-                if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
-                    return;
-                }
-
-                e.preventDefault();
-
-                if (this._multiple && !dom.isConnected(this._menuNode)) {
-                    return this.show();
-                }
-
                 const focusedNode = dom.findOne('.selectmenu-focus', this._itemsList);
 
                 if (e.key === 'Enter') {
-                    return dom.click(focusedNode);
+                    // select the focused item
+                    if (focusedNode) {
+                        const value = dom.getDataset(focusedNode, 'value');
+                        this._selectValue(value);
+                    }
+
+                    return;
                 }
 
-                let focusNode;
+                // focus the previous/next item
 
+                let focusNode;
                 if (!focusedNode) {
                     focusNode = dom.findOne('.selectmenu-action:not(.disabled)', this._itemsList);
                 } else {
@@ -396,12 +369,10 @@
                     }
                 }
 
-                if (!focusNode) {
-                    return;
+                if (focusNode) {
+                    dom.removeClass(focusedNode, 'selectmenu-focus');
+                    dom.addClass(focusNode, 'selectmenu-focus');
                 }
-
-                dom.removeClass(focusedNode, 'selectmenu-focus');
-                dom.addClass(focusNode, 'selectmenu-focus');
             });
 
             dom.addEvent(this._searchInput, 'input.frost.selectmenu', _ => {
@@ -411,6 +382,7 @@
 
                 const term = dom.getValue(this._searchInput);
 
+                // check for minimum search length
                 if (term.length < this._settings.minSearch) {
                     return;
                 }
@@ -424,6 +396,7 @@
             });
 
             if (this._settings.getResults) {
+                // infinite scrolling event
                 dom.addEvent(this._itemsList, 'scroll.frost.selectmenu', _ => {
                     if (this._request || !this._showMore) {
                         return;
@@ -449,11 +422,10 @@
             }
         },
 
+        /**
+         * Attach events for a multiple SelectMenu.
+         */
         _eventsMulti() {
-            dom.addEvent(this._node, 'focus.frost.selectmenu', _ => {
-                dom.focus(this._searchInput);
-            });
-
             dom.addEvent(this._searchInput, 'focus.frost.selectmenu', _ => {
                 dom.hide(this._placeholder);
                 dom.detach(this._placeholder);
@@ -461,47 +433,51 @@
             });
 
             dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
-                if (dom.getDataset(this._toggle, 'preFocus')) {
+                if (dom.hasDataset(this._toggle, 'preFocus')) {
+                    // prevent losing focus when toggle element is focused
                     return;
                 }
 
-                this._refreshPlaceholder();
-                dom.setValue(this._searchInput, '');
                 dom.removeClass(this._toggle, 'focus');
                 this.hide();
             });
 
             dom.addEvent(this._toggle, 'mousedown.frost.selectmenu', _ => {
                 if (dom.hasClass(this._toggle, 'focus')) {
+                    // maintain focus when toggle element is already focused
                     dom.setDataset(this._toggle, 'preFocus', true);
                 } else {
                     dom.hide(this._placeholder);
                     dom.addClass(this._toggle, 'focus');
                 }
+
                 this.show();
+
                 dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
-                    dom.removeDataset(this._toggle, 'preFocus');
+                    if (dom.hasDataset(this._toggle, 'preFocus')) {
+                        dom.removeDataset(this._toggle, 'preFocus');
+                    }
+
                     dom.focus(this._searchInput);
                 });
             });
 
-            // remove selection
             dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
                 e.preventDefault();
 
+                // remove selection
                 const element = dom.parent(e.currentTarget);
                 const index = dom.index(element);
                 this._value.splice(index, 1)
-                this.setValue(this._value);
+                this._setValue(this._value);
                 dom.focus(this._searchInput);
             });
         },
 
+        /**
+         * Attach events for a single SelectMenu.
+         */
         _eventsSingle() {
-            dom.addEvent(this._node, 'focus.frost.selectmenu', _ => {
-                dom.focus(this._toggle);
-            });
-
             dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
                 this.hide();
             });
@@ -511,21 +487,27 @@
                     this.hide();
                 } else {
                     this.show();
+
                     dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
+                        // focus search input when mouse is released
                         dom.focus(this._searchInput);
                     });
                 }
             });
 
-            dom.addEvent(this._toggle, 'keydown.frost.selectmenu', _ => {
+            dom.addEvent(this._toggle, 'keydown.frost.selectmenu', e => {
+                if (!/^.$/u.test(e.key)) {
+                    return;
+                }
+
                 this.show();
                 dom.focus(this._searchInput);
             });
 
-            // remove selection
             if (this._settings.allowClear) {
-                dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
-                    this.setValue(null);
+                dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', _ => {
+                    // remove selection
+                    this._setValue(null);
                 });
             }
         }
@@ -533,79 +515,125 @@
     });
 
 
+    /**
+     * SelectMenu Helpers
+     */
+
     Object.assign(SelectMenu.prototype, {
 
+        /**
+         * Retrieve cloned data for a value.
+         * @param {string|number} value The value to retrieve data for.
+         * @returns {object} The cloned data.
+         */
+        _cloneValue(value) {
+            const data = this._findValue(value);
+
+            if (!data) {
+                return data;
+            }
+
+            const clone = Core.extend({}, data);
+
+            delete clone.element;
+
+            return clone;
+        },
+
+        /**
+         * Retrieve data for a value.
+         * @param {string|number} value The value to retrieve data for.
+         * @returns {object} The data.
+         */
         _findValue(value) {
-            if (value in this._lookupData) {
-                return this._lookupData[value];
+            if (value in this._lookup) {
+                return this._lookup[value];
             }
 
             return null;
         },
 
-        _refresh() {
-            dom.empty(this._node);
-            dom.detach(this._placeholder);
-
-            if (this._settings.allowClear) {
-                dom.detach(this._clear);
-            }
-
-            if (this._disabled) {
-                dom.addClass(this._toggle, 'disabled');
+        /**
+         * Set a new value, loading the data if it has not already been loaded.
+         * @param {string|number} value The value to load.
+         */
+        _loadValue(value) {
+            if (
+                !value ||
+                !this._getResults ||
+                (!this._multiple && this._findValue(value)) ||
+                (this._multiple && value.every(val => this._findValue(val)))
+            ) {
+                this._setValue(value);
             } else {
-                dom.removeClass(this._toggle, 'disabled');
-            }
-
-            const item = this._findValue(this._value);
-
-            if (!item) {
-                dom.empty(this._toggle);
-                dom.show(this._placeholder);
-                dom.append(this._toggle, this._placeholder);
-                return;
-            }
-
-            dom.append(this._node, item.element);
-
-            const content = this._settings.renderSelection(item);
-            dom.setHTML(this._toggle, this._settings.sanitize(content));
-
-            if (this._settings.allowClear) {
-                dom.append(this._toggle, this._clear);
+                this._getResults({ value }).then(_ => this._setValue(value));
             }
         },
 
+        /**
+         * Refresh the selected value(s).
+         */
+        _refresh() {
+            if (this._multiple) {
+                this._refreshMulti();
+            } else {
+                this._refreshSingle();
+            }
+        },
+
+        /**
+         * Refresh the toggle disabled class.
+         */
+        _refreshDisabled() {
+            if (this._disabled) {
+                dom.addClass(this._toggle, 'disabled');
+                if (this._multiple) {
+                    dom.setAttribute(this._searchInput, 'tabindex', '-1');
+                } else {
+                    dom.setAttribute(this._toggle, 'tabindex', '-1');
+                }
+            } else {
+                dom.removeClass(this._toggle, 'disabled');
+                if (this._multiple) {
+                    dom.removeAttribute(this._searchInput, 'tabindex');
+                } else {
+                    dom.removeAttribute(this._toggle, 'tabindex');
+                }
+            }
+        },
+
+        /**
+         * Refresh the selected value(s) for a multiple SelectMenu.
+         */
         _refreshMulti() {
             if (!this._value) {
                 this._value = [];
             }
 
-            if (this._settings.maxSelections && this._value.length > this._settings.maxSelections) {
-                this._value = this._value.slice(0, this._settings.maxSelections);
+            // check max selections
+            if (this._maxSelections && this._value.length > this._maxSelections) {
+                this._value = this._value.slice(0, this._maxSelections);
             }
 
+            // check values have been loaded and are not disabled
+            this._value = this._value.filter(value => {
+                const item = this._findValue(value);
+                return item && !item.disabled;
+            });
+
+            // prevent events from being removed
             dom.detach(this._searchInput);
-            dom.detach(this._placeholder);
 
             dom.empty(this._node);
             dom.empty(this._toggle);
 
-            if (this._disabled) {
-                dom.addClass(this._toggle, 'disabled');
-            } else {
-                dom.removeClass(this._toggle, 'disabled');
-            }
+            this._refreshDisabled();
+            this._refreshPlaceholder();
 
-            if (!this._value.length) {
-                this._refreshPlaceholder();
-            } else {
+            // add values
+            if (this._value.length) {
                 for (const value of this._value) {
                     const item = this._findValue(value);
-
-                    if (!item) {
-                        continue;
-                    }
 
                     dom.append(this._node, item.element);
 
@@ -617,29 +645,107 @@
             dom.append(this._toggle, this._searchInput);
         },
 
+        /**
+         * Refresh the placeholder.
+         */
         _refreshPlaceholder() {
-            if (!this._multiple) {
+            if (this._value && this._value.length) {
+                dom.hide(this._placeholder);
+            } else {
+                dom.show(this._placeholder);
+                dom.prepend(this._toggle, this._placeholder);
+            }
+        },
+
+        /**
+         * Refresh the selected value for a single SelectMenu.
+         */
+        _refreshSingle() {
+            // check value has been loaded and is not disabled
+            const item = this._findValue(this._value);
+
+            if (!item || item.disabled) {
+                this._value = null;
+            }
+
+            dom.empty(this._node);
+            dom.empty(this._toggle);
+
+            this._refreshDisabled();
+            this._refreshPlaceholder();
+
+            if (!this._value) {
                 return;
             }
 
-            if (!this._value.length) {
-                dom.show(this._placeholder);
-                dom.prepend(this._toggle, this._placeholder);
-            } else {
-                dom.hide(this._placeholder);
+            // add value
+
+            dom.append(this._node, item.element);
+
+            const content = this._settings.renderSelection(item);
+            dom.setHTML(this._toggle, this._settings.sanitize(content));
+
+            if (this._settings.allowClear) {
+                dom.append(this._toggle, this._clear);
             }
         },
 
-        _setValue(value) {
-            this._value = value;
+        /**
+         * Select a value (from DOM event).
+         * @param {string|number} value The value to select.
+         */
+        _selectValue(value) {
+            // check item has been loaded
+            const item = this._findValue(value);
+
+            if (!item) {
+                return;
+            }
+
+            // get actual value from item
+            value = item.value;
+
+            // toggle selected values for multiple select
+            if (this._multiple) {
+                const index = this._value.indexOf(value);
+                if (index >= 0) {
+                    this._value.splice(index, 1)
+                    value = this._value;
+                } else {
+                    value = this._value.concat([value]);
+                }
+            }
+
+            this._setValue(value);
+
+            if (this._settings.closeOnSelect) {
+                this.hide();
+            } else {
+                this._getData({});
+            }
+
+            this._refreshPlaceholder();
+            dom.setValue(this._searchInput, '');
 
             if (this._multiple) {
-                this._refreshMulti();
+                dom.focus(this._searchInput);
             } else {
-                this._refresh();
+                dom.focus(this._toggle);
             }
         },
 
+        /**
+         * Select the selected value(s).
+         * @param {string|number} value The value to select.
+         */
+        _setValue(value) {
+            this._value = value;
+            this._refresh();
+        },
+
+        /**
+         * Update the search input width.
+         */
         _updateSearchWidth() {
             const span = dom.create('span', {
                 text: dom.getValue(this._searchInput),
@@ -659,26 +765,163 @@
     });
 
 
+    /**
+     * SelectMenu Init
+     */
+
     Object.assign(SelectMenu.prototype, {
 
+        /**
+         * Initialize preloaded get data.
+         */
+        _getDataInit() {
+            this._getData = ({ term = null }) => {
+                // check for minimum search length
+                if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
+                    return this.update();
+                }
+
+                // check for max selections
+                if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
+                    return this._renderInfo(this._settings.lang.maxSelections);
+                }
+
+                let results = this._data;
+
+                if (term) {
+                    // filter results
+                    results = this._settings.sortResults(
+                        results.reduce(
+                            (acc, result) => {
+                                if (result.children) {
+                                    acc.push(...result.children)
+                                } else {
+                                    acc.push(result);
+                                }
+                                return acc;
+                            },
+                            []
+                        ),
+                        term
+                    ).filter(item => this._settings.isMatch(item, term));
+                }
+
+                this._renderResults(results);
+                this.update();
+            };
+        },
+
+        /**
+         * Initialize get data from callback.
+         */
+        _getResultsInit() {
+            this._getData = ({ offset = 0, term = null }) => {
+
+                // cancel last request
+                if (this._request && this._request.cancel) {
+                    this._request.cancel();
+                    this._request = null;
+                }
+
+                if (!offset) {
+                    dom.empty(this._itemsList);
+                }
+
+                // check for minimum search length
+                if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
+                    return this.update();
+                }
+
+                // check for max selections
+                if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
+                    return this._renderInfo(this._settings.lang.maxSelections);
+                }
+
+                const loading = this._renderInfo(this._settings.lang.loading);
+                const request = this._getResults({ offset, term });
+
+                request.then(response => {
+                    this._renderResults(response.results);
+                }).catch(_ => {
+                    // error
+                }).finally(_ => {
+                    dom.remove(loading);
+                    this.update();
+
+                    if (this._request === request) {
+                        this._request = null;
+                    }
+                });
+            };
+        },
+
+        /**
+         * Initialize get data callback.
+         */
+        _getResultsCallbackInit() {
+            this._getResults = options => {
+                // reset data for starting offset
+                if (!options.offset) {
+                    this._data = [];
+                }
+
+                const request = this._settings.getResults(options);
+                this._request = Promise.resolve(request);
+
+                this._request.then(response => {
+                    const newData = this.constructor._parseData(response.results);
+                    this._data.push(...newData);
+                    this._showMore = response.showMore;
+
+                    // update lookup
+                    Object.assign(
+                        this._lookup,
+                        this.constructor._parseDataLookup(this._data)
+                    );
+
+                    return response;
+                });
+
+                return this._request;
+            };
+        }
+
+    });
+
+
+    /**
+     * SelectMenu Render
+     */
+
+    Object.assign(SelectMenu.prototype, {
+
+        /**
+         * Render the toggle element.
+         */
         _render() {
             if (this._multiple) {
-                this._renderSelectMulti();
+                this._renderToggleMulti();
             } else {
                 if (this._settings.allowClear) {
                     this._renderClear();
                 }
 
-                this._renderSelect();
+                this._renderToggleSingle();
             }
 
             this._renderPlaceholder();
             this._renderMenu();
 
+            // hide the input node
             dom.addClass(this._node, 'visually-hidden');
+            dom.setAttribute(this._node, 'tabindex', '-1');
+
             dom.after(this._node, this._toggle);
         },
 
+        /**
+         * Render the clear button.
+         */
         _renderClear() {
             this._clear = dom.create('button', {
                 html: '<small class="icon-cancel"></small>',
@@ -689,16 +932,40 @@
             });
         },
 
+        /**
+         * Render a group item.
+         * @param {object} group The group item to render.
+         * @returns {HTMLElement} The group element.
+         */
+        _renderGroup(group) {
+            return dom.create('div', {
+                html: this._settings.sanitize(
+                    this._settings.renderResult(group)
+                ),
+                class: 'selectmenu-group'
+            });
+        },
+
+        /**
+         * Render an information item.
+         * @param {string} text The text to render.
+         * @returns {HTMLElement} The information element.
+         */
         _renderInfo(text) {
             const element = dom.create('button', {
                 html: this._settings.sanitize(text),
                 class: 'selectmenu-item text-secondary'
             });
             dom.append(this._itemsList, element);
-            this._popper.update();
+            this.update();
             return element;
         },
 
+        /**
+         * Render an item.
+         * @param {object} group The item to render.
+         * @returns {HTMLElement} The item element.
+         */
         _renderItem(item) {
             const active =
                 (
@@ -726,18 +993,16 @@
                 dom.addClass(element, 'active');
             }
 
+            if (item.disabled) {
+                dom.addClass(element, 'disabled');
+            }
+
             return element;
         },
 
-        _renderGroup(group) {
-            return dom.create('div', {
-                html: this._settings.sanitize(
-                    this._settings.renderResult(group)
-                ),
-                class: 'selectmenu-group'
-            });
-        },
-
+        /**
+         * Render the menu.
+         */
         _renderMenu() {
             this._menuNode = dom.create('div', {
                 class: 'selectmenu-menu',
@@ -747,6 +1012,8 @@
             });
 
             if (!this._multiple) {
+                // add search input for single select menus
+
                 const searchItem = dom.create('div', {
                     class: 'p-1'
                 });
@@ -766,10 +1033,6 @@
                     class: 'ripple-line'
                 });
                 dom.append(searchContainer, ripple);
-
-                if (this._settings.maxSearch) {
-                    dom.setAttribute(this._searchInput, 'maxlength', this._settings.maxSearch);
-                }
             }
 
             this._itemsList = dom.create('div', {
@@ -799,6 +1062,11 @@
             this._popper = new UI.Popper(this._menuNode, popperOptions);
         },
 
+        /**
+         * Render a multiple selection item.
+         * @param {object} item The item to render.
+         * @returns {HTMLElement} The selection element.
+         */
         _renderMultiSelection(item) {
             const group = dom.create('div', {
                 class: 'btn-group'
@@ -823,13 +1091,20 @@
             return group;
         },
 
+        /**
+         * Render the placeholder.
+         */
         _renderPlaceholder() {
             this._placeholder = dom.create('span', {
-                html: this._settings.sanitize(this._settings.placeholder),
+                html: this._settings.sanitize(this._placeholderText),
                 class: 'selectmenu-placeholder'
             });
         },
 
+        /**
+         * Render results.
+         * @param {array} results The results to render.
+         */
         _renderResults(results) {
             if (!results.length) {
                 return this._renderInfo(this._settings.lang.noResults);
@@ -853,7 +1128,25 @@
             }
         },
 
-        _renderSelectMulti() {
+        /**
+         * Render the single toggle element.
+         */
+        _renderToggleSingle() {
+            this._toggle = dom.create('button', {
+                class: [
+                    dom.getAttribute(this._node, 'class') || '',
+                    'selectmenu-toggle position-relative text-start'
+                ],
+                dataset: {
+                    target: '#' + dom.getAttribute(this._node, 'id')
+                }
+            });
+        },
+
+        /**
+         * Render the multiple toggle element.
+         */
+        _renderToggleMulti() {
             this._toggle = dom.create('div', {
                 class: [
                     dom.getAttribute(this._node, 'class') || '',
@@ -867,140 +1160,183 @@
             this._searchInput = dom.create('input', {
                 class: 'selectmenu-multi-input'
             });
-
-            if (this._settings.maxSearch) {
-                dom.setAttribute(this._searchInput, 'maxlength', this._settings.maxSearch);
-            }
-        },
-
-        _renderSelect() {
-            this._toggle = dom.create('button', {
-                class: [
-                    dom.getAttribute(this._node, 'class') || '',
-                    'selectmenu-toggle position-relative text-start'
-                ],
-                dataset: {
-                    target: '#' + dom.getAttribute(this._node, 'id')
-                }
-            });
         }
 
     });
 
 
+    /**
+     * SelectMenu Utility
+     */
+
     Object.assign(SelectMenu.prototype, {
 
+        /**
+         * Get data for the selected value(s).
+         * @returns {array|object} The selected item(s).
+         */
         data() {
             if (this._multiple) {
-                return this._value.map(value => {
-                    const data = Core.extend({}, this._findValue(value));
-
-                    delete data.option;
-
-                    return data;
-                });
+                return this._value.map(value => this._cloneValue(value));
             }
 
-            const data = Core.extend({}, this._findValue(this._value));
-
-            delete data.option;
-
-            return data;
+            return this._cloneValue(this._value);
         },
 
+        /**
+         * Disable the SelectMenu.
+         * @returns {SelectMenu} The SelectMenu.
+         */
         disable() {
             dom.setAttribute(this._node, 'disabled', true);
             this._disabled = true;
+            this._refreshDisabled();
 
-            if (this._multiple) {
-                this._refreshMulti();
-            } else {
-                this._refresh();
-            }
+            return this;
         },
 
+        /**
+         * Enable the SelectMenu.
+         * @returns {SelectMenu} The SelectMenu.
+         */
         enable() {
             dom.removeAttribute(this._node, 'disabled');
             this._disabled = false;
+            this._refreshDisabled();
 
-            if (this._multiple) {
-                this._refreshMulti();
-            } else {
-                this._refresh();
-            }
+            return this;
         },
 
+        /**
+         * Get the maximum selections.
+         * @returns {number} The maximum selections.
+         */
+        getMaxSelections() {
+            return this._maxSelections;
+        },
+
+        /**
+         * Get the placeholder text.
+         * @returns {string} The placeholder text.
+         */
+        getPlaceholder() {
+            return this._placeholderText;
+        },
+
+        /**
+         * Get the selected value(s).
+         * @returns {string|number|array} The selected value(s).
+         */
         getValue() {
             return this._value;
         },
 
+        /**
+         * Set the maximum selections.
+         * @param {number} maxSelections The maximum selections.
+         * @returns {SelectMenu} The SelectMenu.
+         */
+        setMaxSelections(maxSelections) {
+            this._maxSelections = maxSelections;
+
+            this.hide();
+            this._refresh();
+
+            return this;
+        },
+
+        /**
+         * Set the placeholder text.
+         * @param {string} placeholder The placeholder text.
+         * @returns {SelectMenu} The SelectMenu.
+         */
+        setPlaceholder(placeholder) {
+            this._placeholderText = placeholder;
+
+            dom.remove(this._placeholder);
+            this._renderPlaceholder();
+            this._refresh();
+
+            return this;
+        },
+
+        /**
+         * Set the selected value(s).
+         * @param {string|number|array} value The selected value(s).
+         * @returns {SelectMenu} The SelectMenu.
+         */
         setValue(value) {
-            if (this._disabled) {
-                return;
+            if (!this._disabled) {
+                this._loadValue(value);
             }
 
-            if (!value) {
-                return this._setValue(value);
-            }
-
-            if (
-                !value ||
-                !this._getResults ||
-                (!this._multiple && this._findValue(value)) ||
-                (this._multiple && value.every(val => this._findValue(val)))
-            ) {
-                return this._setValue(value);
-            }
-
-            this._getResults({ value }).then(_ => {
-                this._setValue(value)
-            });
+            return this;
         }
 
     });
 
 
+    /**
+     * SelectMenu (Static) Helpers
+     */
+
     Object.assign(SelectMenu, {
 
+        /**
+         * Build an option element for an item.
+         * @param {object} item The item to use.
+         * @returns {HTMLElement} The option element.
+         */
         _buildOption(item) {
             return dom.create('option', {
                 text: item.text,
-                value: item.value
+                value: item.value,
+                properties: {
+                    selected: true
+                }
             });
         },
 
+        /**
+         * Build a data array from a DOM element.
+         * @param {HTMLElement} element The element to parse.
+         * @returns {array} The parsed data.
+         */
         _getDataFromDOM(element) {
-            const children = dom.children(element);
-
-            const results = [];
-
-            for (const child of children) {
-                const text = dom.getText(child);
+            return dom.children(element).map(child => {
                 const data = dom.getDataset(child);
 
                 if (dom.is(child, 'option')) {
-                    results.push({
-                        text,
+                    return {
+                        text: dom.getText(child),
                         value: dom.getValue(child),
                         ...data
-                    })
-                } else {
-                    results.push({
-                        text,
-                        children: this._getDataFromDOM(child),
-                        ...data
-                    });
+                    };
                 }
-            }
 
-            return results;
+                return {
+                    text: dom.getAttribute(child, 'label'),
+                    children: this._getDataFromDOM(child),
+                    ...data
+                };
+            });
         },
 
+        /**
+         * Build a data array from an object.
+         * @param {object} data The data to parse.
+         * @returns {array} The parsed data.
+         */
         _getDataFromObject(data) {
             return Object.entries(data)
                 .map(([value, text]) => ({ value, text }));
         },
 
+        /**
+         * Add option elements to data.
+         * @param {array} data The data to parse.
+         * @returns {array} The parsed data.
+         */
         _parseData(data) {
             for (const item of data) {
                 if (item.children) {
@@ -1013,6 +1349,12 @@
             return data;
         },
 
+        /**
+         * Populate lookup with data.
+         * @param {array} data The data to parse.
+         * @param {object} [lookup] The lookup.
+         * @returns {object} The populated lookup.
+         */
         _parseDataLookup(data, lookup = {}) {
             for (const item of data) {
                 if (data.children) {
@@ -1021,6 +1363,7 @@
                     lookup[item.value] = Core.extend({}, item);
                 }
             }
+
             return lookup;
         }
 
@@ -1029,13 +1372,14 @@
 
     // SelectMenu default options
     SelectMenu.defaults = {
-        data: null,
-        placeholder: '&nbsp;',
+        placeholder: '',
         lang: {
             loading: 'Loading..',
             maxSelections: 'Selection limit reached.',
             noResults: 'No results'
         },
+        data: null,
+        getResults: null,
         isMatch: (item, term) => item.text.toLowerCase().indexOf(term.toLowerCase()) > -1,
         renderResult: item => item.text,
         renderSelection: item => item.text,
@@ -1054,7 +1398,6 @@
 
             return aLower.localeCompare(bLower);
         }),
-        maxSearch: 0,
         maxSelections: 0,
         minSearch: 0,
         allowClear: false,

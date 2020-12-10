@@ -1,23 +1,36 @@
+/**
+ * SelectMenu Render
+ */
+
 Object.assign(SelectMenu.prototype, {
 
+    /**
+     * Render the toggle element.
+     */
     _render() {
         if (this._multiple) {
-            this._renderSelectMulti();
+            this._renderToggleMulti();
         } else {
             if (this._settings.allowClear) {
                 this._renderClear();
             }
 
-            this._renderSelect();
+            this._renderToggleSingle();
         }
 
         this._renderPlaceholder();
         this._renderMenu();
 
+        // hide the input node
         dom.addClass(this._node, 'visually-hidden');
+        dom.setAttribute(this._node, 'tabindex', '-1');
+
         dom.after(this._node, this._toggle);
     },
 
+    /**
+     * Render the clear button.
+     */
     _renderClear() {
         this._clear = dom.create('button', {
             html: '<small class="icon-cancel"></small>',
@@ -28,6 +41,25 @@ Object.assign(SelectMenu.prototype, {
         });
     },
 
+    /**
+     * Render a group item.
+     * @param {object} group The group item to render.
+     * @returns {HTMLElement} The group element.
+     */
+    _renderGroup(group) {
+        return dom.create('div', {
+            html: this._settings.sanitize(
+                this._settings.renderResult(group)
+            ),
+            class: 'selectmenu-group'
+        });
+    },
+
+    /**
+     * Render an information item.
+     * @param {string} text The text to render.
+     * @returns {HTMLElement} The information element.
+     */
     _renderInfo(text) {
         const element = dom.create('button', {
             html: this._settings.sanitize(text),
@@ -38,6 +70,11 @@ Object.assign(SelectMenu.prototype, {
         return element;
     },
 
+    /**
+     * Render an item.
+     * @param {object} group The item to render.
+     * @returns {HTMLElement} The item element.
+     */
     _renderItem(item) {
         const active =
             (
@@ -65,18 +102,16 @@ Object.assign(SelectMenu.prototype, {
             dom.addClass(element, 'active');
         }
 
+        if (item.disabled) {
+            dom.addClass(element, 'disabled');
+        }
+
         return element;
     },
 
-    _renderGroup(group) {
-        return dom.create('div', {
-            html: this._settings.sanitize(
-                this._settings.renderResult(group)
-            ),
-            class: 'selectmenu-group'
-        });
-    },
-
+    /**
+     * Render the menu.
+     */
     _renderMenu() {
         this._menuNode = dom.create('div', {
             class: 'selectmenu-menu',
@@ -86,6 +121,8 @@ Object.assign(SelectMenu.prototype, {
         });
 
         if (!this._multiple) {
+            // add search input for single select menus
+
             const searchItem = dom.create('div', {
                 class: 'p-1'
             });
@@ -105,10 +142,6 @@ Object.assign(SelectMenu.prototype, {
                 class: 'ripple-line'
             });
             dom.append(searchContainer, ripple);
-
-            if (this._settings.maxSearch) {
-                dom.setAttribute(this._searchInput, 'maxlength', this._settings.maxSearch);
-            }
         }
 
         this._itemsList = dom.create('div', {
@@ -138,6 +171,11 @@ Object.assign(SelectMenu.prototype, {
         this._popper = new UI.Popper(this._menuNode, popperOptions);
     },
 
+    /**
+     * Render a multiple selection item.
+     * @param {object} item The item to render.
+     * @returns {HTMLElement} The selection element.
+     */
     _renderMultiSelection(item) {
         const group = dom.create('div', {
             class: 'btn-group'
@@ -162,13 +200,20 @@ Object.assign(SelectMenu.prototype, {
         return group;
     },
 
+    /**
+     * Render the placeholder.
+     */
     _renderPlaceholder() {
         this._placeholder = dom.create('span', {
-            html: this._settings.sanitize(this._settings.placeholder),
+            html: this._settings.sanitize(this._placeholderText),
             class: 'selectmenu-placeholder'
         });
     },
 
+    /**
+     * Render results.
+     * @param {array} results The results to render.
+     */
     _renderResults(results) {
         if (!results.length) {
             return this._renderInfo(this._settings.lang.noResults);
@@ -192,7 +237,25 @@ Object.assign(SelectMenu.prototype, {
         }
     },
 
-    _renderSelectMulti() {
+    /**
+     * Render the single toggle element.
+     */
+    _renderToggleSingle() {
+        this._toggle = dom.create('button', {
+            class: [
+                dom.getAttribute(this._node, 'class') || '',
+                'selectmenu-toggle position-relative text-start'
+            ],
+            dataset: {
+                target: '#' + dom.getAttribute(this._node, 'id')
+            }
+        });
+    },
+
+    /**
+     * Render the multiple toggle element.
+     */
+    _renderToggleMulti() {
         this._toggle = dom.create('div', {
             class: [
                 dom.getAttribute(this._node, 'class') || '',
@@ -205,22 +268,6 @@ Object.assign(SelectMenu.prototype, {
 
         this._searchInput = dom.create('input', {
             class: 'selectmenu-multi-input'
-        });
-
-        if (this._settings.maxSearch) {
-            dom.setAttribute(this._searchInput, 'maxlength', this._settings.maxSearch);
-        }
-    },
-
-    _renderSelect() {
-        this._toggle = dom.create('button', {
-            class: [
-                dom.getAttribute(this._node, 'class') || '',
-                'selectmenu-toggle position-relative text-start'
-            ],
-            dataset: {
-                target: '#' + dom.getAttribute(this._node, 'id')
-            }
         });
     }
 

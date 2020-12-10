@@ -1,5 +1,35 @@
+/**
+ * SelectMenu Class
+ * @class
+ */
 class SelectMenu {
 
+    /**
+     * New SelectMenu constructor.
+     * @param {HTMLElement} node The input node.
+     * @param {object} [settings] The options to create the SelectMenu with.
+     * @param {string} [settings.placeholder] The placeholder text.
+     * @param {object} [settings.lang] Language to use.
+     * @param {object|array} [settings.data] The selection data.
+     * @param {function} [settings.getResults] The query callback.
+     * @param {function} [settings.isMatch] The match test callback.
+     * @param {function} [settings.renderResult] The render result callback
+     * @param {function} [settings.renderSelection] The render selection callback.
+     * @param {function} [settings.sanitize] The sanitization callback.
+     * @param {function} [settings.sortResults] The sort results callback.
+     * @param {number} [settings.maxSelections] The maximum number of selected options.
+     * @param {number} [settings.minSearch] The minimum length to start searching.
+     * @param {Boolean} [settings.allowClear] Whether to allow clearing the selected value.
+     * @param {Boolean} [settings.closeOnSelect] Whether to close the menu after selecting an item.
+     * @param {Boolean} [settings.fullWidth] Whether the menu should be the full width of the toggle.
+     * @param {number} [settings.duration=100] The duration of the animation.
+     * @param {string} [settings.placement=bottom] The placement of the SelectMenu relative to the toggle.
+     * @param {string} [settings.position=start] The position of the SelectMenu relative to the toggle.
+     * @param {Boolean} [settings.fixed=false] Whether the SelectMenu position is fixed.
+     * @param {number} [settings.spacing=2] The spacing between the SelectMenu and the toggle.
+     * @param {number} [settings.minContact=false] The minimum amount of contact the SelectMenu must make with the toggle.
+     * @returns {SelectMenu} A new SelectMenu object.
+     */
     constructor(node, settings) {
         this._node = node;
 
@@ -10,74 +40,21 @@ class SelectMenu {
             settings
         );
 
+        this._placeholderText = this._settings.placeholder;
+        this._maxSelections = this._settings.maxSelections;
         this._multiple = dom.getProperty(this._node, 'multiple');
-        this._disabled = dom.getProperty(this._node, 'disabled')
+        this._disabled = dom.getProperty(this._node, 'disabled');
+
+        this._data = [];
+        this._lookup = {};
 
         this._getData = null;
         this._getResults = null;
 
         let data;
         if (Core.isFunction(this._settings.getResults)) {
-            this._getResults = options => {
-                if (!options.offset) {
-                    this._data = [];
-                }
-
-                const request = this._settings.getResults(options);
-                this._request = Promise.resolve(request);
-
-                this._request.then(response => {
-                    const newData = this.constructor._parseData(response.results);
-                    this._data.push(...newData);
-                    this._showMore = response.showMore;
-
-                    Object.assign(
-                        this._lookupData,
-                        this.constructor._parseDataLookup(this._data)
-                    );
-
-                    return response;
-                });
-
-                return this._request;
-            };
-
-            this._getData = ({ offset = 0, term = null }) => {
-                if (this._request && this._request.cancel) {
-                    this._request.cancel();
-                    this._request = null;
-                }
-
-                if (!offset) {
-                    dom.empty(this._itemsList);
-                }
-
-                if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
-                    this.update();
-                    return;
-                }
-
-                if (this._multiple && this._settings.maxSelections && this._value.length >= this._settings.maxSelections) {
-                    return this._renderInfo(this._settings.lang.maxSelections);
-                }
-
-                const loading = this._renderInfo(this._settings.lang.loading);
-
-                const request = this._getResults({ offset, term });
-
-                request.then(response => {
-                    this._renderResults(response.results);
-                }).catch(_ => {
-                    // error
-                }).finally(_ => {
-                    dom.remove(loading);
-                    this.update();
-
-                    if (this._request === request) {
-                        this._request = null;
-                    }
-                });
-            };
+            this._getResultsCallbackInit();
+            this._getResultsInit();
         } else if (Core.isPlainObject(this._settings.data)) {
             data = this.constructor._getDataFromObject(this._settings.data);
         } else if (Core.isArray(this._settings.data)) {
@@ -86,50 +63,15 @@ class SelectMenu {
             data = this.constructor._getDataFromDOM(this._node);
         }
 
-        this._data = [];
-        this._lookupData = {};
-
         if (data) {
             this._data = this.constructor._parseData(data);
-            this._lookupData = this.constructor._parseDataLookup(data);
-
-            this._getData = ({ term = null }) => {
-                if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
-                    this.update();
-                    return;
-                }
-
-                if (this._multiple && this._settings.maxSelections && this._value.length >= this._settings.maxSelections) {
-                    return this._renderInfo(this._settings.lang.maxSelections);
-                }
-
-                let results = this._data;
-
-                if (term) {
-                    results = this._settings.sortResults(
-                        results.reduce(
-                            (acc, result) => {
-                                if (result.children) {
-                                    acc.push(...result.children)
-                                } else {
-                                    acc.push(result);
-                                }
-                                return acc;
-                            },
-                            []
-                        ),
-                        term
-                    ).filter(item => this._settings.isMatch(item, term));
-                }
-
-                this._renderResults(results);
-                this.update();
-            };
+            this._lookup = this.constructor._parseDataLookup(data);
+            this._getDataInit();
         }
 
         const value = dom.getValue(this._node);
         this._render();
-        this.setValue(value);
+        this._loadValue(value);
         this._events();
 
         dom.setData(this._node, 'selectmenu', this);
@@ -143,9 +85,10 @@ class SelectMenu {
             this._popper.destroy();
         }
 
-        // remove menu
-        // remove button
-        // remove events
+        dom.removeEvent(this._node, 'focus.frost.selectmenu');
+        dom.removeClass(this._node, 'visually-hidden');
+        dom.remove(this._menuNode);
+        dom.remove(this._toggle);
         dom.removeData(this._node, 'selectmenu');
     }
 
@@ -154,7 +97,6 @@ class SelectMenu {
      */
     hide() {
         if (
-            this._settings.inline ||
             this._animating ||
             !dom.isConnected(this._menuNode) ||
             !dom.triggerOne(this._node, 'hide.frost.selectmenu')
@@ -163,7 +105,6 @@ class SelectMenu {
         }
 
         this._animating = true;
-
         this._refreshPlaceholder();
         dom.setValue(this._searchInput, '');
 
@@ -184,10 +125,9 @@ class SelectMenu {
      */
     show() {
         if (
-            this._settings.inline ||
+            this._disabled ||
             this._animating ||
             dom.isConnected(this._menuNode) ||
-            dom.is(this._node, ':disabled') ||
             !dom.triggerOne(this._node, 'show.frost.selectmenu')
         ) {
             return;
@@ -201,7 +141,6 @@ class SelectMenu {
 
         this._animating = true;
         dom.append(document.body, this._menuNode);
-
         this.update();
 
         dom.fadeIn(this._menuNode, {
@@ -221,6 +160,13 @@ class SelectMenu {
         dom.isConnected(this._menuNode) ?
             this.hide() :
             this.show();
+    }
+
+    /**
+     * Update the SelectMenu position.
+     */
+    update() {
+        this._popper.update();
     }
 
     /**
@@ -248,10 +194,36 @@ class SelectMenu {
         }
     }
 
-    static init(node, settings, autoInit = false) {
+    /**
+     * Initialize a SelectMenu.
+     * @param {HTMLElement} node The input node.
+     * @param {object} [settings] The options to create the SelectMenu with.
+     * @param {string} [settings.placeholder] The placeholder text.
+     * @param {object} [settings.lang] Language to use.
+     * @param {object|array} [settings.data] The selection data.
+     * @param {function} [settings.getResults] The query callback.
+     * @param {function} [settings.isMatch] The match test callback.
+     * @param {function} [settings.renderResult] The render result callback
+     * @param {function} [settings.renderSelection] The render selection callback.
+     * @param {function} [settings.sanitize] The sanitization callback.
+     * @param {function} [settings.sortResults] The sort results callback.
+     * @param {number} [settings.maxSelections] The maximum number of selected options.
+     * @param {number} [settings.minSearch] The minimum length to start searching.
+     * @param {Boolean} [settings.allowClear] Whether to allow clearing the selected value.
+     * @param {Boolean} [settings.closeOnSelect] Whether to close the menu after selecting an item.
+     * @param {Boolean} [settings.fullWidth] Whether the menu should be the full width of the toggle.
+     * @param {number} [settings.duration=100] The duration of the animation.
+     * @param {string} [settings.placement=bottom] The placement of the SelectMenu relative to the toggle.
+     * @param {string} [settings.position=start] The position of the SelectMenu relative to the toggle.
+     * @param {Boolean} [settings.fixed=false] Whether the SelectMenu position is fixed.
+     * @param {number} [settings.spacing=2] The spacing between the SelectMenu and the toggle.
+     * @param {number} [settings.minContact=false] The minimum amount of contact the SelectMenu must make with the toggle.
+     * @returns {SelectMenu} A new SelectMenu object.
+     */
+    static init(node, settings) {
         return dom.hasData(node, 'selectmenu') ?
             dom.getData(node, 'selectmenu') :
-            new this(node, settings, autoInit);
+            new this(node, settings);
     }
 
 }

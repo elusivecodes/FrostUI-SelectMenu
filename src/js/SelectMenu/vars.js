@@ -1,12 +1,13 @@
 // SelectMenu default options
 SelectMenu.defaults = {
-    data: null,
-    placeholder: '&nbsp;',
+    placeholder: '',
     lang: {
         loading: 'Loading..',
         maxSelections: 'Selection limit reached.',
         noResults: 'No results'
     },
+    data: null,
+    getResults: null,
     isMatch: (item, term) => item.text.toLowerCase().indexOf(term.toLowerCase()) > -1,
     renderResult: item => item.text,
     renderSelection: item => item.text,
@@ -25,7 +26,6 @@ SelectMenu.defaults = {
 
         return aLower.localeCompare(bLower);
     }),
-    maxSearch: 0,
     maxSelections: 0,
     minSearch: 0,
     allowClear: false,

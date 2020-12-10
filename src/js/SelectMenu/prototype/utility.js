@@ -1,74 +1,109 @@
+/**
+ * SelectMenu Utility
+ */
+
 Object.assign(SelectMenu.prototype, {
 
+    /**
+     * Get data for the selected value(s).
+     * @returns {array|object} The selected item(s).
+     */
     data() {
         if (this._multiple) {
-            return this._value.map(value => {
-                const data = Core.extend({}, this._findValue(value));
-
-                delete data.option;
-
-                return data;
-            });
+            return this._value.map(value => this._cloneValue(value));
         }
 
-        const data = Core.extend({}, this._findValue(this._value));
-
-        delete data.option;
-
-        return data;
+        return this._cloneValue(this._value);
     },
 
+    /**
+     * Disable the SelectMenu.
+     * @returns {SelectMenu} The SelectMenu.
+     */
     disable() {
         dom.setAttribute(this._node, 'disabled', true);
         this._disabled = true;
+        this._refreshDisabled();
 
-        if (this._multiple) {
-            this._refreshMulti();
-        } else {
-            this._refresh();
-        }
+        return this;
     },
 
+    /**
+     * Enable the SelectMenu.
+     * @returns {SelectMenu} The SelectMenu.
+     */
     enable() {
         dom.removeAttribute(this._node, 'disabled');
         this._disabled = false;
+        this._refreshDisabled();
 
-        if (this._multiple) {
-            this._refreshMulti();
-        } else {
-            this._refresh();
-        }
+        return this;
     },
 
+    /**
+     * Get the maximum selections.
+     * @returns {number} The maximum selections.
+     */
+    getMaxSelections() {
+        return this._maxSelections;
+    },
+
+    /**
+     * Get the placeholder text.
+     * @returns {string} The placeholder text.
+     */
+    getPlaceholder() {
+        return this._placeholderText;
+    },
+
+    /**
+     * Get the selected value(s).
+     * @returns {string|number|array} The selected value(s).
+     */
     getValue() {
         return this._value;
     },
 
-    setValue(value) {
-        if (this._disabled) {
-            return;
-        }
+    /**
+     * Set the maximum selections.
+     * @param {number} maxSelections The maximum selections.
+     * @returns {SelectMenu} The SelectMenu.
+     */
+    setMaxSelections(maxSelections) {
+        this._maxSelections = maxSelections;
 
-        if (!value) {
-            return this._setValue(value);
-        }
+        this.hide();
+        this._refresh();
 
-        if (
-            !value ||
-            !this._getResults ||
-            (!this._multiple && this._findValue(value)) ||
-            (this._multiple && value.every(val => this._findValue(val)))
-        ) {
-            return this._setValue(value);
-        }
-
-        this._getResults({ value }).then(_ => {
-            this._setValue(value)
-        });
+        return this;
     },
 
-    update() {
-        this._popper.update();
+    /**
+     * Set the placeholder text.
+     * @param {string} placeholder The placeholder text.
+     * @returns {SelectMenu} The SelectMenu.
+     */
+    setPlaceholder(placeholder) {
+        this._placeholderText = placeholder;
+
+        dom.remove(this._placeholder);
+        this._renderPlaceholder();
+        this._refresh();
+
+        return this;
+    },
+
+    /**
+     * Set the selected value(s).
+     * @param {string|number|array} value The selected value(s).
+     * @returns {SelectMenu} The SelectMenu.
+     */
+    setValue(value) {
+        if (!this._disabled) {
+            this._loadValue(value);
+        }
+
+        return this;
     }
 
 });

@@ -133,13 +133,65 @@
             </div>
         </div>
 
-        <!-- set value -->
-        <!-- disabled -->
-        <!-- disabled options -->
+        <h4>Disabled</h4>
+        <div class="mb-4">
+            <label for="selectDisabled">Default</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectDisabled" disabled data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectDisabledMulti">Multiple</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectDisabledMulti" multiple disabled
+                    data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+
+        <h4>Disabled Options</h4>
+        <div class="mb-4">
+            <label for="selectDisabledOptions">Default</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectDisabledOptions" data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectDisabledOptionsMulti">Default</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectDisabledOptionsMulti" multiple
+                    data-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+
         <!-- custom matching -->
         <!-- custom sorting -->
     </div>
     <script>
+        const selectDefault = dom.findOne('#selectDefault');
+        const selectMulti = dom.findOne('#selectMulti');
+        const selectPlaceholder = dom.findOne('#selectPlaceholder');
+        const selectPlaceholderMulti = dom.findOne('#selectPlaceholderMulti');
+        const selectArray = dom.findOne('#selectArray');
+        const selectQuery = dom.findOne('#selectQuery');
+        const selectInfinite = dom.findOne('#selectInfinite');
+        const selectRender = dom.findOne('#selectRender');
+        const selectRenderMulti = dom.findOne('#selectRenderMulti');
+        const selectMinLength = dom.findOne('#selectMinLength');
+        const selectMinLengthMulti = dom.findOne('#selectMinLengthMulti');
+        const selectMaxSelections = dom.findOne('#selectMaxSelections');
+        const selectDisabled = dom.findOne('#selectDisabled');
+        const selectDisabledMulti = dom.findOne('#selectDisabledMulti');
+        const selectDisabledOptions = dom.findOne('#selectDisabledOptions');
+        const selectDisabledOptionsMulti = dom.findOne('#selectDisabledOptionsMulti');
+
         const sampleData = {
             1: 'Option 1',
             2: 'Option 2',
@@ -170,18 +222,29 @@
             }
         ];
 
-        const selectDefault = dom.findOne('#selectDefault');
-        const selectMulti = dom.findOne('#selectMulti');
-        const selectPlaceholder = dom.findOne('#selectPlaceholder');
-        const selectPlaceholderMulti = dom.findOne('#selectPlaceholderMulti');
-        const selectArray = dom.findOne('#selectArray');
-        const selectQuery = dom.findOne('#selectQuery');
-        const selectInfinite = dom.findOne('#selectInfinite');
-        const selectRender = dom.findOne('#selectRender');
-        const selectRenderMulti = dom.findOne('#selectRenderMulti');
-        const selectMinLength = dom.findOne('#selectMinLength');
-        const selectMinLengthMulti = dom.findOne('#selectMinLengthMulti');
-        const selectMaxSelections = dom.findOne('#selectMaxSelections');
+        const sampleDataDisabled = [
+            {
+                value: 1,
+                text: 'Option 1',
+                extra: 'Extra 1'
+            },
+            {
+                value: 2,
+                text: 'Option 2',
+                extra: 'Extra 2',
+                disabled: true
+            },
+            {
+                value: 3,
+                text: 'Option 3',
+                extra: 'Extra 3'
+            },
+            {
+                value: 4,
+                text: 'Option 4',
+                extra: 'Extra 4'
+            }
+        ];
 
         UI.SelectMenu.init(selectDefault);
 
@@ -263,6 +326,22 @@
 
         UI.SelectMenu.init(selectMaxSelections, {
             data: sampleData
+        });
+
+        UI.SelectMenu.init(selectDisabled, {
+            data: sampleData
+        });
+
+        UI.SelectMenu.init(selectDisabledMulti, {
+            data: sampleData
+        });
+
+        UI.SelectMenu.init(selectDisabledOptions, {
+            data: sampleDataDisabled
+        });
+
+        UI.SelectMenu.init(selectDisabledOptionsMulti, {
+            data: sampleDataDisabled
         });
 
     </script>
