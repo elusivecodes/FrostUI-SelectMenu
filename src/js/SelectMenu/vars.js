@@ -6,6 +6,7 @@ SelectMenu.defaults = {
         maxSelections: 'Selection limit reached.',
         noResults: 'No results'
     },
+    clearIcon: 'icon-cancel',
     data: null,
     getResults: null,
     isMatch: (item, term) => {
@@ -55,6 +56,33 @@ SelectMenu.defaults = {
     fixed: false,
     spacing: 3,
     minContact: false
+};
+
+// Default classes
+SelectMenu.classes = {
+    action: 'selectmenu-action',
+    active: 'selectmenu-active',
+    clear: 'close float-end me-5 lh-base',
+    disabled: 'disabled',
+    disabledItem: 'selectmenu-disabled',
+    hide: 'visually-hidden',
+    info: 'selectmenu-item text-secondary',
+    item: 'selectmenu-item',
+    items: 'selectmenu-items',
+    focus: 'selectmenu-focus', //
+    group: 'selectmenu-group',
+    menu: 'selectmenu-menu',
+    multiClear: 'btn btn-sm btn-outline-secondary',
+    multiGroup: 'btn-group',
+    multiItem: 'btn btn-sm btn-secondary',
+    multiSearchInput: 'selectmenu-multi-input',
+    multiToggle: 'selectmenu-multi d-flex flex-wrap position-relative text-start',
+    placeholder: 'selectmenu-placeholder',
+    readonly: 'readonly',
+    rippleLine: 'ripple-line',
+    searchContainer: 'form-input p-1',
+    searchInput: 'input-filled',
+    toggle: 'selectmenu-toggle position-relative text-start'
 };
 
 UI.initComponent('selectmenu', SelectMenu);

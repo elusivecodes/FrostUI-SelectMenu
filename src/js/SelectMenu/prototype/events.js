@@ -32,10 +32,12 @@ Object.assign(SelectMenu.prototype, {
             this._selectValue(value);
         });
 
-        dom.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '.selectmenu-action:not(.disabled)', DOM.debounce(e => {
-            const focusedNode = dom.find('.selectmenu-focus', this._itemsList);
-            dom.removeClass(focusedNode, 'selectmenu-focus');
-            dom.addClass(e.currentTarget, 'selectmenu-focus');
+        dom.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '[data-ui-action="select"]', DOM.debounce(e => {
+            const focusedNode = dom.find('[data-ui-focus]', this._itemsList);
+            dom.removeClass(focusedNode, this.constructor.classes.focus);
+            dom.removeDataset(focusedNode, 'uiFocus');
+            dom.addClass(e.currentTarget, this.constructor.classes.focus);
+            dom.setDataset(e.currentTarget, 'uiFocus', true);
         }));
 
         dom.addEvent(this._searchInput, 'keydown.ui.selectmenu', e => {
@@ -80,7 +82,7 @@ Object.assign(SelectMenu.prototype, {
                 return;
             }
 
-            const focusedNode = dom.findOne('.selectmenu-focus', this._itemsList);
+            const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
 
             if (e.key === 'Enter') {
                 // select the focused item
@@ -96,21 +98,23 @@ Object.assign(SelectMenu.prototype, {
 
             let focusNode;
             if (!focusedNode) {
-                focusNode = dom.findOne('.selectmenu-action:not(.disabled)', this._itemsList);
+                focusNode = dom.findOne('[data-ui-action="select"]', this._itemsList);
             } else {
                 switch (e.key) {
                     case 'ArrowDown':
-                        focusNode = dom.nextAll(focusedNode, '.selectmenu-action:not(.disabled)').shift();
+                        focusNode = dom.nextAll(focusedNode, '[data-ui-action="select"]').shift();
                         break;
                     case 'ArrowUp':
-                        focusNode = dom.prevAll(focusedNode, '.selectmenu-action:not(.disabled)').pop();
+                        focusNode = dom.prevAll(focusedNode, '[data-ui-action="select"]').pop();
                         break;
                 }
             }
 
             if (focusNode) {
-                dom.removeClass(focusedNode, 'selectmenu-focus');
-                dom.addClass(focusNode, 'selectmenu-focus');
+                dom.removeClass(focusedNode, this.constructor.classes.focus);
+                dom.removeDataset(focusedNode, 'uiFocus');
+                dom.addClass(focusNode, this.constructor.classes.focus);
+                dom.setDataset(focusNode, 'uiFocus', true);
             }
         });
 

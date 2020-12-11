@@ -58,8 +58,8 @@ class SelectMenu extends UI.BaseComponent {
         }
 
         dom.removeAttribute(this._node, 'tabindex');
-        dom.removeEvent(this._node, 'focus.frost.selectmenu');
-        dom.removeClass(this._node, 'visually-hidden');
+        dom.removeEvent(this._node, 'focus.ui.selectmenu');
+        dom.removeClass(this._node, this.constructor.classes.hide);
         dom.remove(this._menuNode);
         dom.remove(this._toggle);
 
@@ -73,7 +73,7 @@ class SelectMenu extends UI.BaseComponent {
         if (
             this._animating ||
             !dom.isConnected(this._menuNode) ||
-            !dom.triggerOne(this._node, 'hide.frost.selectmenu')
+            !dom.triggerOne(this._node, 'hide.ui.selectmenu')
         ) {
             return;
         }
@@ -88,7 +88,7 @@ class SelectMenu extends UI.BaseComponent {
             dom.empty(this._itemsList);
             dom.detach(this._menuNode);
             dom.setAttribute(this._toggle, 'aria-expanded', false);
-            dom.triggerEvent(this._node, 'hidden.frost.selectmenu');
+            dom.triggerEvent(this._node, 'hidden.ui.selectmenu');
         }).catch(_ => { }).finally(_ => {
             this._animating = false;
         });
@@ -103,7 +103,7 @@ class SelectMenu extends UI.BaseComponent {
             this._readonly ||
             this._animating ||
             dom.isConnected(this._menuNode) ||
-            !dom.triggerOne(this._node, 'show.frost.selectmenu')
+            !dom.triggerOne(this._node, 'show.ui.selectmenu')
         ) {
             return;
         }
@@ -122,7 +122,7 @@ class SelectMenu extends UI.BaseComponent {
             duration: this._settings.duration
         }).then(_ => {
             dom.setAttribute(this._toggle, 'aria-expanded', true);
-            dom.triggerEvent(this._node, 'shown.frost.selectmenu');
+            dom.triggerEvent(this._node, 'shown.ui.selectmenu');
         }).catch(_ => { }).finally(_ => {
             this._animating = false;
         });

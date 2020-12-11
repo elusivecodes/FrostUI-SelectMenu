@@ -73,15 +73,15 @@ Object.assign(SelectMenu.prototype, {
             this._toggle;
 
         if (this._disabled) {
-            dom.addClass(this._toggle, 'disabled');
+            dom.addClass(this._toggle, this.constructor.classes.disabled);
             dom.setAttribute(element, 'tabindex', '-1');
         } else {
-            dom.removeClass(this._toggle, 'disabled');
+            dom.removeClass(this._toggle, this.constructor.classes.disabled);
             dom.removeAttribute(element, 'tabindex');
         }
 
         if (this._readonly) {
-            dom.addClass(this._toggle, 'readonly');
+            dom.addClass(this._toggle, this.constructor.classes.readonly);
         }
     },
 
@@ -235,8 +235,8 @@ Object.assign(SelectMenu.prototype, {
     _updateSearchWidth() {
         const span = dom.create('span', {
             text: dom.getValue(this._searchInput),
-            class: 'd-inline-block',
             style: {
+                display: 'inline-block',
                 fontSize: dom.css(this._searchInput, 'fontSize'),
                 whiteSpace: 'pre-wrap'
             }

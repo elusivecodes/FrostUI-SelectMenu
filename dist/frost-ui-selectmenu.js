@@ -88,8 +88,8 @@
             }
 
             dom.removeAttribute(this._node, 'tabindex');
-            dom.removeEvent(this._node, 'focus.frost.selectmenu');
-            dom.removeClass(this._node, 'visually-hidden');
+            dom.removeEvent(this._node, 'focus.ui.selectmenu');
+            dom.removeClass(this._node, this.constructor.classes.hide);
             dom.remove(this._menuNode);
             dom.remove(this._toggle);
 
@@ -103,7 +103,7 @@
             if (
                 this._animating ||
                 !dom.isConnected(this._menuNode) ||
-                !dom.triggerOne(this._node, 'hide.frost.selectmenu')
+                !dom.triggerOne(this._node, 'hide.ui.selectmenu')
             ) {
                 return;
             }
@@ -118,7 +118,7 @@
                 dom.empty(this._itemsList);
                 dom.detach(this._menuNode);
                 dom.setAttribute(this._toggle, 'aria-expanded', false);
-                dom.triggerEvent(this._node, 'hidden.frost.selectmenu');
+                dom.triggerEvent(this._node, 'hidden.ui.selectmenu');
             }).catch(_ => { }).finally(_ => {
                 this._animating = false;
             });
@@ -133,7 +133,7 @@
                 this._readonly ||
                 this._animating ||
                 dom.isConnected(this._menuNode) ||
-                !dom.triggerOne(this._node, 'show.frost.selectmenu')
+                !dom.triggerOne(this._node, 'show.ui.selectmenu')
             ) {
                 return;
             }
@@ -152,7 +152,7 @@
                 duration: this._settings.duration
             }).then(_ => {
                 dom.setAttribute(this._toggle, 'aria-expanded', true);
-                dom.triggerEvent(this._node, 'shown.frost.selectmenu');
+                dom.triggerEvent(this._node, 'shown.ui.selectmenu');
             }).catch(_ => { }).finally(_ => {
                 this._animating = false;
             });
@@ -236,10 +236,12 @@
                 this._selectValue(value);
             });
 
-            dom.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '.selectmenu-action:not(.disabled)', DOM.debounce(e => {
-                const focusedNode = dom.find('.selectmenu-focus', this._itemsList);
-                dom.removeClass(focusedNode, 'selectmenu-focus');
-                dom.addClass(e.currentTarget, 'selectmenu-focus');
+            dom.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '[data-ui-action="select"]', DOM.debounce(e => {
+                const focusedNode = dom.find('[data-ui-focus]', this._itemsList);
+                dom.removeClass(focusedNode, this.constructor.classes.focus);
+                dom.removeDataset(focusedNode, 'uiFocus');
+                dom.addClass(e.currentTarget, this.constructor.classes.focus);
+                dom.setDataset(e.currentTarget, 'uiFocus', true);
             }));
 
             dom.addEvent(this._searchInput, 'keydown.ui.selectmenu', e => {
@@ -284,7 +286,7 @@
                     return;
                 }
 
-                const focusedNode = dom.findOne('.selectmenu-focus', this._itemsList);
+                const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
 
                 if (e.key === 'Enter') {
                     // select the focused item
@@ -300,21 +302,23 @@
 
                 let focusNode;
                 if (!focusedNode) {
-                    focusNode = dom.findOne('.selectmenu-action:not(.disabled)', this._itemsList);
+                    focusNode = dom.findOne('[data-ui-action="select"]', this._itemsList);
                 } else {
                     switch (e.key) {
                         case 'ArrowDown':
-                            focusNode = dom.nextAll(focusedNode, '.selectmenu-action:not(.disabled)').shift();
+                            focusNode = dom.nextAll(focusedNode, '[data-ui-action="select"]').shift();
                             break;
                         case 'ArrowUp':
-                            focusNode = dom.prevAll(focusedNode, '.selectmenu-action:not(.disabled)').pop();
+                            focusNode = dom.prevAll(focusedNode, '[data-ui-action="select"]').pop();
                             break;
                     }
                 }
 
                 if (focusNode) {
-                    dom.removeClass(focusedNode, 'selectmenu-focus');
-                    dom.addClass(focusNode, 'selectmenu-focus');
+                    dom.removeClass(focusedNode, this.constructor.classes.focus);
+                    dom.removeDataset(focusedNode, 'uiFocus');
+                    dom.addClass(focusNode, this.constructor.classes.focus);
+                    dom.setDataset(focusNode, 'uiFocus', true);
                 }
             });
 
@@ -538,15 +542,15 @@
                 this._toggle;
 
             if (this._disabled) {
-                dom.addClass(this._toggle, 'disabled');
+                dom.addClass(this._toggle, this.constructor.classes.disabled);
                 dom.setAttribute(element, 'tabindex', '-1');
             } else {
-                dom.removeClass(this._toggle, 'disabled');
+                dom.removeClass(this._toggle, this.constructor.classes.disabled);
                 dom.removeAttribute(element, 'tabindex');
             }
 
             if (this._readonly) {
-                dom.addClass(this._toggle, 'readonly');
+                dom.addClass(this._toggle, this.constructor.classes.readonly);
             }
         },
 
@@ -700,8 +704,8 @@
         _updateSearchWidth() {
             const span = dom.create('span', {
                 text: dom.getValue(this._searchInput),
-                class: 'd-inline-block',
                 style: {
+                    display: 'inline-block',
                     fontSize: dom.css(this._searchInput, 'fontSize'),
                     whiteSpace: 'pre-wrap'
                 }
@@ -864,7 +868,7 @@
             this._renderMenu();
 
             // hide the input node
-            dom.addClass(this._node, 'visually-hidden');
+            dom.addClass(this._node, this.constructor.classes.hide);
             dom.setAttribute(this._node, 'tabindex', '-1');
 
             dom.after(this._node, this._toggle);
@@ -875,8 +879,8 @@
          */
         _renderClear() {
             this._clear = dom.create('button', {
-                html: '<small class="icon-cancel"></small>',
-                class: 'close float-end me-5 lh-base',
+                html: `<small class="${this._settings.clearIcon}"></small>`,
+                class: this.constructor.classes.close,
                 dataset: {
                     uiAction: 'clear'
                 }
@@ -893,7 +897,7 @@
                 html: this._settings.sanitize(
                     this._settings.renderResult(group)
                 ),
-                class: 'selectmenu-group'
+                class: this.constructor.classes.group
             });
         },
 
@@ -905,7 +909,7 @@
         _renderInfo(text) {
             const element = dom.create('button', {
                 html: this._settings.sanitize(text),
-                class: 'selectmenu-item text-secondary'
+                class: this.constructor.classes.info
             });
             dom.append(this._itemsList, element);
             this.update();
@@ -933,19 +937,22 @@
                 html: this._settings.sanitize(
                     this._settings.renderResult(data, active)
                 ),
-                class: 'selectmenu-item selectmenu-action',
-                dataset: {
-                    uiAction: 'select',
-                    uiValue: item.value
-                }
+                class: this.constructor.classes.item
             });
 
             if (active) {
-                dom.addClass(element, 'active');
+                dom.addClass(element, this.constructor.classes.active);
+                dom.setDataset(element, 'uiActive', true);
             }
 
             if (item.disabled) {
-                dom.addClass(element, 'disabled');
+                dom.addClass(element, this.constructor.classes.disabledItem);
+            } else {
+                dom.addClass(element, this.constructor.classes.action)
+                dom.setDataset(element, {
+                    uiAction: 'select',
+                    uiValue: item.value
+                });
             }
 
             return element;
@@ -956,38 +963,30 @@
          */
         _renderMenu() {
             this._menuNode = dom.create('div', {
-                class: 'selectmenu-menu',
-                dataset: {
-                    target: '#' + dom.getAttribute(this._node, 'id')
-                }
+                class: this.constructor.classes.menu
             });
 
             if (!this._multiple) {
                 // add search input for single select menus
 
-                const searchItem = dom.create('div', {
-                    class: 'p-1'
-                });
-                dom.append(this._menuNode, searchItem);
-
                 const searchContainer = dom.create('div', {
-                    class: 'form-input'
+                    class: this.constructor.classes.searchContainer
                 });
-                dom.append(searchItem, searchContainer);
+                dom.append(this._menuNode, searchContainer);
 
                 this._searchInput = dom.create('input', {
-                    class: 'input-filled'
+                    class: this.constructor.classes.searchInput
                 });
                 dom.append(searchContainer, this._searchInput);
 
                 const ripple = dom.create('div', {
-                    class: 'ripple-line'
+                    class: this.constructor.classes.rippleLine
                 });
                 dom.append(searchContainer, ripple);
             }
 
             this._itemsList = dom.create('div', {
-                class: 'selectmenu-items'
+                class: this.constructor.classes.items
             });
             dom.append(this._menuNode, this._itemsList);
 
@@ -1020,12 +1019,12 @@
          */
         _renderMultiSelection(item) {
             const group = dom.create('div', {
-                class: 'btn-group'
+                class: this.constructor.classes.multiGroup
             });
 
             const close = dom.create('div', {
-                html: '<small class="icon-cancel"></small>',
-                class: 'btn btn-sm btn-outline-secondary',
+                html: `<small class="${this._settings.clearIcon}"></small>`,
+                class: this.constructor.classes.multiClear,
                 dataset: {
                     uiAction: 'clear'
                 }
@@ -1035,7 +1034,7 @@
             const content = this._settings.renderSelection(item);
             const tag = dom.create('div', {
                 html: this._settings.sanitize(content),
-                class: 'btn btn-sm btn-secondary'
+                class: this.constructor.classes.multiItem
             });
             dom.append(group, tag);
 
@@ -1048,7 +1047,7 @@
         _renderPlaceholder() {
             this._placeholder = dom.create('span', {
                 html: this._settings.sanitize(this._placeholderText),
-                class: 'selectmenu-placeholder'
+                class: this.constructor.classes.placeholder
             });
         },
 
@@ -1068,14 +1067,15 @@
                 dom.append(this._itemsList, element);
             }
 
-            let focusNode = dom.findOne('.selectmenu-action.active', this._itemsList);
+            let focusNode = dom.findOne('[data-ui-active]', this._itemsList);
 
             if (!focusNode) {
-                focusNode = dom.findOne('.selectmenu-action:not(.disabled)', this._itemsList);
+                focusNode = dom.findOne('[data-ui-action="select"]', this._itemsList);
             }
 
             if (focusNode) {
-                dom.addClass(focusNode, 'selectmenu-focus');
+                dom.addClass(focusNode, this.constructor.classes.focus);
+                dom.setDataset(focusNode, 'uiFocus', true);
             }
         },
 
@@ -1086,11 +1086,8 @@
             this._toggle = dom.create('button', {
                 class: [
                     dom.getAttribute(this._node, 'class') || '',
-                    'selectmenu-toggle position-relative text-start'
-                ],
-                dataset: {
-                    target: '#' + dom.getAttribute(this._node, 'id')
-                }
+                    this.constructor.classes.toggle
+                ]
             });
         },
 
@@ -1101,15 +1098,12 @@
             this._toggle = dom.create('div', {
                 class: [
                     dom.getAttribute(this._node, 'class') || '',
-                    'selectmenu-multi d-flex flex-wrap position-relative text-start'
-                ],
-                dataset: {
-                    target: '#' + dom.getAttribute(this._node, 'id')
-                }
+                    this.constructor.classes.multiToggle
+                ]
             });
 
             this._searchInput = dom.create('input', {
-                class: 'selectmenu-multi-input'
+                class: this.constructor.classes.multiSearchInput
             });
         }
 
@@ -1329,6 +1323,7 @@
             maxSelections: 'Selection limit reached.',
             noResults: 'No results'
         },
+        clearIcon: 'icon-cancel',
         data: null,
         getResults: null,
         isMatch: (item, term) => {
@@ -1378,6 +1373,33 @@
         fixed: false,
         spacing: 3,
         minContact: false
+    };
+
+    // Default classes
+    SelectMenu.classes = {
+        action: 'selectmenu-action',
+        active: 'selectmenu-active',
+        clear: 'close float-end me-5 lh-base',
+        disabled: 'disabled',
+        disabledItem: 'selectmenu-disabled',
+        hide: 'visually-hidden',
+        info: 'selectmenu-item text-secondary',
+        item: 'selectmenu-item',
+        items: 'selectmenu-items',
+        focus: 'selectmenu-focus', //
+        group: 'selectmenu-group',
+        menu: 'selectmenu-menu',
+        multiClear: 'btn btn-sm btn-outline-secondary',
+        multiGroup: 'btn-group',
+        multiItem: 'btn btn-sm btn-secondary',
+        multiSearchInput: 'selectmenu-multi-input',
+        multiToggle: 'selectmenu-multi d-flex flex-wrap position-relative text-start',
+        placeholder: 'selectmenu-placeholder',
+        readonly: 'readonly',
+        rippleLine: 'ripple-line',
+        searchContainer: 'form-input p-1',
+        searchInput: 'input-filled',
+        toggle: 'selectmenu-toggle position-relative text-start'
     };
 
     UI.initComponent('selectmenu', SelectMenu);

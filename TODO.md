@@ -1,6 +1,6 @@
 # FrostUI-SelectMenu
 
-[ ] Prefix disabled option attribute with UI
-[ ] Add CSS classes map
-[ ] Fix readonly*
+[ ] Fix readonly handling // DTP
+[ ] Add appendTo/parent option
+
 [ ] Add size handling

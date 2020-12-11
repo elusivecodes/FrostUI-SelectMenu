@@ -80,26 +80,26 @@
         border-bottom-left-radius: inherit;
         border-bottom-right-radius: inherit;
     }
+}
 
-    &.disabled {
-        opacity: @disabled-opacity;
-        pointer-events: none;
-    }
+.selectmenu-disabled {
+    opacity: @disabled-opacity;
+    pointer-events: none;
 }
 
 .selectmenu-action {
     cursor: default;
+}
 
-    &.active {
-        color: @text;
-        text-decoration: none;
-        background-color: @hover-color;
-    }
+.selectmenu-active {
+    color: @text;
+    text-decoration: none;
+    background-color: @hover-color;
 }
 
 .selectmenu-focus {
     &,
-    &.selectmenu-action.active {
+    &.selectmenu-active {
         color: @white;
         background-color: @primary;
     }

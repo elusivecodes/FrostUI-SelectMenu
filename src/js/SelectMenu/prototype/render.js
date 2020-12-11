@@ -22,7 +22,7 @@ Object.assign(SelectMenu.prototype, {
         this._renderMenu();
 
         // hide the input node
-        dom.addClass(this._node, 'visually-hidden');
+        dom.addClass(this._node, this.constructor.classes.hide);
         dom.setAttribute(this._node, 'tabindex', '-1');
 
         dom.after(this._node, this._toggle);
@@ -33,8 +33,8 @@ Object.assign(SelectMenu.prototype, {
      */
     _renderClear() {
         this._clear = dom.create('button', {
-            html: '<small class="icon-cancel"></small>',
-            class: 'close float-end me-5 lh-base',
+            html: `<small class="${this._settings.clearIcon}"></small>`,
+            class: this.constructor.classes.close,
             dataset: {
                 uiAction: 'clear'
             }
@@ -51,7 +51,7 @@ Object.assign(SelectMenu.prototype, {
             html: this._settings.sanitize(
                 this._settings.renderResult(group)
             ),
-            class: 'selectmenu-group'
+            class: this.constructor.classes.group
         });
     },
 
@@ -63,7 +63,7 @@ Object.assign(SelectMenu.prototype, {
     _renderInfo(text) {
         const element = dom.create('button', {
             html: this._settings.sanitize(text),
-            class: 'selectmenu-item text-secondary'
+            class: this.constructor.classes.info
         });
         dom.append(this._itemsList, element);
         this.update();
@@ -91,19 +91,22 @@ Object.assign(SelectMenu.prototype, {
             html: this._settings.sanitize(
                 this._settings.renderResult(data, active)
             ),
-            class: 'selectmenu-item selectmenu-action',
-            dataset: {
-                uiAction: 'select',
-                uiValue: item.value
-            }
+            class: this.constructor.classes.item
         });
 
         if (active) {
-            dom.addClass(element, 'active');
+            dom.addClass(element, this.constructor.classes.active);
+            dom.setDataset(element, 'uiActive', true);
         }
 
         if (item.disabled) {
-            dom.addClass(element, 'disabled');
+            dom.addClass(element, this.constructor.classes.disabledItem);
+        } else {
+            dom.addClass(element, this.constructor.classes.action)
+            dom.setDataset(element, {
+                uiAction: 'select',
+                uiValue: item.value
+            });
         }
 
         return element;
@@ -114,38 +117,30 @@ Object.assign(SelectMenu.prototype, {
      */
     _renderMenu() {
         this._menuNode = dom.create('div', {
-            class: 'selectmenu-menu',
-            dataset: {
-                target: '#' + dom.getAttribute(this._node, 'id')
-            }
+            class: this.constructor.classes.menu
         });
 
         if (!this._multiple) {
             // add search input for single select menus
 
-            const searchItem = dom.create('div', {
-                class: 'p-1'
-            });
-            dom.append(this._menuNode, searchItem);
-
             const searchContainer = dom.create('div', {
-                class: 'form-input'
+                class: this.constructor.classes.searchContainer
             });
-            dom.append(searchItem, searchContainer);
+            dom.append(this._menuNode, searchContainer);
 
             this._searchInput = dom.create('input', {
-                class: 'input-filled'
+                class: this.constructor.classes.searchInput
             });
             dom.append(searchContainer, this._searchInput);
 
             const ripple = dom.create('div', {
-                class: 'ripple-line'
+                class: this.constructor.classes.rippleLine
             });
             dom.append(searchContainer, ripple);
         }
 
         this._itemsList = dom.create('div', {
-            class: 'selectmenu-items'
+            class: this.constructor.classes.items
         });
         dom.append(this._menuNode, this._itemsList);
 
@@ -178,12 +173,12 @@ Object.assign(SelectMenu.prototype, {
      */
     _renderMultiSelection(item) {
         const group = dom.create('div', {
-            class: 'btn-group'
+            class: this.constructor.classes.multiGroup
         });
 
         const close = dom.create('div', {
-            html: '<small class="icon-cancel"></small>',
-            class: 'btn btn-sm btn-outline-secondary',
+            html: `<small class="${this._settings.clearIcon}"></small>`,
+            class: this.constructor.classes.multiClear,
             dataset: {
                 uiAction: 'clear'
             }
@@ -193,7 +188,7 @@ Object.assign(SelectMenu.prototype, {
         const content = this._settings.renderSelection(item);
         const tag = dom.create('div', {
             html: this._settings.sanitize(content),
-            class: 'btn btn-sm btn-secondary'
+            class: this.constructor.classes.multiItem
         });
         dom.append(group, tag);
 
@@ -206,7 +201,7 @@ Object.assign(SelectMenu.prototype, {
     _renderPlaceholder() {
         this._placeholder = dom.create('span', {
             html: this._settings.sanitize(this._placeholderText),
-            class: 'selectmenu-placeholder'
+            class: this.constructor.classes.placeholder
         });
     },
 
@@ -226,14 +221,15 @@ Object.assign(SelectMenu.prototype, {
             dom.append(this._itemsList, element);
         }
 
-        let focusNode = dom.findOne('.selectmenu-action.active', this._itemsList);
+        let focusNode = dom.findOne('[data-ui-active]', this._itemsList);
 
         if (!focusNode) {
-            focusNode = dom.findOne('.selectmenu-action:not(.disabled)', this._itemsList);
+            focusNode = dom.findOne('[data-ui-action="select"]', this._itemsList);
         }
 
         if (focusNode) {
-            dom.addClass(focusNode, 'selectmenu-focus');
+            dom.addClass(focusNode, this.constructor.classes.focus);
+            dom.setDataset(focusNode, 'uiFocus', true);
         }
     },
 
@@ -244,11 +240,8 @@ Object.assign(SelectMenu.prototype, {
         this._toggle = dom.create('button', {
             class: [
                 dom.getAttribute(this._node, 'class') || '',
-                'selectmenu-toggle position-relative text-start'
-            ],
-            dataset: {
-                target: '#' + dom.getAttribute(this._node, 'id')
-            }
+                this.constructor.classes.toggle
+            ]
         });
     },
 
@@ -259,15 +252,12 @@ Object.assign(SelectMenu.prototype, {
         this._toggle = dom.create('div', {
             class: [
                 dom.getAttribute(this._node, 'class') || '',
-                'selectmenu-multi d-flex flex-wrap position-relative text-start'
-            ],
-            dataset: {
-                target: '#' + dom.getAttribute(this._node, 'id')
-            }
+                this.constructor.classes.multiToggle
+            ]
         });
 
         this._searchInput = dom.create('input', {
-            class: 'selectmenu-multi-input'
+            class: this.constructor.classes.multiSearchInput
         });
     }
 
