@@ -2,48 +2,22 @@
  * SelectMenu Class
  * @class
  */
-class SelectMenu {
+class SelectMenu extends UI.BaseComponent {
 
     /**
      * New SelectMenu constructor.
      * @param {HTMLElement} node The input node.
      * @param {object} [settings] The options to create the SelectMenu with.
-     * @param {string} [settings.placeholder] The placeholder text.
-     * @param {object} [settings.lang] Language to use.
-     * @param {object|array} [settings.data] The selection data.
-     * @param {function} [settings.getResults] The query callback.
-     * @param {function} [settings.isMatch] The match test callback.
-     * @param {function} [settings.renderResult] The render result callback
-     * @param {function} [settings.renderSelection] The render selection callback.
-     * @param {function} [settings.sanitize] The sanitization callback.
-     * @param {function} [settings.sortResults] The sort results callback.
-     * @param {number} [settings.maxSelections] The maximum number of selected options.
-     * @param {number} [settings.minSearch] The minimum length to start searching.
-     * @param {Boolean} [settings.allowClear] Whether to allow clearing the selected value.
-     * @param {Boolean} [settings.closeOnSelect] Whether to close the menu after selecting an item.
-     * @param {Boolean} [settings.fullWidth] Whether the menu should be the full width of the toggle.
-     * @param {number} [settings.duration=100] The duration of the animation.
-     * @param {string} [settings.placement=bottom] The placement of the SelectMenu relative to the toggle.
-     * @param {string} [settings.position=start] The position of the SelectMenu relative to the toggle.
-     * @param {Boolean} [settings.fixed=false] Whether the SelectMenu position is fixed.
-     * @param {number} [settings.spacing=2] The spacing between the SelectMenu and the toggle.
-     * @param {number} [settings.minContact=false] The minimum amount of contact the SelectMenu must make with the toggle.
      * @returns {SelectMenu} A new SelectMenu object.
      */
     constructor(node, settings) {
-        this._node = node;
-
-        this._settings = Core.extend(
-            {},
-            this.constructor.defaults,
-            dom.getDataset(this._node),
-            settings
-        );
+        super(node, settings);
 
         this._placeholderText = this._settings.placeholder;
         this._maxSelections = this._settings.maxSelections;
         this._multiple = dom.getProperty(this._node, 'multiple');
         this._disabled = dom.getProperty(this._node, 'disabled');
+        this._readonly = dom.hasAttribute(this._node, 'readonly');
 
         this._data = [];
         this._lookup = {};
@@ -73,8 +47,6 @@ class SelectMenu {
         this._render();
         this._loadValue(value);
         this._events();
-
-        dom.setData(this._node, 'selectmenu', this);
     }
 
     /**
@@ -85,11 +57,13 @@ class SelectMenu {
             this._popper.destroy();
         }
 
+        dom.removeAttribute(this._node, 'tabindex');
         dom.removeEvent(this._node, 'focus.frost.selectmenu');
         dom.removeClass(this._node, 'visually-hidden');
         dom.remove(this._menuNode);
         dom.remove(this._toggle);
-        dom.removeData(this._node, 'selectmenu');
+
+        super.destroy();
     }
 
     /**
@@ -126,6 +100,7 @@ class SelectMenu {
     show() {
         if (
             this._disabled ||
+            this._readonly ||
             this._animating ||
             dom.isConnected(this._menuNode) ||
             !dom.triggerOne(this._node, 'show.frost.selectmenu')
@@ -192,38 +167,6 @@ class SelectMenu {
             const datetimepicker = this.init(input);
             datetimepicker.hide();
         }
-    }
-
-    /**
-     * Initialize a SelectMenu.
-     * @param {HTMLElement} node The input node.
-     * @param {object} [settings] The options to create the SelectMenu with.
-     * @param {string} [settings.placeholder] The placeholder text.
-     * @param {object} [settings.lang] Language to use.
-     * @param {object|array} [settings.data] The selection data.
-     * @param {function} [settings.getResults] The query callback.
-     * @param {function} [settings.isMatch] The match test callback.
-     * @param {function} [settings.renderResult] The render result callback
-     * @param {function} [settings.renderSelection] The render selection callback.
-     * @param {function} [settings.sanitize] The sanitization callback.
-     * @param {function} [settings.sortResults] The sort results callback.
-     * @param {number} [settings.maxSelections] The maximum number of selected options.
-     * @param {number} [settings.minSearch] The minimum length to start searching.
-     * @param {Boolean} [settings.allowClear] Whether to allow clearing the selected value.
-     * @param {Boolean} [settings.closeOnSelect] Whether to close the menu after selecting an item.
-     * @param {Boolean} [settings.fullWidth] Whether the menu should be the full width of the toggle.
-     * @param {number} [settings.duration=100] The duration of the animation.
-     * @param {string} [settings.placement=bottom] The placement of the SelectMenu relative to the toggle.
-     * @param {string} [settings.position=start] The position of the SelectMenu relative to the toggle.
-     * @param {Boolean} [settings.fixed=false] Whether the SelectMenu position is fixed.
-     * @param {number} [settings.spacing=2] The spacing between the SelectMenu and the toggle.
-     * @param {number} [settings.minContact=false] The minimum amount of contact the SelectMenu must make with the toggle.
-     * @returns {SelectMenu} A new SelectMenu object.
-     */
-    static init(node, settings) {
-        return dom.hasData(node, 'selectmenu') ?
-            dom.getData(node, 'selectmenu') :
-            new this(node, settings);
     }
 
 }

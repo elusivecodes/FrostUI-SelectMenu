@@ -32,48 +32,22 @@
      * SelectMenu Class
      * @class
      */
-    class SelectMenu {
+    class SelectMenu extends UI.BaseComponent {
 
         /**
          * New SelectMenu constructor.
          * @param {HTMLElement} node The input node.
          * @param {object} [settings] The options to create the SelectMenu with.
-         * @param {string} [settings.placeholder] The placeholder text.
-         * @param {object} [settings.lang] Language to use.
-         * @param {object|array} [settings.data] The selection data.
-         * @param {function} [settings.getResults] The query callback.
-         * @param {function} [settings.isMatch] The match test callback.
-         * @param {function} [settings.renderResult] The render result callback
-         * @param {function} [settings.renderSelection] The render selection callback.
-         * @param {function} [settings.sanitize] The sanitization callback.
-         * @param {function} [settings.sortResults] The sort results callback.
-         * @param {number} [settings.maxSelections] The maximum number of selected options.
-         * @param {number} [settings.minSearch] The minimum length to start searching.
-         * @param {Boolean} [settings.allowClear] Whether to allow clearing the selected value.
-         * @param {Boolean} [settings.closeOnSelect] Whether to close the menu after selecting an item.
-         * @param {Boolean} [settings.fullWidth] Whether the menu should be the full width of the toggle.
-         * @param {number} [settings.duration=100] The duration of the animation.
-         * @param {string} [settings.placement=bottom] The placement of the SelectMenu relative to the toggle.
-         * @param {string} [settings.position=start] The position of the SelectMenu relative to the toggle.
-         * @param {Boolean} [settings.fixed=false] Whether the SelectMenu position is fixed.
-         * @param {number} [settings.spacing=2] The spacing between the SelectMenu and the toggle.
-         * @param {number} [settings.minContact=false] The minimum amount of contact the SelectMenu must make with the toggle.
          * @returns {SelectMenu} A new SelectMenu object.
          */
         constructor(node, settings) {
-            this._node = node;
-
-            this._settings = Core.extend(
-                {},
-                this.constructor.defaults,
-                dom.getDataset(this._node),
-                settings
-            );
+            super(node, settings);
 
             this._placeholderText = this._settings.placeholder;
             this._maxSelections = this._settings.maxSelections;
             this._multiple = dom.getProperty(this._node, 'multiple');
             this._disabled = dom.getProperty(this._node, 'disabled');
+            this._readonly = dom.hasAttribute(this._node, 'readonly');
 
             this._data = [];
             this._lookup = {};
@@ -103,8 +77,6 @@
             this._render();
             this._loadValue(value);
             this._events();
-
-            dom.setData(this._node, 'selectmenu', this);
         }
 
         /**
@@ -115,11 +87,13 @@
                 this._popper.destroy();
             }
 
+            dom.removeAttribute(this._node, 'tabindex');
             dom.removeEvent(this._node, 'focus.frost.selectmenu');
             dom.removeClass(this._node, 'visually-hidden');
             dom.remove(this._menuNode);
             dom.remove(this._toggle);
-            dom.removeData(this._node, 'selectmenu');
+
+            super.destroy();
         }
 
         /**
@@ -156,6 +130,7 @@
         show() {
             if (
                 this._disabled ||
+                this._readonly ||
                 this._animating ||
                 dom.isConnected(this._menuNode) ||
                 !dom.triggerOne(this._node, 'show.frost.selectmenu')
@@ -224,38 +199,6 @@
             }
         }
 
-        /**
-         * Initialize a SelectMenu.
-         * @param {HTMLElement} node The input node.
-         * @param {object} [settings] The options to create the SelectMenu with.
-         * @param {string} [settings.placeholder] The placeholder text.
-         * @param {object} [settings.lang] Language to use.
-         * @param {object|array} [settings.data] The selection data.
-         * @param {function} [settings.getResults] The query callback.
-         * @param {function} [settings.isMatch] The match test callback.
-         * @param {function} [settings.renderResult] The render result callback
-         * @param {function} [settings.renderSelection] The render selection callback.
-         * @param {function} [settings.sanitize] The sanitization callback.
-         * @param {function} [settings.sortResults] The sort results callback.
-         * @param {number} [settings.maxSelections] The maximum number of selected options.
-         * @param {number} [settings.minSearch] The minimum length to start searching.
-         * @param {Boolean} [settings.allowClear] Whether to allow clearing the selected value.
-         * @param {Boolean} [settings.closeOnSelect] Whether to close the menu after selecting an item.
-         * @param {Boolean} [settings.fullWidth] Whether the menu should be the full width of the toggle.
-         * @param {number} [settings.duration=100] The duration of the animation.
-         * @param {string} [settings.placement=bottom] The placement of the SelectMenu relative to the toggle.
-         * @param {string} [settings.position=start] The position of the SelectMenu relative to the toggle.
-         * @param {Boolean} [settings.fixed=false] Whether the SelectMenu position is fixed.
-         * @param {number} [settings.spacing=2] The spacing between the SelectMenu and the toggle.
-         * @param {number} [settings.minContact=false] The minimum amount of contact the SelectMenu must make with the toggle.
-         * @returns {SelectMenu} A new SelectMenu object.
-         */
-        static init(node, settings) {
-            return dom.hasData(node, 'selectmenu') ?
-                dom.getData(node, 'selectmenu') :
-                new this(node, settings);
-        }
-
     }
 
 
@@ -269,7 +212,7 @@
          * Attach events for the SelectMenu.
          */
         _events() {
-            dom.addEvent(this._node, 'focus.frost.selectmenu', _ => {
+            dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
                 if (this._disabled) {
                     return;
                 }
@@ -281,25 +224,25 @@
                 }
             });
 
-            dom.addEvent(this._menuNode, 'mousedown.frost.selectmenu', e => {
+            dom.addEvent(this._menuNode, 'mousedown.ui.selectmenu', e => {
                 // prevent search input from triggering blur event
                 e.preventDefault();
             });
 
-            dom.addEventDelegate(this._itemsList, 'mouseup.frost.selectmenu', '[data-action="select"]', e => {
+            dom.addEventDelegate(this._itemsList, 'mouseup.ui.selectmenu', '[data-ui-action="select"]', e => {
                 e.preventDefault();
 
-                const value = dom.getDataset(e.currentTarget, 'value');
+                const value = dom.getDataset(e.currentTarget, 'uiValue');
                 this._selectValue(value);
             });
 
-            dom.addEventDelegate(this._itemsList, 'mouseover.frost.selectmenu', '.selectmenu-action:not(.disabled)', e => {
-                const focusedNode = dom.findOne('.selectmenu-focus', this._itemsList);
+            dom.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '.selectmenu-action:not(.disabled)', DOM.debounce(e => {
+                const focusedNode = dom.find('.selectmenu-focus', this._itemsList);
                 dom.removeClass(focusedNode, 'selectmenu-focus');
                 dom.addClass(e.currentTarget, 'selectmenu-focus');
-            });
+            }));
 
-            dom.addEvent(this._searchInput, 'keydown.frost.selectmenu', e => {
+            dom.addEvent(this._searchInput, 'keydown.ui.selectmenu', e => {
                 if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter', 'Escape'].includes(e.key)) {
                     return;
                 }
@@ -318,7 +261,7 @@
                         this._updateSearchWidth();
 
                         // trigger input
-                        dom.triggerEvent(this._searchInput, 'input.frost.selectmenu');
+                        dom.triggerEvent(this._searchInput, 'input.ui.selectmenu');
                     }
 
                     return;
@@ -346,7 +289,7 @@
                 if (e.key === 'Enter') {
                     // select the focused item
                     if (focusedNode) {
-                        const value = dom.getDataset(focusedNode, 'value');
+                        const value = dom.getDataset(focusedNode, 'uiValue');
                         this._selectValue(value);
                     }
 
@@ -375,7 +318,13 @@
                 }
             });
 
-            dom.addEvent(this._searchInput, 'input.frost.selectmenu', _ => {
+            // debounced input event
+            const getDataDebounced = Core.debounce(term => {
+                dom.empty(this._itemsList);
+                this._getData({ term });
+            }, this._settings.debounceInput);
+
+            dom.addEvent(this._searchInput, 'input.ui.selectmenu', DOM.debounce(_ => {
                 if (this._multiple) {
                     this._updateSearchWidth();
                 }
@@ -391,13 +340,12 @@
                     this.show();
                 }
 
-                dom.empty(this._itemsList);
-                this._getData({ term });
-            });
+                getDataDebounced(term);
+            }));
 
             if (this._settings.getResults) {
                 // infinite scrolling event
-                dom.addEvent(this._itemsList, 'scroll.frost.selectmenu', _ => {
+                dom.addEvent(this._itemsList, 'scroll.ui.selectmenu', Core.throttle(_ => {
                     if (this._request || !this._showMore) {
                         return;
                     }
@@ -406,13 +354,13 @@
                     const scrollHeight = dom.height(this._itemsList, DOM.SCROLL_BOX);
                     const scrollTop = dom.getScrollY(this._itemsList);
 
-                    if (scrollTop >= scrollHeight - height - 50) {
+                    if (scrollTop >= scrollHeight - height - (height / 4)) {
                         const term = dom.getValue(this._searchInput);
                         const offset = this._data.length;
 
                         this._getData({ term, offset });
                     }
-                });
+                }, 250, false));
             }
 
             if (this._multiple) {
@@ -426,13 +374,13 @@
          * Attach events for a multiple SelectMenu.
          */
         _eventsMulti() {
-            dom.addEvent(this._searchInput, 'focus.frost.selectmenu', _ => {
+            dom.addEvent(this._searchInput, 'focus.ui.selectmenu', _ => {
                 dom.hide(this._placeholder);
                 dom.detach(this._placeholder);
                 dom.addClass(this._toggle, 'focus');
             });
 
-            dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
+            dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
                 if (dom.hasDataset(this._toggle, 'preFocus')) {
                     // prevent losing focus when toggle element is focused
                     return;
@@ -442,10 +390,10 @@
                 this.hide();
             });
 
-            dom.addEvent(this._toggle, 'mousedown.frost.selectmenu', _ => {
+            dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', _ => {
                 if (dom.hasClass(this._toggle, 'focus')) {
                     // maintain focus when toggle element is already focused
-                    dom.setDataset(this._toggle, 'preFocus', true);
+                    dom.setDataset(this._toggle, 'uiPreFocus', true);
                 } else {
                     dom.hide(this._placeholder);
                     dom.addClass(this._toggle, 'focus');
@@ -453,16 +401,16 @@
 
                 this.show();
 
-                dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
-                    if (dom.hasDataset(this._toggle, 'preFocus')) {
-                        dom.removeDataset(this._toggle, 'preFocus');
+                dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
+                    if (dom.hasDataset(this._toggle, 'uiPreFocus')) {
+                        dom.removeDataset(this._toggle, 'uiPreFocus');
                     }
 
                     dom.focus(this._searchInput);
                 });
             });
 
-            dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
+            dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', e => {
                 e.preventDefault();
 
                 // remove selection
@@ -478,24 +426,24 @@
          * Attach events for a single SelectMenu.
          */
         _eventsSingle() {
-            dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
+            dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
                 this.hide();
             });
 
-            dom.addEvent(this._toggle, 'mousedown.frost.selectmenu', _ => {
+            dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', _ => {
                 if (dom.isConnected(this._menuNode)) {
                     this.hide();
                 } else {
                     this.show();
 
-                    dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
+                    dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
                         // focus search input when mouse is released
                         dom.focus(this._searchInput);
                     });
                 }
             });
 
-            dom.addEvent(this._toggle, 'keydown.frost.selectmenu', e => {
+            dom.addEvent(this._toggle, 'keydown.ui.selectmenu', e => {
                 if (!/^.$/u.test(e.key)) {
                     return;
                 }
@@ -505,7 +453,7 @@
             });
 
             if (this._settings.allowClear) {
-                dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', _ => {
+                dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', _ => {
                     // remove selection
                     this._setValue(null);
                 });
@@ -585,20 +533,20 @@
          * Refresh the toggle disabled class.
          */
         _refreshDisabled() {
+            const element = this._multiple ?
+                this._searchInput :
+                this._toggle;
+
             if (this._disabled) {
                 dom.addClass(this._toggle, 'disabled');
-                if (this._multiple) {
-                    dom.setAttribute(this._searchInput, 'tabindex', '-1');
-                } else {
-                    dom.setAttribute(this._toggle, 'tabindex', '-1');
-                }
+                dom.setAttribute(element, 'tabindex', '-1');
             } else {
                 dom.removeClass(this._toggle, 'disabled');
-                if (this._multiple) {
-                    dom.removeAttribute(this._searchInput, 'tabindex');
-                } else {
-                    dom.removeAttribute(this._toggle, 'tabindex');
-                }
+                dom.removeAttribute(element, 'tabindex');
+            }
+
+            if (this._readonly) {
+                dom.addClass(this._toggle, 'readonly');
             }
         },
 
@@ -649,7 +597,10 @@
          * Refresh the placeholder.
          */
         _refreshPlaceholder() {
-            if (this._value && this._value.length) {
+            if (
+                (this._multiple && this._value.length) ||
+                (!this._multiple && this._value)
+            ) {
                 dom.hide(this._placeholder);
             } else {
                 dom.show(this._placeholder);
@@ -927,7 +878,7 @@
                 html: '<small class="icon-cancel"></small>',
                 class: 'close float-end me-5 lh-base',
                 dataset: {
-                    action: 'clear'
+                    uiAction: 'clear'
                 }
             });
         },
@@ -984,8 +935,8 @@
                 ),
                 class: 'selectmenu-item selectmenu-action',
                 dataset: {
-                    action: 'select',
-                    value: item.value
+                    uiAction: 'select',
+                    uiValue: item.value
                 }
             });
 
@@ -1076,7 +1027,7 @@
                 html: '<small class="icon-cancel"></small>',
                 class: 'btn btn-sm btn-outline-secondary',
                 dataset: {
-                    action: 'clear'
+                    uiAction: 'clear'
                 }
             });
             dom.append(group, close);
@@ -1380,7 +1331,24 @@
         },
         data: null,
         getResults: null,
-        isMatch: (item, term) => item.text.toLowerCase().indexOf(term.toLowerCase()) > -1,
+        isMatch: (item, term) => {
+            const escapedTerm = Core.escapeRegExp(term);
+            const regExp = new RegExp(escapedTerm, 'i');
+
+            if (regExp.test(item.text)) {
+                return true;
+            }
+
+            const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const escapedNormal = Core.escapeRegExp(normalized);
+            const regExpNormal = new RegExp(escapedNormal, 'i');
+
+            if (regExpNormal.test(item.text)) {
+                return true;
+            }
+
+            return false;
+        },
         renderResult: item => item.text,
         renderSelection: item => item.text,
         sanitize: input => dom.sanitize(input),
@@ -1403,6 +1371,7 @@
         allowClear: false,
         closeOnSelect: true,
         fullWidth: true,
+        debounceInput: 250,
         duration: 100,
         placement: 'bottom',
         position: 'start',
@@ -1411,32 +1380,7 @@
         minContact: false
     };
 
-    // SelectMenu QuerySet method
-    if (QuerySet) {
-        QuerySet.prototype.selectmenu = function(a, ...args) {
-            let settings, method;
-
-            if (Core.isObject(a)) {
-                settings = a;
-            } else if (Core.isString(a)) {
-                method = a;
-            }
-
-            for (const node of this) {
-                if (!Core.isElement(node)) {
-                    continue;
-                }
-
-                const selectMenu = SelectMenu.init(node, settings);
-
-                if (method) {
-                    selectMenu[method](...args);
-                }
-            }
-
-            return this;
-        };
-    }
+    UI.initComponent('selectmenu', SelectMenu);
 
     UI.SelectMenu = SelectMenu;
 

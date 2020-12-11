@@ -8,7 +8,7 @@ Object.assign(SelectMenu.prototype, {
      * Attach events for the SelectMenu.
      */
     _events() {
-        dom.addEvent(this._node, 'focus.frost.selectmenu', _ => {
+        dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
             if (this._disabled) {
                 return;
             }
@@ -20,25 +20,25 @@ Object.assign(SelectMenu.prototype, {
             }
         });
 
-        dom.addEvent(this._menuNode, 'mousedown.frost.selectmenu', e => {
+        dom.addEvent(this._menuNode, 'mousedown.ui.selectmenu', e => {
             // prevent search input from triggering blur event
             e.preventDefault();
         });
 
-        dom.addEventDelegate(this._itemsList, 'mouseup.frost.selectmenu', '[data-action="select"]', e => {
+        dom.addEventDelegate(this._itemsList, 'mouseup.ui.selectmenu', '[data-ui-action="select"]', e => {
             e.preventDefault();
 
-            const value = dom.getDataset(e.currentTarget, 'value');
+            const value = dom.getDataset(e.currentTarget, 'uiValue');
             this._selectValue(value);
         });
 
-        dom.addEventDelegate(this._itemsList, 'mouseover.frost.selectmenu', '.selectmenu-action:not(.disabled)', e => {
-            const focusedNode = dom.findOne('.selectmenu-focus', this._itemsList);
+        dom.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '.selectmenu-action:not(.disabled)', DOM.debounce(e => {
+            const focusedNode = dom.find('.selectmenu-focus', this._itemsList);
             dom.removeClass(focusedNode, 'selectmenu-focus');
             dom.addClass(e.currentTarget, 'selectmenu-focus');
-        });
+        }));
 
-        dom.addEvent(this._searchInput, 'keydown.frost.selectmenu', e => {
+        dom.addEvent(this._searchInput, 'keydown.ui.selectmenu', e => {
             if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter', 'Escape'].includes(e.key)) {
                 return;
             }
@@ -57,7 +57,7 @@ Object.assign(SelectMenu.prototype, {
                     this._updateSearchWidth();
 
                     // trigger input
-                    dom.triggerEvent(this._searchInput, 'input.frost.selectmenu');
+                    dom.triggerEvent(this._searchInput, 'input.ui.selectmenu');
                 }
 
                 return;
@@ -85,7 +85,7 @@ Object.assign(SelectMenu.prototype, {
             if (e.key === 'Enter') {
                 // select the focused item
                 if (focusedNode) {
-                    const value = dom.getDataset(focusedNode, 'value');
+                    const value = dom.getDataset(focusedNode, 'uiValue');
                     this._selectValue(value);
                 }
 
@@ -114,7 +114,13 @@ Object.assign(SelectMenu.prototype, {
             }
         });
 
-        dom.addEvent(this._searchInput, 'input.frost.selectmenu', _ => {
+        // debounced input event
+        const getDataDebounced = Core.debounce(term => {
+            dom.empty(this._itemsList);
+            this._getData({ term });
+        }, this._settings.debounceInput);
+
+        dom.addEvent(this._searchInput, 'input.ui.selectmenu', DOM.debounce(_ => {
             if (this._multiple) {
                 this._updateSearchWidth();
             }
@@ -130,13 +136,12 @@ Object.assign(SelectMenu.prototype, {
                 this.show();
             }
 
-            dom.empty(this._itemsList);
-            this._getData({ term });
-        });
+            getDataDebounced(term);
+        }));
 
         if (this._settings.getResults) {
             // infinite scrolling event
-            dom.addEvent(this._itemsList, 'scroll.frost.selectmenu', _ => {
+            dom.addEvent(this._itemsList, 'scroll.ui.selectmenu', Core.throttle(_ => {
                 if (this._request || !this._showMore) {
                     return;
                 }
@@ -145,13 +150,13 @@ Object.assign(SelectMenu.prototype, {
                 const scrollHeight = dom.height(this._itemsList, DOM.SCROLL_BOX);
                 const scrollTop = dom.getScrollY(this._itemsList);
 
-                if (scrollTop >= scrollHeight - height - 50) {
+                if (scrollTop >= scrollHeight - height - (height / 4)) {
                     const term = dom.getValue(this._searchInput);
                     const offset = this._data.length;
 
                     this._getData({ term, offset });
                 }
-            });
+            }, 250, false));
         }
 
         if (this._multiple) {
@@ -165,13 +170,13 @@ Object.assign(SelectMenu.prototype, {
      * Attach events for a multiple SelectMenu.
      */
     _eventsMulti() {
-        dom.addEvent(this._searchInput, 'focus.frost.selectmenu', _ => {
+        dom.addEvent(this._searchInput, 'focus.ui.selectmenu', _ => {
             dom.hide(this._placeholder);
             dom.detach(this._placeholder);
             dom.addClass(this._toggle, 'focus');
         });
 
-        dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
+        dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
             if (dom.hasDataset(this._toggle, 'preFocus')) {
                 // prevent losing focus when toggle element is focused
                 return;
@@ -181,10 +186,10 @@ Object.assign(SelectMenu.prototype, {
             this.hide();
         });
 
-        dom.addEvent(this._toggle, 'mousedown.frost.selectmenu', _ => {
+        dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', _ => {
             if (dom.hasClass(this._toggle, 'focus')) {
                 // maintain focus when toggle element is already focused
-                dom.setDataset(this._toggle, 'preFocus', true);
+                dom.setDataset(this._toggle, 'uiPreFocus', true);
             } else {
                 dom.hide(this._placeholder);
                 dom.addClass(this._toggle, 'focus');
@@ -192,16 +197,16 @@ Object.assign(SelectMenu.prototype, {
 
             this.show();
 
-            dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
-                if (dom.hasDataset(this._toggle, 'preFocus')) {
-                    dom.removeDataset(this._toggle, 'preFocus');
+            dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
+                if (dom.hasDataset(this._toggle, 'uiPreFocus')) {
+                    dom.removeDataset(this._toggle, 'uiPreFocus');
                 }
 
                 dom.focus(this._searchInput);
             });
         });
 
-        dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', e => {
+        dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', e => {
             e.preventDefault();
 
             // remove selection
@@ -217,24 +222,24 @@ Object.assign(SelectMenu.prototype, {
      * Attach events for a single SelectMenu.
      */
     _eventsSingle() {
-        dom.addEvent(this._searchInput, 'blur.frost.selectmenu', _ => {
+        dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
             this.hide();
         });
 
-        dom.addEvent(this._toggle, 'mousedown.frost.selectmenu', _ => {
+        dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', _ => {
             if (dom.isConnected(this._menuNode)) {
                 this.hide();
             } else {
                 this.show();
 
-                dom.addEventOnce(window, 'mouseup.frost.selectmenu', _ => {
+                dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
                     // focus search input when mouse is released
                     dom.focus(this._searchInput);
                 });
             }
         });
 
-        dom.addEvent(this._toggle, 'keydown.frost.selectmenu', e => {
+        dom.addEvent(this._toggle, 'keydown.ui.selectmenu', e => {
             if (!/^.$/u.test(e.key)) {
                 return;
             }
@@ -244,7 +249,7 @@ Object.assign(SelectMenu.prototype, {
         });
 
         if (this._settings.allowClear) {
-            dom.addEventDelegate(this._toggle, 'click.frost.selectmenu', '[data-action="clear"]', _ => {
+            dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', _ => {
                 // remove selection
                 this._setValue(null);
             });

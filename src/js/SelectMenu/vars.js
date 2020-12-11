@@ -8,7 +8,24 @@ SelectMenu.defaults = {
     },
     data: null,
     getResults: null,
-    isMatch: (item, term) => item.text.toLowerCase().indexOf(term.toLowerCase()) > -1,
+    isMatch: (item, term) => {
+        const escapedTerm = Core.escapeRegExp(term);
+        const regExp = new RegExp(escapedTerm, 'i');
+
+        if (regExp.test(item.text)) {
+            return true;
+        }
+
+        const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const escapedNormal = Core.escapeRegExp(normalized);
+        const regExpNormal = new RegExp(escapedNormal, 'i');
+
+        if (regExpNormal.test(item.text)) {
+            return true;
+        }
+
+        return false;
+    },
     renderResult: item => item.text,
     renderSelection: item => item.text,
     sanitize: input => dom.sanitize(input),
@@ -31,6 +48,7 @@ SelectMenu.defaults = {
     allowClear: false,
     closeOnSelect: true,
     fullWidth: true,
+    debounceInput: 250,
     duration: 100,
     placement: 'bottom',
     position: 'start',
@@ -39,31 +57,6 @@ SelectMenu.defaults = {
     minContact: false
 };
 
-// SelectMenu QuerySet method
-if (QuerySet) {
-    QuerySet.prototype.selectmenu = function(a, ...args) {
-        let settings, method;
-
-        if (Core.isObject(a)) {
-            settings = a;
-        } else if (Core.isString(a)) {
-            method = a;
-        }
-
-        for (const node of this) {
-            if (!Core.isElement(node)) {
-                continue;
-            }
-
-            const selectMenu = SelectMenu.init(node, settings);
-
-            if (method) {
-                selectMenu[method](...args);
-            }
-        }
-
-        return this;
-    };
-}
+UI.initComponent('selectmenu', SelectMenu);
 
 UI.SelectMenu = SelectMenu;

@@ -36,7 +36,7 @@ Object.assign(SelectMenu.prototype, {
             html: '<small class="icon-cancel"></small>',
             class: 'close float-end me-5 lh-base',
             dataset: {
-                action: 'clear'
+                uiAction: 'clear'
             }
         });
     },
@@ -93,8 +93,8 @@ Object.assign(SelectMenu.prototype, {
             ),
             class: 'selectmenu-item selectmenu-action',
             dataset: {
-                action: 'select',
-                value: item.value
+                uiAction: 'select',
+                uiValue: item.value
             }
         });
 
@@ -185,7 +185,7 @@ Object.assign(SelectMenu.prototype, {
             html: '<small class="icon-cancel"></small>',
             class: 'btn btn-sm btn-outline-secondary',
             dataset: {
-                action: 'clear'
+                uiAction: 'clear'
             }
         });
         dom.append(group, close);

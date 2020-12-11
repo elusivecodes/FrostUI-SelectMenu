@@ -68,20 +68,20 @@ Object.assign(SelectMenu.prototype, {
      * Refresh the toggle disabled class.
      */
     _refreshDisabled() {
+        const element = this._multiple ?
+            this._searchInput :
+            this._toggle;
+
         if (this._disabled) {
             dom.addClass(this._toggle, 'disabled');
-            if (this._multiple) {
-                dom.setAttribute(this._searchInput, 'tabindex', '-1');
-            } else {
-                dom.setAttribute(this._toggle, 'tabindex', '-1');
-            }
+            dom.setAttribute(element, 'tabindex', '-1');
         } else {
             dom.removeClass(this._toggle, 'disabled');
-            if (this._multiple) {
-                dom.removeAttribute(this._searchInput, 'tabindex');
-            } else {
-                dom.removeAttribute(this._toggle, 'tabindex');
-            }
+            dom.removeAttribute(element, 'tabindex');
+        }
+
+        if (this._readonly) {
+            dom.addClass(this._toggle, 'readonly');
         }
     },
 
@@ -132,7 +132,10 @@ Object.assign(SelectMenu.prototype, {
      * Refresh the placeholder.
      */
     _refreshPlaceholder() {
-        if (this._value && this._value.length) {
+        if (
+            (this._multiple && this._value.length) ||
+            (!this._multiple && this._value)
+        ) {
             dom.hide(this._placeholder);
         } else {
             dom.show(this._placeholder);
