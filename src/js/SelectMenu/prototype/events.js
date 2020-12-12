@@ -181,7 +181,7 @@ Object.assign(SelectMenu.prototype, {
         });
 
         dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
-            if (dom.hasDataset(this._toggle, 'preFocus')) {
+            if (dom.hasDataset(this._toggle, 'uiPreFocus')) {
                 // prevent losing focus when toggle element is focused
                 return;
             }
