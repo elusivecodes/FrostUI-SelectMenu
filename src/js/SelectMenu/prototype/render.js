@@ -123,10 +123,15 @@ Object.assign(SelectMenu.prototype, {
         if (!this._multiple) {
             // add search input for single select menus
 
+            const searchOuter = dom.create('div', {
+                class: this.constructor.classes.searchOuter
+            });
+            dom.append(this._menuNode, searchOuter);
+
             const searchContainer = dom.create('div', {
                 class: this.constructor.classes.searchContainer
             });
-            dom.append(this._menuNode, searchContainer);
+            dom.append(searchOuter, searchContainer);
 
             this._searchInput = dom.create('input', {
                 class: this.constructor.classes.searchInput

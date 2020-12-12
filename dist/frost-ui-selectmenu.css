@@ -8,8 +8,21 @@
   background-size: 16px 12px;
 }
 .selectmenu-multi {
-  padding: 0.25rem 0.25rem 0.5rem 0.5rem;
+  padding: 0.5rem;
   cursor: text;
+}
+.selectmenu-multi .btn {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+}
+.selectmenu-multi > * {
+  margin: 0 0.25rem 0 0;
+}
+.selectmenu-multi.input-sm {
+  padding: 0.25rem 0.5rem;
+}
+.selectmenu-multi.input-lg .btn {
+  font-size: 1rem;
 }
 .selectmenu-placeholder {
   color: gray;
@@ -18,18 +31,9 @@
 }
 .selectmenu-multi-input {
   width: 0;
-  height: 1.5rem;
   min-width: 20px;
   background: transparent;
   outline: 0;
-}
-.selectmenu-multi .btn {
-  height: 1.5rem;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.75rem;
-}
-.selectmenu-multi > * {
-  margin: 0.25rem 0.25rem 0 0;
 }
 .selectmenu-menu {
   width: 100%;

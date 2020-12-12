@@ -81,8 +81,9 @@ SelectMenu.classes = {
     placeholder: 'selectmenu-placeholder',
     readonly: 'readonly',
     rippleLine: 'ripple-line',
-    searchContainer: 'form-input p-1',
+    searchContainer: 'form-input',
     searchInput: 'input-filled',
+    searchOuter: 'p-1',
     toggle: 'selectmenu-toggle position-relative text-start'
 };
 
