@@ -25,6 +25,11 @@ Object.assign(SelectMenu.prototype, {
             e.preventDefault();
         });
 
+        dom.addEventDelegate(this._menuNode, 'contextmenu.ui.selectmenu', '[data-ui-action="select"]', e => {
+            // prevent menu node from showing right click menu
+            e.preventDefault();
+        });
+
         dom.addEventDelegate(this._itemsList, 'mouseup.ui.selectmenu', '[data-ui-action="select"]', e => {
             e.preventDefault();
 
@@ -187,10 +192,14 @@ Object.assign(SelectMenu.prototype, {
             }
 
             dom.removeClass(this._toggle, 'focus');
-            this.hide();
+            if (dom.isConnected(this._menuNode)) {
+                this.hide();
+            } else {
+                this._refreshPlaceholder();
+            }
         });
 
-        dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', _ => {
+        dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
             if (dom.hasClass(this._toggle, 'focus')) {
                 // maintain focus when toggle element is already focused
                 dom.setDataset(this._toggle, 'uiPreFocus', true);
@@ -199,7 +208,9 @@ Object.assign(SelectMenu.prototype, {
                 dom.addClass(this._toggle, 'focus');
             }
 
-            this.show();
+            if (!e.button) {
+                this.show();
+            }
 
             dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
                 if (dom.hasDataset(this._toggle, 'uiPreFocus')) {
@@ -230,7 +241,11 @@ Object.assign(SelectMenu.prototype, {
             this.hide();
         });
 
-        dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', _ => {
+        dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
+            if (e.button) {
+                return;
+            }
+
             if (dom.isConnected(this._menuNode)) {
                 this.hide();
             } else {
