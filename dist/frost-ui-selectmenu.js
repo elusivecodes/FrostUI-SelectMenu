@@ -1413,7 +1413,7 @@
         info: 'selectmenu-item text-secondary',
         item: 'selectmenu-item',
         items: 'selectmenu-items',
-        focus: 'selectmenu-focus', //
+        focus: 'selectmenu-focus',
         group: 'selectmenu-group',
         menu: 'selectmenu-menu',
         multiClear: 'btn btn-sm btn-outline-secondary',
