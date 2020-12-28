@@ -98,6 +98,7 @@
 
         /**
          * Hide the SelectMenu.
+         * @returns {SelectMenu} The SelectMenu.
          */
         hide() {
             if (
@@ -105,7 +106,7 @@
                 !dom.isConnected(this._menuNode) ||
                 !dom.triggerOne(this._node, 'hide.ui.selectmenu')
             ) {
-                return;
+                return this;
             }
 
             this._animating = true;
@@ -122,10 +123,13 @@
             }).catch(_ => { }).finally(_ => {
                 this._animating = false;
             });
+
+            return this;
         }
 
         /**
          * Show the SelectMenu.
+         * @returns {SelectMenu} The SelectMenu.
          */
         show() {
             if (
@@ -135,13 +139,13 @@
                 dom.isConnected(this._menuNode) ||
                 !dom.triggerOne(this._node, 'show.ui.selectmenu')
             ) {
-                return;
+                return this;
             }
 
             this._getData({});
 
             if (this._multiple && !dom.hasChildren(this._itemsList)) {
-                return;
+                return this;
             }
 
             this._animating = true;
@@ -162,22 +166,28 @@
             }).catch(_ => { }).finally(_ => {
                 this._animating = false;
             });
+
+            return this;
         }
 
         /**
          * Toggle the SelectMenu.
+         * @returns {SelectMenu} The SelectMenu.
          */
         toggle() {
-            dom.isConnected(this._menuNode) ?
+            return dom.isConnected(this._menuNode) ?
                 this.hide() :
                 this.show();
         }
 
         /**
          * Update the SelectMenu position.
+         * @returns {SelectMenu} The SelectMenu.
          */
         update() {
             this._popper.update();
+
+            return this;
         }
 
         /**
@@ -256,11 +266,11 @@
             }));
 
             dom.addEvent(this._searchInput, 'keydown.ui.selectmenu', e => {
-                if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter', 'Escape'].includes(e.key)) {
+                if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter', 'Escape'].includes(e.code)) {
                     return;
                 }
 
-                if (e.key === 'Backspace') {
+                if (e.code === 'Backspace') {
                     if (this._multiple && this._value.length && !dom.getValue(this._searchInput)) {
                         e.preventDefault();
 
@@ -280,11 +290,11 @@
                     return;
                 }
 
-                if (this._multiple && !dom.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
+                if (this._multiple && !dom.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
                     return this.show();
                 }
 
-                if (e.key === 'Escape') {
+                if (e.code === 'Escape') {
                     // close the menu
                     dom.blur(this._searchInput);
 
@@ -299,7 +309,7 @@
 
                 const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
 
-                if (e.key === 'Enter') {
+                if (e.code === 'Enter') {
                     // select the focused item
                     if (focusedNode) {
                         const value = dom.getDataset(focusedNode, 'uiValue');
@@ -315,7 +325,7 @@
                 if (!focusedNode) {
                     focusNode = dom.findOne('[data-ui-action="select"]', this._itemsList);
                 } else {
-                    switch (e.key) {
+                    switch (e.code) {
                         case 'ArrowDown':
                             focusNode = dom.nextAll(focusedNode, '[data-ui-action="select"]').shift();
                             break;

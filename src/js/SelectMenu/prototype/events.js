@@ -46,11 +46,11 @@ Object.assign(SelectMenu.prototype, {
         }));
 
         dom.addEvent(this._searchInput, 'keydown.ui.selectmenu', e => {
-            if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter', 'Escape'].includes(e.key)) {
+            if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter', 'Escape'].includes(e.code)) {
                 return;
             }
 
-            if (e.key === 'Backspace') {
+            if (e.code === 'Backspace') {
                 if (this._multiple && this._value.length && !dom.getValue(this._searchInput)) {
                     e.preventDefault();
 
@@ -70,11 +70,11 @@ Object.assign(SelectMenu.prototype, {
                 return;
             }
 
-            if (this._multiple && !dom.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
+            if (this._multiple && !dom.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
                 return this.show();
             }
 
-            if (e.key === 'Escape') {
+            if (e.code === 'Escape') {
                 // close the menu
                 dom.blur(this._searchInput);
 
@@ -89,7 +89,7 @@ Object.assign(SelectMenu.prototype, {
 
             const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
 
-            if (e.key === 'Enter') {
+            if (e.code === 'Enter') {
                 // select the focused item
                 if (focusedNode) {
                     const value = dom.getDataset(focusedNode, 'uiValue');
@@ -105,7 +105,7 @@ Object.assign(SelectMenu.prototype, {
             if (!focusedNode) {
                 focusNode = dom.findOne('[data-ui-action="select"]', this._itemsList);
             } else {
-                switch (e.key) {
+                switch (e.code) {
                     case 'ArrowDown':
                         focusNode = dom.nextAll(focusedNode, '[data-ui-action="select"]').shift();
                         break;

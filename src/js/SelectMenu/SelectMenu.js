@@ -68,6 +68,7 @@ class SelectMenu extends UI.BaseComponent {
 
     /**
      * Hide the SelectMenu.
+     * @returns {SelectMenu} The SelectMenu.
      */
     hide() {
         if (
@@ -75,7 +76,7 @@ class SelectMenu extends UI.BaseComponent {
             !dom.isConnected(this._menuNode) ||
             !dom.triggerOne(this._node, 'hide.ui.selectmenu')
         ) {
-            return;
+            return this;
         }
 
         this._animating = true;
@@ -92,10 +93,13 @@ class SelectMenu extends UI.BaseComponent {
         }).catch(_ => { }).finally(_ => {
             this._animating = false;
         });
+
+        return this;
     }
 
     /**
      * Show the SelectMenu.
+     * @returns {SelectMenu} The SelectMenu.
      */
     show() {
         if (
@@ -105,13 +109,13 @@ class SelectMenu extends UI.BaseComponent {
             dom.isConnected(this._menuNode) ||
             !dom.triggerOne(this._node, 'show.ui.selectmenu')
         ) {
-            return;
+            return this;
         }
 
         this._getData({});
 
         if (this._multiple && !dom.hasChildren(this._itemsList)) {
-            return;
+            return this;
         }
 
         this._animating = true;
@@ -132,22 +136,28 @@ class SelectMenu extends UI.BaseComponent {
         }).catch(_ => { }).finally(_ => {
             this._animating = false;
         });
+
+        return this;
     }
 
     /**
      * Toggle the SelectMenu.
+     * @returns {SelectMenu} The SelectMenu.
      */
     toggle() {
-        dom.isConnected(this._menuNode) ?
+        return dom.isConnected(this._menuNode) ?
             this.hide() :
             this.show();
     }
 
     /**
      * Update the SelectMenu position.
+     * @returns {SelectMenu} The SelectMenu.
      */
     update() {
         this._popper.update();
+
+        return this;
     }
 
     /**
