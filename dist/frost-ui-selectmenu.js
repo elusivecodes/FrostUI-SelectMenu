@@ -80,11 +80,12 @@
         }
 
         /**
-         * Destroy the SelectMenu.
+         * Dispose the SelectMenu.
          */
-        destroy() {
+        dispose() {
             if (this._popper) {
-                this._popper.destroy();
+                this._popper.dispose();
+                this._popper = null;
             }
 
             dom.removeAttribute(this._node, 'tabindex');
@@ -93,7 +94,18 @@
             dom.remove(this._menuNode);
             dom.remove(this._toggle);
 
-            super.destroy();
+            this._toggle = null;
+            this._clear = null;
+            this._searchInput = null;
+            this._placeholder = null;
+            this._menuNode = null;
+            this._itemsList = null;
+            this._data = null;
+            this._lookup = null;
+            this._value = null;
+            this._request = null;
+
+            super.dispose();
         }
 
         /**
