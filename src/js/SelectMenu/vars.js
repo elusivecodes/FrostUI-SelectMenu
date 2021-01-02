@@ -6,7 +6,7 @@ SelectMenu.defaults = {
         maxSelections: 'Selection limit reached.',
         noResults: 'No results'
     },
-    clearIcon: 'icon-cancel',
+    clearIcon: 'icon icon-cancel',
     data: null,
     getResults: null,
     isMatch: (item, term) => {

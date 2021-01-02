@@ -922,7 +922,7 @@
          */
         _renderClear() {
             this._clear = dom.create('button', {
-                html: `<small class="${this._settings.clearIcon}"></small>`,
+                html: `<span class="${this._settings.clearIcon}"></span>`,
                 class: this.constructor.classes.close,
                 dataset: {
                     uiAction: 'clear'
@@ -1071,7 +1071,7 @@
             });
 
             const close = dom.create('div', {
-                html: `<small class="${this._settings.clearIcon}"></small>`,
+                html: `<span class="${this._settings.clearIcon}"></span>`,
                 class: this.constructor.classes.multiClear,
                 dataset: {
                     uiAction: 'clear'
@@ -1371,7 +1371,7 @@
             maxSelections: 'Selection limit reached.',
             noResults: 'No results'
         },
-        clearIcon: 'icon-cancel',
+        clearIcon: 'icon icon-cancel',
         data: null,
         getResults: null,
         isMatch: (item, term) => {
