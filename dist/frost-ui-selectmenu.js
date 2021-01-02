@@ -1031,7 +1031,7 @@
 
                 if (this._settings.searchInputStyle === 'filled') {
                     const ripple = dom.create('div', {
-                        class: this.constructor.classes.rippleLine
+                        class: this.constructor.classes.searchInputRipple
                     });
                     dom.append(searchContainer, ripple);
                 }
@@ -1450,10 +1450,10 @@
         multiToggle: 'selectmenu-multi d-flex flex-wrap position-relative text-start',
         placeholder: 'selectmenu-placeholder',
         readonly: 'readonly',
-        rippleLine: 'ripple-line',
         searchContainer: 'form-input',
         searchInputFilled: 'input-filled',
         searchInputOutline: 'input-outline',
+        searchInputRipple: 'ripple-line',
         searchOuter: 'p-1',
         toggle: 'selectmenu-toggle position-relative text-start'
     };

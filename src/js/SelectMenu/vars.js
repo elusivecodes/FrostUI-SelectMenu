@@ -81,10 +81,10 @@ SelectMenu.classes = {
     multiToggle: 'selectmenu-multi d-flex flex-wrap position-relative text-start',
     placeholder: 'selectmenu-placeholder',
     readonly: 'readonly',
-    rippleLine: 'ripple-line',
     searchContainer: 'form-input',
     searchInputFilled: 'input-filled',
     searchInputOutline: 'input-outline',
+    searchInputRipple: 'ripple-line',
     searchOuter: 'p-1',
     toggle: 'selectmenu-toggle position-relative text-start'
 };

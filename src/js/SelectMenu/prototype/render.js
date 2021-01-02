@@ -142,7 +142,7 @@ Object.assign(SelectMenu.prototype, {
 
             if (this._settings.searchInputStyle === 'filled') {
                 const ripple = dom.create('div', {
-                    class: this.constructor.classes.rippleLine
+                    class: this.constructor.classes.searchInputRipple
                 });
                 dom.append(searchContainer, ripple);
             }
