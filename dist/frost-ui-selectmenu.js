@@ -1023,14 +1023,18 @@
                 dom.append(searchOuter, searchContainer);
 
                 this._searchInput = dom.create('input', {
-                    class: this.constructor.classes.searchInput
+                    class: this._settings.searchInputStyle === 'filled' ?
+                        this.constructor.classes.searchInputFilled :
+                        this.constructor.classes.searchInputOutline
                 });
                 dom.append(searchContainer, this._searchInput);
 
-                const ripple = dom.create('div', {
-                    class: this.constructor.classes.rippleLine
-                });
-                dom.append(searchContainer, ripple);
+                if (this._settings.searchInputStyle === 'filled') {
+                    const ripple = dom.create('div', {
+                        class: this.constructor.classes.rippleLine
+                    });
+                    dom.append(searchContainer, ripple);
+                }
             }
 
             this._itemsList = dom.create('div', {
@@ -1372,6 +1376,7 @@
             noResults: 'No results'
         },
         clearIcon: 'icon icon-cancel',
+        searchInputStyle: 'filled',
         data: null,
         getResults: null,
         isMatch: (item, term) => {
@@ -1447,7 +1452,8 @@
         readonly: 'readonly',
         rippleLine: 'ripple-line',
         searchContainer: 'form-input',
-        searchInput: 'input-filled',
+        searchInputFilled: 'input-filled',
+        searchInputOutline: 'input-outline',
         searchOuter: 'p-1',
         toggle: 'selectmenu-toggle position-relative text-start'
     };

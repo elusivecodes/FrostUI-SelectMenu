@@ -7,6 +7,7 @@ SelectMenu.defaults = {
         noResults: 'No results'
     },
     clearIcon: 'icon icon-cancel',
+    searchInputStyle: 'filled',
     data: null,
     getResults: null,
     isMatch: (item, term) => {
@@ -82,7 +83,8 @@ SelectMenu.classes = {
     readonly: 'readonly',
     rippleLine: 'ripple-line',
     searchContainer: 'form-input',
-    searchInput: 'input-filled',
+    searchInputFilled: 'input-filled',
+    searchInputOutline: 'input-outline',
     searchOuter: 'p-1',
     toggle: 'selectmenu-toggle position-relative text-start'
 };
