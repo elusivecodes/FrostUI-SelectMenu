@@ -9,7 +9,7 @@ Object.assign(SelectMenu.prototype, {
      */
     _events() {
         dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
-            if (this._disabled) {
+            if (!this._enabled) {
                 return;
             }
 

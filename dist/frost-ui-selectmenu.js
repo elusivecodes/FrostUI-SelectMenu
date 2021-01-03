@@ -46,7 +46,7 @@
             this._placeholderText = this._settings.placeholder;
             this._maxSelections = this._settings.maxSelections;
             this._multiple = dom.getProperty(this._node, 'multiple');
-            this._disabled = dom.is(this._node, ':disabled');
+            this._enabled = !dom.is(this._node, ':disabled');
             this._readonly = dom.hasAttribute(this._node, 'readonly');
 
             this._data = [];
@@ -145,7 +145,7 @@
          */
         show() {
             if (
-                this._disabled ||
+                !this._enabled ||
                 this._readonly ||
                 this._animating ||
                 dom.isConnected(this._menuNode) ||
@@ -241,7 +241,7 @@
          */
         _events() {
             dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
-                if (this._disabled) {
+                if (!this._enabled) {
                     return;
                 }
 
@@ -584,7 +584,7 @@
                 this._searchInput :
                 this._toggle;
 
-            if (this._disabled) {
+            if (!this._enabled) {
                 dom.addClass(this._toggle, this.constructor.classes.disabled);
                 dom.setAttribute(element, 'tabindex', '-1');
             } else {
@@ -1186,7 +1186,7 @@
          */
         disable() {
             dom.setAttribute(this._node, 'disabled', true);
-            this._disabled = true;
+            this._enabled = false;
             this._refreshDisabled();
 
             return this;
@@ -1198,7 +1198,7 @@
          */
         enable() {
             dom.removeAttribute(this._node, 'disabled');
-            this._disabled = false;
+            this._enabled = true;
             this._refreshDisabled();
 
             return this;
@@ -1263,7 +1263,7 @@
          * @returns {SelectMenu} The SelectMenu.
          */
         setValue(value) {
-            if (!this._disabled) {
+            if (this._enabled) {
                 this._loadValue(value);
             }
 

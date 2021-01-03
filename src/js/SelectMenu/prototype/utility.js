@@ -22,7 +22,7 @@ Object.assign(SelectMenu.prototype, {
      */
     disable() {
         dom.setAttribute(this._node, 'disabled', true);
-        this._disabled = true;
+        this._enabled = false;
         this._refreshDisabled();
 
         return this;
@@ -34,7 +34,7 @@ Object.assign(SelectMenu.prototype, {
      */
     enable() {
         dom.removeAttribute(this._node, 'disabled');
-        this._disabled = false;
+        this._enabled = true;
         this._refreshDisabled();
 
         return this;
@@ -99,7 +99,7 @@ Object.assign(SelectMenu.prototype, {
      * @returns {SelectMenu} The SelectMenu.
      */
     setValue(value) {
-        if (!this._disabled) {
+        if (this._enabled) {
             this._loadValue(value);
         }
 

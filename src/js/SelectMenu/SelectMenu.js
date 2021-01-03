@@ -16,7 +16,7 @@ class SelectMenu extends UI.BaseComponent {
         this._placeholderText = this._settings.placeholder;
         this._maxSelections = this._settings.maxSelections;
         this._multiple = dom.getProperty(this._node, 'multiple');
-        this._disabled = dom.is(this._node, ':disabled');
+        this._enabled = !dom.is(this._node, ':disabled');
         this._readonly = dom.hasAttribute(this._node, 'readonly');
 
         this._data = [];
@@ -115,7 +115,7 @@ class SelectMenu extends UI.BaseComponent {
      */
     show() {
         if (
-            this._disabled ||
+            !this._enabled ||
             this._readonly ||
             this._animating ||
             dom.isConnected(this._menuNode) ||
