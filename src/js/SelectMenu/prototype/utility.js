@@ -95,7 +95,7 @@ Object.assign(SelectMenu.prototype, {
 
     /**
      * Set the selected value(s).
-     * @param {string|number|array} value The selected value(s).
+     * @param {string|number|array} value The value to set.
      * @returns {SelectMenu} The SelectMenu.
      */
     setValue(value) {
