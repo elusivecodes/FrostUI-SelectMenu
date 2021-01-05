@@ -172,29 +172,4 @@ class SelectMenu extends UI.BaseComponent {
         return this;
     }
 
-    /**
-     * Auto-hide all visible select menus (non-inline).
-     * @param {HTMLElement} [target] The target node.
-     */
-    static autoHide(target) {
-        const targetSelector = dom.getDataset(target, 'target');
-        const menus = dom.find('.selectmenu-menu');
-
-        for (const menu of menus) {
-            if (target && dom.hasDescendent(menu, target)) {
-                continue;
-            }
-
-            const selector = dom.getDataset(menu, 'target');
-
-            if (selector === targetSelector) {
-                continue;
-            }
-
-            const input = dom.findOne(selector);
-            const datetimepicker = this.init(input);
-            datetimepicker.hide();
-        }
-    }
-
 }

@@ -72,7 +72,7 @@ Object.assign(SelectMenu.prototype, {
 
     /**
      * Render an item.
-     * @param {object} group The item to render.
+     * @param {object} item The item to render.
      * @returns {HTMLElement} The item element.
      */
     _renderItem(item) {

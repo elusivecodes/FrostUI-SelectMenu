@@ -202,31 +202,6 @@
             return this;
         }
 
-        /**
-         * Auto-hide all visible select menus (non-inline).
-         * @param {HTMLElement} [target] The target node.
-         */
-        static autoHide(target) {
-            const targetSelector = dom.getDataset(target, 'target');
-            const menus = dom.find('.selectmenu-menu');
-
-            for (const menu of menus) {
-                if (target && dom.hasDescendent(menu, target)) {
-                    continue;
-                }
-
-                const selector = dom.getDataset(menu, 'target');
-
-                if (selector === targetSelector) {
-                    continue;
-                }
-
-                const input = dom.findOne(selector);
-                const datetimepicker = this.init(input);
-                datetimepicker.hide();
-            }
-        }
-
     }
 
 
@@ -961,7 +936,7 @@
 
         /**
          * Render an item.
-         * @param {object} group The item to render.
+         * @param {object} item The item to render.
          * @returns {HTMLElement} The item element.
          */
         _renderItem(item) {
@@ -1436,12 +1411,12 @@
         clear: 'close float-end me-5 lh-base',
         disabled: 'disabled',
         disabledItem: 'selectmenu-disabled',
+        focus: 'selectmenu-focus',
+        group: 'selectmenu-group',
         hide: 'visually-hidden',
         info: 'selectmenu-item text-secondary',
         item: 'selectmenu-item',
         items: 'selectmenu-items',
-        focus: 'selectmenu-focus',
-        group: 'selectmenu-group',
         menu: 'selectmenu-menu',
         multiClear: 'btn btn-sm btn-outline-secondary',
         multiGroup: 'btn-group',
