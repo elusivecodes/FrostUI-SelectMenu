@@ -35,6 +35,9 @@ Object.assign(SelectMenu.prototype, {
         this._clear = dom.create('button', {
             html: `<span class="${this._settings.clearIcon}"></span>`,
             class: this.constructor.classes.close,
+            attributes: {
+                type: 'button'
+            },
             dataset: {
                 uiAction: 'clear'
             }
@@ -63,7 +66,10 @@ Object.assign(SelectMenu.prototype, {
     _renderInfo(text) {
         const element = dom.create('button', {
             html: this._settings.sanitize(text),
-            class: this.constructor.classes.info
+            class: this.constructor.classes.info,
+            attributes: {
+                type: 'button'
+            }
         });
         dom.append(this._itemsList, element);
         this.update();
@@ -250,7 +256,10 @@ Object.assign(SelectMenu.prototype, {
             class: [
                 dom.getAttribute(this._node, 'class') || '',
                 this.constructor.classes.toggle
-            ]
+            ],
+            attributes: {
+                type: 'button'
+            }
         });
     },
 

@@ -13,6 +13,10 @@ class SelectMenu extends UI.BaseComponent {
     constructor(node, settings) {
         super(node, settings);
 
+        if (!dom.is(this._node, 'select')) {
+            throw new Error('SelectMenu must be created on a select element');
+        }
+
         this._placeholderText = this._settings.placeholder;
         this._maxSelections = this._settings.maxSelections;
         this._multiple = dom.getProperty(this._node, 'multiple');

@@ -43,6 +43,10 @@
         constructor(node, settings) {
             super(node, settings);
 
+            if (!dom.is(this._node, 'select')) {
+                throw new Error('SelectMenu must be created on a select element');
+            }
+
             this._placeholderText = this._settings.placeholder;
             this._maxSelections = this._settings.maxSelections;
             this._multiple = dom.getProperty(this._node, 'multiple');
@@ -899,6 +903,9 @@
             this._clear = dom.create('button', {
                 html: `<span class="${this._settings.clearIcon}"></span>`,
                 class: this.constructor.classes.close,
+                attributes: {
+                    type: 'button'
+                },
                 dataset: {
                     uiAction: 'clear'
                 }
@@ -927,7 +934,10 @@
         _renderInfo(text) {
             const element = dom.create('button', {
                 html: this._settings.sanitize(text),
-                class: this.constructor.classes.info
+                class: this.constructor.classes.info,
+                attributes: {
+                    type: 'button'
+                }
             });
             dom.append(this._itemsList, element);
             this.update();
@@ -1114,7 +1124,10 @@
                 class: [
                     dom.getAttribute(this._node, 'class') || '',
                     this.constructor.classes.toggle
-                ]
+                ],
+                attributes: {
+                    type: 'button'
+                }
             });
         },
 
