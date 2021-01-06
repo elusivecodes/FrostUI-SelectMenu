@@ -1363,7 +1363,7 @@
             maxSelections: 'Selection limit reached.',
             noResults: 'No results'
         },
-        clearIcon: 'icon icon-cancel',
+        clearIcon: 'btn-close',
         searchInputStyle: 'filled',
         data: null,
         getResults: null,
