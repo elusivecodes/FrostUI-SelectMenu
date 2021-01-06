@@ -6,7 +6,6 @@ SelectMenu.defaults = {
         maxSelections: 'Selection limit reached.',
         noResults: 'No results'
     },
-    clearIcon: 'btn-close',
     searchInputStyle: 'filled',
     data: null,
     getResults: null,
@@ -64,7 +63,7 @@ SelectMenu.defaults = {
 SelectMenu.classes = {
     action: 'selectmenu-action',
     active: 'selectmenu-active',
-    clear: 'close float-end me-5 lh-base',
+    clear: 'btn-close float-end me-5 lh-base',
     disabled: 'disabled',
     disabledItem: 'selectmenu-disabled',
     focus: 'selectmenu-focus',
@@ -75,6 +74,7 @@ SelectMenu.classes = {
     items: 'selectmenu-items',
     menu: 'selectmenu-menu',
     multiClear: 'btn btn-sm btn-outline-secondary',
+    multiClearIcon: 'btn-close',
     multiGroup: 'btn-group',
     multiItem: 'btn btn-sm btn-secondary',
     multiSearchInput: 'selectmenu-multi-input',

@@ -33,8 +33,7 @@ Object.assign(SelectMenu.prototype, {
      */
     _renderClear() {
         this._clear = dom.create('button', {
-            html: `<span class="${this._settings.clearIcon}"></span>`,
-            class: this.constructor.classes.close,
+            class: this.constructor.classes.clear,
             attributes: {
                 type: 'button'
             },
@@ -192,7 +191,7 @@ Object.assign(SelectMenu.prototype, {
         });
 
         const close = dom.create('div', {
-            html: `<span class="${this._settings.clearIcon}"></span>`,
+            html: `<span class="${this.constructor.classes.multiClearIcon}"></span>`,
             class: this.constructor.classes.multiClear,
             dataset: {
                 uiAction: 'clear'
@@ -215,7 +214,9 @@ Object.assign(SelectMenu.prototype, {
      */
     _renderPlaceholder() {
         this._placeholder = dom.create('span', {
-            html: this._settings.sanitize(this._placeholderText),
+            html: this._placeholderText ?
+                this._settings.sanitize(this._placeholderText) :
+                '&nbsp;',
             class: this.constructor.classes.placeholder
         });
     },
