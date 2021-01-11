@@ -17,30 +17,6 @@ Object.assign(SelectMenu.prototype, {
     },
 
     /**
-     * Disable the SelectMenu.
-     * @returns {SelectMenu} The SelectMenu.
-     */
-    disable() {
-        dom.setAttribute(this._node, 'disabled', true);
-        this._enabled = false;
-        this._refreshDisabled();
-
-        return this;
-    },
-
-    /**
-     * Enable the SelectMenu.
-     * @returns {SelectMenu} The SelectMenu.
-     */
-    enable() {
-        dom.removeAttribute(this._node, 'disabled');
-        this._enabled = true;
-        this._refreshDisabled();
-
-        return this;
-    },
-
-    /**
      * Get the maximum selections.
      * @returns {number} The maximum selections.
      */

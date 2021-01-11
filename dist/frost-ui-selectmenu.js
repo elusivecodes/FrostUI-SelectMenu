@@ -84,6 +84,18 @@
         }
 
         /**
+         * Disable the SelectMenu.
+         * @returns {SelectMenu} The SelectMenu.
+         */
+        disable() {
+            dom.setAttribute(this._node, 'disabled', true);
+            this._enabled = false;
+            this._refreshDisabled();
+
+            return this;
+        }
+
+        /**
          * Dispose the SelectMenu.
          */
         dispose() {
@@ -110,6 +122,18 @@
             this._request = null;
 
             super.dispose();
+        }
+
+        /**
+         * Enable the SelectMenu.
+         * @returns {SelectMenu} The SelectMenu.
+         */
+        enable() {
+            dom.removeAttribute(this._node, 'disabled');
+            this._enabled = true;
+            this._refreshDisabled();
+
+            return this;
         }
 
         /**
@@ -1167,30 +1191,6 @@
             }
 
             return this._cloneValue(this._value);
-        },
-
-        /**
-         * Disable the SelectMenu.
-         * @returns {SelectMenu} The SelectMenu.
-         */
-        disable() {
-            dom.setAttribute(this._node, 'disabled', true);
-            this._enabled = false;
-            this._refreshDisabled();
-
-            return this;
-        },
-
-        /**
-         * Enable the SelectMenu.
-         * @returns {SelectMenu} The SelectMenu.
-         */
-        enable() {
-            dom.removeAttribute(this._node, 'disabled');
-            this._enabled = true;
-            this._refreshDisabled();
-
-            return this;
         },
 
         /**

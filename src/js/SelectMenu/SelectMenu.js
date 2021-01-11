@@ -54,6 +54,18 @@ class SelectMenu extends UI.BaseComponent {
     }
 
     /**
+     * Disable the SelectMenu.
+     * @returns {SelectMenu} The SelectMenu.
+     */
+    disable() {
+        dom.setAttribute(this._node, 'disabled', true);
+        this._enabled = false;
+        this._refreshDisabled();
+
+        return this;
+    }
+
+    /**
      * Dispose the SelectMenu.
      */
     dispose() {
@@ -80,6 +92,18 @@ class SelectMenu extends UI.BaseComponent {
         this._request = null;
 
         super.dispose();
+    }
+
+    /**
+     * Enable the SelectMenu.
+     * @returns {SelectMenu} The SelectMenu.
+     */
+    enable() {
+        dom.removeAttribute(this._node, 'disabled');
+        this._enabled = true;
+        this._refreshDisabled();
+
+        return this;
     }
 
     /**
