@@ -75,7 +75,7 @@ Object.assign(SelectMenu.prototype, {
      * @returns {SelectMenu} The SelectMenu.
      */
     setValue(value) {
-        if (this._enabled) {
+        if (!dom.is(this._node, ':disabled')) {
             this._loadValue(value);
         }
 

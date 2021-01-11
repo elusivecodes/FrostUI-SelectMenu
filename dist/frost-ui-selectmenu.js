@@ -50,8 +50,6 @@
             this._placeholderText = this._settings.placeholder;
             this._maxSelections = this._settings.maxSelections;
             this._multiple = dom.getProperty(this._node, 'multiple');
-            this._enabled = !dom.is(this._node, ':disabled');
-            this._readonly = dom.hasAttribute(this._node, 'readonly');
 
             this._data = [];
             this._lookup = {};
@@ -89,7 +87,6 @@
          */
         disable() {
             dom.setAttribute(this._node, 'disabled', true);
-            this._enabled = false;
             this._refreshDisabled();
 
             return this;
@@ -130,7 +127,6 @@
          */
         enable() {
             dom.removeAttribute(this._node, 'disabled');
-            this._enabled = true;
             this._refreshDisabled();
 
             return this;
@@ -173,8 +169,8 @@
          */
         show() {
             if (
-                !this._enabled ||
-                this._readonly ||
+                dom.is(this._node, ':disabled') ||
+                dom.hasAttribute(this._node, 'readonly') ||
                 this._animating ||
                 dom.isConnected(this._menuNode) ||
                 !dom.triggerOne(this._node, 'show.ui.selectmenu')
@@ -244,10 +240,6 @@
          */
         _events() {
             dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
-                if (!this._enabled) {
-                    return;
-                }
-
                 if (this._multiple) {
                     dom.focus(this._searchInput);
                 } else {
@@ -587,7 +579,7 @@
                 this._searchInput :
                 this._toggle;
 
-            if (!this._enabled) {
+            if (dom.is(this._node, ':disabled')) {
                 dom.addClass(this._toggle, this.constructor.classes.disabled);
                 dom.setAttribute(element, 'tabindex', '-1');
             } else {
@@ -595,7 +587,7 @@
                 dom.removeAttribute(element, 'tabindex');
             }
 
-            if (this._readonly) {
+            if (dom.hasAttribute(this._node, 'readonly')) {
                 dom.addClass(this._toggle, this.constructor.classes.readonly);
             }
         },
@@ -1252,7 +1244,7 @@
          * @returns {SelectMenu} The SelectMenu.
          */
         setValue(value) {
-            if (this._enabled) {
+            if (!dom.is(this._node, ':disabled')) {
                 this._loadValue(value);
             }
 

@@ -72,7 +72,7 @@ Object.assign(SelectMenu.prototype, {
             this._searchInput :
             this._toggle;
 
-        if (!this._enabled) {
+        if (dom.is(this._node, ':disabled')) {
             dom.addClass(this._toggle, this.constructor.classes.disabled);
             dom.setAttribute(element, 'tabindex', '-1');
         } else {
@@ -80,7 +80,7 @@ Object.assign(SelectMenu.prototype, {
             dom.removeAttribute(element, 'tabindex');
         }
 
-        if (this._readonly) {
+        if (dom.hasAttribute(this._node, 'readonly')) {
             dom.addClass(this._toggle, this.constructor.classes.readonly);
         }
     },

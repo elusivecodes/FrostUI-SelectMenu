@@ -9,10 +9,6 @@ Object.assign(SelectMenu.prototype, {
      */
     _events() {
         dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
-            if (!this._enabled) {
-                return;
-            }
-
             if (this._multiple) {
                 dom.focus(this._searchInput);
             } else {

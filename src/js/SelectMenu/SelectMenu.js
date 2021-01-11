@@ -20,8 +20,6 @@ class SelectMenu extends UI.BaseComponent {
         this._placeholderText = this._settings.placeholder;
         this._maxSelections = this._settings.maxSelections;
         this._multiple = dom.getProperty(this._node, 'multiple');
-        this._enabled = !dom.is(this._node, ':disabled');
-        this._readonly = dom.hasAttribute(this._node, 'readonly');
 
         this._data = [];
         this._lookup = {};
@@ -59,7 +57,6 @@ class SelectMenu extends UI.BaseComponent {
      */
     disable() {
         dom.setAttribute(this._node, 'disabled', true);
-        this._enabled = false;
         this._refreshDisabled();
 
         return this;
@@ -100,7 +97,6 @@ class SelectMenu extends UI.BaseComponent {
      */
     enable() {
         dom.removeAttribute(this._node, 'disabled');
-        this._enabled = true;
         this._refreshDisabled();
 
         return this;
@@ -143,8 +139,8 @@ class SelectMenu extends UI.BaseComponent {
      */
     show() {
         if (
-            !this._enabled ||
-            this._readonly ||
+            dom.is(this._node, ':disabled') ||
+            dom.hasAttribute(this._node, 'readonly') ||
             this._animating ||
             dom.isConnected(this._menuNode) ||
             !dom.triggerOne(this._node, 'show.ui.selectmenu')
