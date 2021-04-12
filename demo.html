@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="dist/frost-ui-selectmenu.css">
     <script src="../FrostUI/dist/frost-ui-bundle.js"></script>
     <script src="dist/frost-ui-selectmenu.js"></script>
+    <style>
+        .selectmenu-focus .text-secondary {
+            color: white !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -302,13 +307,13 @@
 
         UI.SelectMenu.init(selectRender, {
             data: sampleDataArray,
-            renderResult: (item, active) => `${item.text} <small class="text-${active ? 'light' : 'secondary'}">${item.extra}</small>`,
+            renderResult: item => `${item.text} <small class="text-secondary">${item.extra}</small>`,
             renderSelection: item => `${item.text} <small class="text-secondary">${item.extra}</small>`
         });
 
         UI.SelectMenu.init(selectRenderMulti, {
             data: sampleDataArray,
-            renderResult: (item, active) => `${item.text} <small class="text-${active ? 'light' : 'secondary'}">${item.extra}</small>`,
+            renderResult: item => `${item.text} <small class="text-secondary">${item.extra}</small>`,
             renderSelection: item => `${item.text} <small>${item.extra}</small>`
         });
 

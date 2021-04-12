@@ -1,0 +1,85 @@
+$spacing: 1rem !default;
+
+$disabled-opacity: .5 !default;
+
+// border
+$border-size: 1px !default;
+$border-style: solid !default;
+$border-radius: .2rem !default;
+
+// color
+$white: white !default;
+$black: black !default;
+$gray: #808080 !default;
+
+$color-variants: (
+    primary: #2b55d4,
+    dark: #1f3333
+) !default;
+
+$text-color: #121212 !default;
+
+$border-color: fade($black, .15) !default;
+
+// text
+$font-size-sm: .875rem !default;
+$font-size-md: 1rem !default;
+$font-size-lg: 1.25rem !default;
+
+$font-weights: (
+    normal: 400
+) !default;
+
+// z index
+$dropdown-z-index: 1000 !default;
+
+// form
+$input-padding-x: $spacing / 2 !default;
+$input-padding-y: $spacing / 2 !default;
+$input-placeholder-color: $gray !default;
+
+$input-select-arrow-size: 16px !default;
+$input-select-arrow-background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='#{svg-color($text-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !default;
+
+$input-sm-padding-x: $spacing / 2 !default;
+$input-sm-padding-y: $spacing / 4 !default;
+$input-sm-font-size: $font-size-sm !default;
+$input-lg-padding-x: $input-padding-x !default;
+$input-lg-padding-y: $input-padding-y !default;
+$input-lg-font-size: $font-size-lg !default;
+
+// selectmenu
+$selectmenu-multi-btn-padding-x: $spacing / 2 !default;
+$selectmenu-multi-btn-padding-y: $spacing / 8 !default;
+$selectmenu-multi-btn-font-size: .75rem !default;
+$selectmenu-multi-item-spacing: $spacing / 4 !default;
+
+$selectmenu-padding-x: $spacing !default;
+$selectmenu-padding-y: $spacing / 2 !default;
+$selectmenu-color: $text-color !default;
+
+$selectmenu-menu-padding-y: $selectmenu-padding-y !default;
+$selectmenu-menu-font-size: $font-size-md !default;
+$selectmenu-menu-color: $text-color !default;
+$selectmenu-menu-background-color: $white !default;
+$selectmenu-menu-border-size: $border-size !default;
+$selectmenu-menu-border-color: $border-color !default;
+$selectmenu-menu-border-radius: $border-radius !default;
+
+$selectmenu-items-max-height: 250px !default;
+
+$selectmenu-item-padding-x: $selectmenu-padding-x !default;
+$selectmenu-item-padding-y: $spacing / 4 !default;
+$selectmenu-item-font-weight: map-get($font-weights, normal) !default;
+$selectmenu-item-color: $selectmenu-menu-color !default;
+
+$selectmenu-focus-background-color: map-get($color-variants, primary) !default;
+$selectmenu-focus-color: text-color($selectmenu-focus-background-color) !default;
+$selectmenu-active-color: $selectmenu-color !default;
+$selectmenu-active-background-color: fade($black, .1) !default;
+$selectmenu-disabled-opacity: $disabled-opacity !default;
+
+$selectmenu-group-padding-x: $selectmenu-padding-x !default;
+$selectmenu-group-padding-y: $selectmenu-padding-y !default;
+$selectmenu-group-font-size: $font-size-sm !default;
+$selectmenu-group-color: map-get($color-variants, dark) !default;

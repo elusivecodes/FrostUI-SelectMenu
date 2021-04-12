@@ -1,0 +1,1 @@
+[ ] Fix opening menu after removing multiple select items
