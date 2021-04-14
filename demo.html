@@ -167,8 +167,16 @@
             </div>
         </div>
 
-        <!-- custom matching -->
-        <!-- custom sorting -->
+        <h4>Diacratics</h4>
+        <div class="mb-4">
+            <label for="selectDiacratics">Default</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectDiacratics" data-ui-placeholder="Select an item">
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+
     </div>
     <script>
         const selectDefault = dom.findOne('#selectDefault');
@@ -187,6 +195,7 @@
         const selectDisabledMulti = dom.findOne('#selectDisabledMulti');
         const selectDisabledOptions = dom.findOne('#selectDisabledOptions');
         const selectDisabledOptionsMulti = dom.findOne('#selectDisabledOptionsMulti');
+        const selectDiacratics = dom.findOne('#selectDiacratics');
 
         const sampleData = {
             1: 'Option 1',
@@ -247,7 +256,8 @@
         UI.SelectMenu.init(selectMulti);
 
         UI.SelectMenu.init(selectPlaceholder, {
-            data: sampleData
+            data: sampleData,
+            allowClear: true
         });
 
         UI.SelectMenu.init(selectPlaceholderMulti, {
@@ -345,6 +355,14 @@
             data: sampleDataDisabled
         });
 
+        UI.SelectMenu.init(selectDiacratics, {
+            data: {
+                1: 'Optiön 1',
+                2: 'Optiön 2',
+                3: 'Optiön 3',
+                4: 'Optiön 4'
+            }
+        });
     </script>
 </body>
 

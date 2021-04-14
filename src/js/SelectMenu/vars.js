@@ -10,22 +10,11 @@ SelectMenu.defaults = {
     data: null,
     getResults: null,
     isMatch: (item, term) => {
+        const normalized = item.text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const escapedTerm = Core.escapeRegExp(term);
         const regExp = new RegExp(escapedTerm, 'i');
 
-        if (regExp.test(item.text)) {
-            return true;
-        }
-
-        const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const escapedNormal = Core.escapeRegExp(normalized);
-        const regExpNormal = new RegExp(escapedNormal, 'i');
-
-        if (regExpNormal.test(item.text)) {
-            return true;
-        }
-
-        return false;
+        return regExp.test(item.text) || regExp.test(normalized);
     },
     renderResult: item => item.text,
     renderSelection: item => item.text,
@@ -55,7 +44,7 @@ SelectMenu.defaults = {
     placement: 'bottom',
     position: 'start',
     fixed: false,
-    spacing: 3,
+    spacing: 0,
     minContact: false
 };
 
@@ -63,7 +52,7 @@ SelectMenu.defaults = {
 SelectMenu.classes = {
     action: 'selectmenu-action',
     active: 'selectmenu-active',
-    clear: 'btn-close float-end me-5 lh-base',
+    clear: 'btn-close float-end mx-2 lh-base',
     disabled: 'disabled',
     disabledItem: 'selectmenu-disabled',
     focus: 'selectmenu-focus',

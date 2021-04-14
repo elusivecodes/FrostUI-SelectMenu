@@ -412,14 +412,16 @@
                 dom.addClass(this._toggle, 'focus');
             });
 
+            let keepFocus = false;
             dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
-                if (dom.hasDataset(this._toggle, 'uiPreFocus')) {
+                if (keepFocus) {
                     // prevent losing focus when toggle element is focused
                     return;
                 }
 
                 dom.removeClass(this._toggle, 'focus');
                 if (dom.isConnected(this._menuNode)) {
+                    console.log('hidden');
                     this.hide();
                 } else {
                     this._refreshPlaceholder();
@@ -429,7 +431,7 @@
             dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
                 if (dom.hasClass(this._toggle, 'focus')) {
                     // maintain focus when toggle element is already focused
-                    dom.setDataset(this._toggle, 'uiPreFocus', true);
+                    keepFocus = true;
                 } else {
                     dom.hide(this._placeholder);
                     dom.addClass(this._toggle, 'focus');
@@ -439,17 +441,17 @@
                     this.show();
                 }
 
+                dom.focus(this._searchInput);
                 dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
-                    if (dom.hasDataset(this._toggle, 'uiPreFocus')) {
-                        dom.removeDataset(this._toggle, 'uiPreFocus');
-                    }
-
+                    keepFocus = false;
                     dom.focus(this._searchInput);
                 });
             });
 
-            dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', e => {
-                e.preventDefault();
+            dom.addEventDelegate(this._toggle, 'mouseup.ui.selectmenu', '[data-ui-action="clear"]', e => {
+                if (e.button) {
+                    return;
+                }
 
                 // remove selection
                 const element = dom.parent(e.currentTarget);
@@ -495,7 +497,11 @@
             });
 
             if (this._settings.allowClear) {
-                dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', _ => {
+                dom.addEventDelegate(this._toggle, 'mouseup.ui.selectmenu', '[data-ui-action="clear"]', e => {
+                    if (e.button) {
+                        return;
+                    }
+
                     // remove selection
                     this._setValue(null);
                 });
@@ -1360,22 +1366,11 @@
         data: null,
         getResults: null,
         isMatch: (item, term) => {
+            const normalized = item.text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const escapedTerm = Core.escapeRegExp(term);
             const regExp = new RegExp(escapedTerm, 'i');
 
-            if (regExp.test(item.text)) {
-                return true;
-            }
-
-            const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            const escapedNormal = Core.escapeRegExp(normalized);
-            const regExpNormal = new RegExp(escapedNormal, 'i');
-
-            if (regExpNormal.test(item.text)) {
-                return true;
-            }
-
-            return false;
+            return regExp.test(item.text) || regExp.test(normalized);
         },
         renderResult: item => item.text,
         renderSelection: item => item.text,
@@ -1405,7 +1400,7 @@
         placement: 'bottom',
         position: 'start',
         fixed: false,
-        spacing: 3,
+        spacing: 0,
         minContact: false
     };
 
@@ -1413,7 +1408,7 @@
     SelectMenu.classes = {
         action: 'selectmenu-action',
         active: 'selectmenu-active',
-        clear: 'btn-close float-end me-5 lh-base',
+        clear: 'btn-close float-end mx-2 lh-base',
         disabled: 'disabled',
         disabledItem: 'selectmenu-disabled',
         focus: 'selectmenu-focus',

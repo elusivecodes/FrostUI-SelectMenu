@@ -181,14 +181,16 @@ Object.assign(SelectMenu.prototype, {
             dom.addClass(this._toggle, 'focus');
         });
 
+        let keepFocus = false;
         dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
-            if (dom.hasDataset(this._toggle, 'uiPreFocus')) {
+            if (keepFocus) {
                 // prevent losing focus when toggle element is focused
                 return;
             }
 
             dom.removeClass(this._toggle, 'focus');
             if (dom.isConnected(this._menuNode)) {
+                console.log('hidden');
                 this.hide();
             } else {
                 this._refreshPlaceholder();
@@ -198,7 +200,7 @@ Object.assign(SelectMenu.prototype, {
         dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
             if (dom.hasClass(this._toggle, 'focus')) {
                 // maintain focus when toggle element is already focused
-                dom.setDataset(this._toggle, 'uiPreFocus', true);
+                keepFocus = true;
             } else {
                 dom.hide(this._placeholder);
                 dom.addClass(this._toggle, 'focus');
@@ -208,17 +210,17 @@ Object.assign(SelectMenu.prototype, {
                 this.show();
             }
 
+            dom.focus(this._searchInput);
             dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
-                if (dom.hasDataset(this._toggle, 'uiPreFocus')) {
-                    dom.removeDataset(this._toggle, 'uiPreFocus');
-                }
-
+                keepFocus = false;
                 dom.focus(this._searchInput);
             });
         });
 
-        dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', e => {
-            e.preventDefault();
+        dom.addEventDelegate(this._toggle, 'mouseup.ui.selectmenu', '[data-ui-action="clear"]', e => {
+            if (e.button) {
+                return;
+            }
 
             // remove selection
             const element = dom.parent(e.currentTarget);
@@ -264,7 +266,11 @@ Object.assign(SelectMenu.prototype, {
         });
 
         if (this._settings.allowClear) {
-            dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', _ => {
+            dom.addEventDelegate(this._toggle, 'mouseup.ui.selectmenu', '[data-ui-action="clear"]', e => {
+                if (e.button) {
+                    return;
+                }
+
                 // remove selection
                 this._setValue(null);
             });
