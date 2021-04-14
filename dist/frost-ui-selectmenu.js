@@ -1417,7 +1417,7 @@
         info: 'selectmenu-item text-secondary',
         item: 'selectmenu-item',
         items: 'selectmenu-items',
-        menu: 'selectmenu-menu',
+        menu: 'selectmenu-menu shadow-sm',
         multiClear: 'btn btn-sm btn-outline-secondary',
         multiClearIcon: 'btn-close',
         multiGroup: 'btn-group',
