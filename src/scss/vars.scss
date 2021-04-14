@@ -57,9 +57,8 @@ $selectmenu-padding-x: $spacing !default;
 $selectmenu-padding-y: $spacing / 2 !default;
 $selectmenu-color: $text-color !default;
 
-$selectmenu-menu-padding-y: $selectmenu-padding-y !default;
 $selectmenu-menu-font-size: $font-size-md !default;
-$selectmenu-menu-color: $text-color !default;
+$selectmenu-menu-color: $selectmenu-color !default;
 $selectmenu-menu-background-color: $white !default;
 $selectmenu-menu-border-size: $border-size !default;
 $selectmenu-menu-border-color: $border-color !default;
