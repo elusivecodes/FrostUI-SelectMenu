@@ -70,11 +70,11 @@ $selectmenu-item-padding-y: $spacing / 4 !default;
 $selectmenu-item-font-weight: map-get($font-weights, normal) !default;
 $selectmenu-item-color: $selectmenu-menu-color !default;
 
-$selectmenu-focus-background-color: map-get($color-variants, primary) !default;
-$selectmenu-focus-color: text-color($selectmenu-focus-background-color) !default;
-$selectmenu-active-color: $selectmenu-color !default;
-$selectmenu-active-background-color: fade($black, .1) !default;
-$selectmenu-disabled-opacity: $disabled-opacity !default;
+$selectmenu-item-focus-background-color: map-get($color-variants, primary) !default;
+$selectmenu-item-focus-color: text-color($selectmenu-item-focus-background-color) !default;
+$selectmenu-item-active-color: $selectmenu-color !default;
+$selectmenu-item-active-background-color: fade($black, .1) !default;
+$selectmenu-item-disabled-opacity: $disabled-opacity !default;
 
 $selectmenu-group-padding-x: $selectmenu-padding-x !default;
 $selectmenu-group-padding-y: $selectmenu-padding-y !default;

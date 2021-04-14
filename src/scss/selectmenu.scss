@@ -94,19 +94,19 @@
 .selectmenu-focus {
     &,
     &.selectmenu-active {
-        color: $selectmenu-focus-color;
-        background-color: $selectmenu-focus-background-color;
+        color: $selectmenu-item-focus-color;
+        background-color: $selectmenu-item-focus-background-color;
     }
 }
 
 .selectmenu-active {
-    color: $selectmenu-active-color;
+    color: $selectmenu-item-active-color;
     text-decoration: none;
-    background-color: $selectmenu-active-background-color;
+    background-color: $selectmenu-item-active-background-color;
 }
 
 .selectmenu-disabled {
-    opacity: $selectmenu-disabled-opacity;
+    opacity: $selectmenu-item-disabled-opacity;
     pointer-events: none;
 }
 
