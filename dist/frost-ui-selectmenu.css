@@ -47,24 +47,24 @@
 }
 
 .selectmenu-menu {
-  width: 100%;
   position: absolute;
   z-index: 1000;
+  width: 100%;
   padding: 0;
   margin: 0;
   font-size: 1rem;
   color: #121212;
   text-align: left;
   list-style: none;
-  background-color: white;
+  background-color: #fff;
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .selectmenu-items {
   max-height: 250px;
   margin: 0;
-  list-style-type: none;
   overflow-y: auto;
+  list-style-type: none;
 }
 
 .selectmenu-item {
@@ -96,8 +96,8 @@
 }
 
 .selectmenu-disabled {
-  opacity: 0.5;
   pointer-events: none;
+  opacity: 0.5;
 }
 
 .selectmenu-group {

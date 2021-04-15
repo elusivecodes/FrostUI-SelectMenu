@@ -1,5 +1,5 @@
-@import 'functions';
-@import 'vars';
+@import "functions";
+@import "vars";
 
 .selectmenu-toggle:not(:disabled) {
     cursor: default;
@@ -22,7 +22,7 @@
         padding: $selectmenu-multi-btn-padding-y $selectmenu-multi-btn-padding-x;
         font-size: $selectmenu-multi-btn-font-size;
     }
-    
+
     > * {
         margin-right: $selectmenu-multi-item-spacing;
     }
@@ -54,9 +54,9 @@
 }
 
 .selectmenu-menu {
-    width: 100%;
     position: absolute;
     z-index: $dropdown-z-index;
+    width: 100%;
     padding: 0;
     margin: 0;
     font-size: $selectmenu-menu-font-size;
@@ -70,8 +70,8 @@
 .selectmenu-items {
     max-height: $selectmenu-items-max-height;
     margin: 0;
-    list-style-type: none;
     overflow-y: auto;
+    list-style-type: none;
 }
 
 .selectmenu-item {
@@ -106,8 +106,8 @@
 }
 
 .selectmenu-disabled {
-    opacity: $selectmenu-item-disabled-opacity;
     pointer-events: none;
+    opacity: $selectmenu-item-disabled-opacity;
 }
 
 .selectmenu-group {
