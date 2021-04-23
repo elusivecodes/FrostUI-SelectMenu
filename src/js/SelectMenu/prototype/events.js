@@ -17,6 +17,10 @@ Object.assign(SelectMenu.prototype, {
         });
 
         dom.addEvent(this._menuNode, 'mousedown.ui.selectmenu', e => {
+            if (dom.isSame(this._searchInput, e.target)) {
+                return;
+            }
+
             // prevent search input from triggering blur event
             e.preventDefault();
         });
@@ -190,7 +194,6 @@ Object.assign(SelectMenu.prototype, {
 
             dom.removeClass(this._toggle, 'focus');
             if (dom.isConnected(this._menuNode)) {
-                console.log('hidden');
                 this.hide();
             } else {
                 this._refreshPlaceholder();
