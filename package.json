@@ -9,7 +9,7 @@
         "lint": "stylelint \"src/scss/**/*.scss\" --fix"
     },
     "author": "",
-    "license": "ISC",
+    "license": "MIT",
     "devDependencies": {
         "cssnano": "^5.0.1",
         "filepath": "^1.1.0",
