@@ -229,7 +229,7 @@ Object.assign(SelectMenu.prototype, {
             const element = dom.parent(e.currentTarget);
             const index = dom.index(element);
             this._value.splice(index, 1)
-            this._setValue(this._value);
+            this._setValue(this._value, true);
             dom.focus(this._searchInput);
         });
     },
@@ -275,7 +275,7 @@ Object.assign(SelectMenu.prototype, {
                 }
 
                 // remove selection
-                this._setValue(null);
+                this._setValue(null, true);
             });
         }
     }

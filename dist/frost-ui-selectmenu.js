@@ -460,7 +460,7 @@
                 const element = dom.parent(e.currentTarget);
                 const index = dom.index(element);
                 this._value.splice(index, 1)
-                this._setValue(this._value);
+                this._setValue(this._value, true);
                 dom.focus(this._searchInput);
             });
         },
@@ -506,7 +506,7 @@
                     }
 
                     // remove selection
-                    this._setValue(null);
+                    this._setValue(null, true);
                 });
             }
         }
@@ -718,7 +718,7 @@
                 }
             }
 
-            this._setValue(value);
+            this._setValue(value, true);
 
             if (this._settings.closeOnSelect) {
                 this.hide();
@@ -739,10 +739,15 @@
         /**
          * Select the selected value(s).
          * @param {string|number} value The value to select.
+         * @param {Boolean} [triggerEvent] Whether to trigger the change event.
          */
-        _setValue(value) {
+        _setValue(value, triggerEvent = false) {
             this._value = value;
             this._refresh();
+
+            if (triggerEvent) {
+                dom.triggerEvent(this._node, 'change');
+            }
         },
 
         /**

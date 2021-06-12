@@ -202,7 +202,7 @@ Object.assign(SelectMenu.prototype, {
             }
         }
 
-        this._setValue(value);
+        this._setValue(value, true);
 
         if (this._settings.closeOnSelect) {
             this.hide();
@@ -223,10 +223,15 @@ Object.assign(SelectMenu.prototype, {
     /**
      * Select the selected value(s).
      * @param {string|number} value The value to select.
+     * @param {Boolean} [triggerEvent] Whether to trigger the change event.
      */
-    _setValue(value) {
+    _setValue(value, triggerEvent = false) {
         this._value = value;
         this._refresh();
+
+        if (triggerEvent) {
+            dom.triggerEvent(this._node, 'change');
+        }
     },
 
     /**

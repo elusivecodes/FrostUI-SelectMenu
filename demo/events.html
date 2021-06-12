@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostUI SelectMenu Events</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/elusivecodes/frostui@latest/dist/frost-ui.css">
+    <link rel="stylesheet" href="../dist/frost-ui-selectmenu.css">
+    <script src="https://cdn.jsdelivr.net/gh/elusivecodes/frostui@latest/dist/frost-ui-bundle.js"></script>
+    <script src="../dist/frost-ui-selectmenu.js"></script>
+    <style>
+        .selectmenu-focus .text-secondary {
+            color: white !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container pt-5">
+        <div class="mb-4">
+            <div class="card mb-2">
+                <div class="card-body py-0 px-2 overflow-auto" id="events" style="height: 100px;"></div>
+            </div>
+            <label for="selectDefault">Default</label>
+            <div class="form-input">
+                <select class="input-filled" type="text" id="selectEvents">
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                    <option value="4">Option 4</option>
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const selectEvents = dom.findOne('#selectEvents');
+
+        UI.SelectMenu.init(selectEvents);
+
+        dom.addEvent(selectEvents, 'change show.ui.selectmenu shown.ui.selectmenu hide.ui.selectmenu hidden.ui.selectmenu', e => {
+            const div = dom.create('div', {
+                html: `<small>"${e.type}" event triggered</small>`
+            });
+            dom.append(events, div);
+
+            const scrollHeight = dom.height(events, DOM.SCROLL_BOX);
+            dom.setScrollY(events, scrollHeight);
+        });
+    </script>
+</body>
+
+</html>
