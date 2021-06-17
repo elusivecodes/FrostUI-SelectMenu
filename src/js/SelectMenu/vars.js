@@ -63,7 +63,7 @@ SelectMenu.classes = {
     items: 'selectmenu-items',
     menu: 'selectmenu-menu shadow-sm',
     multiClear: 'btn btn-sm btn-outline-secondary',
-    multiClearIcon: 'btn-close',
+    multiClearIcon: 'btn-close pe-none',
     multiGroup: 'btn-group',
     multiItem: 'btn btn-sm btn-secondary',
     multiSearchInput: 'selectmenu-multi-input',
