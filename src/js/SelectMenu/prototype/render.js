@@ -237,6 +237,12 @@ Object.assign(SelectMenu.prototype, {
             dom.append(this._itemsList, element);
         }
 
+        const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
+
+        if (focusedNode) {
+            return;
+        }
+
         let focusNode = dom.findOne('[data-ui-active]', this._itemsList);
 
         if (!focusNode) {

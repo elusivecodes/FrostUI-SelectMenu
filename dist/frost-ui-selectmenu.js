@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.0.3
+ * FrostUI-SelectMenu v1.0.4
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -345,11 +345,23 @@
                     }
                 }
 
-                if (focusNode) {
-                    dom.removeClass(focusedNode, this.constructor.classes.focus);
-                    dom.removeDataset(focusedNode, 'uiFocus');
-                    dom.addClass(focusNode, this.constructor.classes.focus);
-                    dom.setDataset(focusNode, 'uiFocus', true);
+                if (!focusNode) {
+                    return;
+                }
+
+                dom.removeClass(focusedNode, this.constructor.classes.focus);
+                dom.removeDataset(focusedNode, 'uiFocus');
+                dom.addClass(focusNode, this.constructor.classes.focus);
+                dom.setDataset(focusNode, 'uiFocus', true);
+
+                const itemsScrollY = dom.getScrollY(this._itemsList);
+                const itemsRect = dom.rect(this._itemsList, true);
+                const nodeRect = dom.rect(focusNode, true);
+
+                if (nodeRect.top < itemsRect.top) {
+                    dom.setScrollY(this._itemsList, itemsScrollY + nodeRect.top - itemsRect.top);
+                } else if (nodeRect.bottom > itemsRect.bottom) {
+                    dom.setScrollY(this._itemsList, itemsScrollY + nodeRect.bottom - itemsRect.bottom);
                 }
             });
 
@@ -1132,6 +1144,12 @@
                     this._renderGroup(item) :
                     this._renderItem(item);
                 dom.append(this._itemsList, element);
+            }
+
+            const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
+
+            if (focusedNode) {
+                return;
             }
 
             let focusNode = dom.findOne('[data-ui-active]', this._itemsList);
