@@ -1,5 +1,5 @@
 /**
- * SelectMenu Utility
+ * SelectMenu API
  */
 
 Object.assign(SelectMenu.prototype, {
