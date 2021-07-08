@@ -39,7 +39,7 @@
 
         UI.SelectMenu.init(selectEvents);
 
-        dom.addEvent(selectEvents, 'change show.ui.selectmenu shown.ui.selectmenu hide.ui.selectmenu hidden.ui.selectmenu', e => {
+        dom.addEvent(selectEvents, 'change.ui.selectmenu show.ui.selectmenu shown.ui.selectmenu hide.ui.selectmenu hidden.ui.selectmenu', e => {
             const div = dom.create('div', {
                 html: `<small>"${e.type}" event triggered</small>`
             });

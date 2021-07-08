@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.0.5
+ * FrostUI-SelectMenu v1.0.6
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -844,7 +844,7 @@
             this._refresh();
 
             if (triggerEvent) {
-                dom.triggerEvent(this._node, 'change');
+                dom.triggerEvent(this._node, 'change.ui.selectmenu');
             }
         },
 

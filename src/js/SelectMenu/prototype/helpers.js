@@ -230,7 +230,7 @@ Object.assign(SelectMenu.prototype, {
         this._refresh();
 
         if (triggerEvent) {
-            dom.triggerEvent(this._node, 'change');
+            dom.triggerEvent(this._node, 'change.ui.selectmenu');
         }
     },
 
