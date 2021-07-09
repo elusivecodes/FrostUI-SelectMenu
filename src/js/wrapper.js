@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.0.6
+ * FrostUI-SelectMenu v1.0.7
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -23,6 +23,7 @@
     }
 
     const Core = window.Core;
+    const DOM = window.DOM;
     const dom = window.dom;
     const UI = window.UI;
     const document = window.document;
