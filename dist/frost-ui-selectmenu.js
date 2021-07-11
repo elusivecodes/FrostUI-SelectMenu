@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.0.7
+ * FrostUI-SelectMenu v1.0.8
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -189,7 +189,7 @@
             if (this._settings.appendTo) {
                 dom.append(document.body, this._menuNode);
             } else {
-                dom.after(this._node, this._menuNode);
+                dom.after(this._toggle, this._menuNode);
             }
 
             this.update();
@@ -326,14 +326,6 @@
          * Attach events for the SelectMenu.
          */
         _events() {
-            dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
-                if (this._multiple) {
-                    dom.focus(this._searchInput);
-                } else {
-                    dom.focus(this._toggle);
-                }
-            });
-
             dom.addEvent(this._menuNode, 'mousedown.ui.selectmenu', e => {
                 if (dom.isSame(this._searchInput, e.target)) {
                     return;
@@ -343,7 +335,12 @@
                 e.preventDefault();
             });
 
-            dom.addEventDelegate(this._menuNode, 'contextmenu.ui.selectmenu', '[data-ui-action="select"]', e => {
+            dom.addEvent(this._menuNode, 'click.ui.datetimepicker', e => {
+                // prevent menu node from closing modal
+                e.stopPropagation();
+            });
+
+            dom.addEventDelegate(this._menuNode, 'contextmenu.ui.datetimepicker', '[data-ui-action="select"]', e => {
                 // prevent menu node from showing right click menu
                 e.preventDefault();
             });
@@ -364,7 +361,7 @@
             }));
 
             dom.addEvent(this._searchInput, 'keydown.ui.selectmenu', e => {
-                if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter', 'Escape'].includes(e.code)) {
+                if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter'].includes(e.code)) {
                     return;
                 }
 
@@ -390,19 +387,6 @@
 
                 if (this._multiple && !dom.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
                     return this.show();
-                }
-
-                if (e.code === 'Escape') {
-                    // close the menu
-                    dom.blur(this._searchInput);
-
-                    if (this._multiple) {
-                        dom.focus(this._searchInput);
-                    } else {
-                        dom.focus(this._toggle);
-                    }
-
-                    return;
                 }
 
                 const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
@@ -453,6 +437,24 @@
                 }
             });
 
+            dom.addEvent(this._searchInput, 'keyup.ui.selectmenu', e => {
+                if (e.code !== 'Escape' || !dom.isConnected(this._menuNode)) {
+                    return;
+                }
+
+                e.stopPropagation();
+
+                // close the menu
+                this.hide();
+
+                if (this._multiple) {
+                    dom.blur(this._searchInput);
+                    dom.focus(this._searchInput);
+                } else {
+                    dom.focus(this._toggle);
+                }
+            });
+
             // debounced input event
             const getDataDebounced = Core.debounce(term => {
                 dom.empty(this._itemsList);
@@ -498,6 +500,18 @@
                 }, 250, false));
             }
 
+            dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
+                if (!dom.isSame(this._node, document.activeElement)) {
+                    return;
+                }
+
+                if (this._multiple) {
+                    dom.focus(this._searchInput);
+                } else {
+                    dom.focus(this._toggle);
+                }
+            });
+
             if (this._multiple) {
                 this._eventsMulti()
             } else {
@@ -509,27 +523,7 @@
          * Attach events for a multiple SelectMenu.
          */
         _eventsMulti() {
-            dom.addEvent(this._searchInput, 'focus.ui.selectmenu', _ => {
-                dom.hide(this._placeholder);
-                dom.detach(this._placeholder);
-                dom.addClass(this._toggle, 'focus');
-            });
-
             let keepFocus = false;
-            dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
-                if (keepFocus) {
-                    // prevent losing focus when toggle element is focused
-                    return;
-                }
-
-                dom.removeClass(this._toggle, 'focus');
-                if (dom.isConnected(this._menuNode)) {
-                    this.hide();
-                } else {
-                    this._refreshPlaceholder();
-                }
-            });
-
             dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
                 if (dom.hasClass(this._toggle, 'focus')) {
                     // maintain focus when toggle element is already focused
@@ -550,7 +544,7 @@
                 });
             });
 
-            dom.addEventDelegate(this._toggle, 'mouseup.ui.selectmenu', '[data-ui-action="clear"]', e => {
+            dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', e => {
                 if (e.button) {
                     return;
                 }
@@ -562,16 +556,40 @@
                 this._setValue(this._value, true);
                 dom.focus(this._searchInput);
             });
+
+            dom.addEvent(this._searchInput, 'focus.ui.selectmenu', _ => {
+                if (!dom.isSame(this._searchInput, document.activeElement)) {
+                    return;
+                }
+
+                dom.hide(this._placeholder);
+                dom.detach(this._placeholder);
+                dom.addClass(this._toggle, 'focus');
+            });
+
+            dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
+                if (dom.isSame(this._searchInput, document.activeElement)) {
+                    return;
+                }
+
+                if (keepFocus) {
+                    // prevent losing focus when toggle element is focused
+                    return;
+                }
+
+                dom.removeClass(this._toggle, 'focus');
+                if (dom.isConnected(this._menuNode)) {
+                    this.hide();
+                } else {
+                    this._refreshPlaceholder();
+                }
+            });
         },
 
         /**
          * Attach events for a single SelectMenu.
          */
         _eventsSingle() {
-            dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
-                this.hide();
-            });
-
             dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
                 if (e.button) {
                     return;
@@ -599,7 +617,7 @@
             });
 
             if (this._settings.allowClear) {
-                dom.addEventDelegate(this._toggle, 'mouseup.ui.selectmenu', '[data-ui-action="clear"]', e => {
+                dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', e => {
                     if (e.button) {
                         return;
                     }
@@ -608,6 +626,14 @@
                     this._setValue(null, true);
                 });
             }
+
+            dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
+                if (dom.isSame(this._searchInput, document.activeElement)) {
+                    return;
+                }
+
+                this.hide();
+            });
         }
 
     });

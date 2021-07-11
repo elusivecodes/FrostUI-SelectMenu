@@ -176,6 +176,37 @@
                 <div class="ripple-line"></div>
             </div>
         </div>
+
+        <h4>Modal</h4>
+        <div class="mb-4">
+            <button class="btn btn-primary ripple" data-ui-toggle="modal" data-ui-target="#modal" type="button">Open Modal</button>
+        </div>
+        <div class="modal" id="modal" tabindex="-1" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content shadow">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Modal title</h5>
+                        <button class="btn-close" data-ui-dismiss="modal" type="button" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="autocompleteModal">Default</label>
+                        <div class="form-input">
+                            <select class="input-filled" type="text" id="selectModal">
+                                <option value="1">Option 1</option>
+                                <option value="2">Option 2</option>
+                                <option value="3">Option 3</option>
+                                <option value="4">Option 4</option>
+                            </select>
+                            <div class="ripple-line"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success ripple mb-0" type="button">Save</button>
+                        <button class="btn btn-secondary ripple mb-0" data-ui-dismiss="modal" type="button">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         const selectDefault = dom.findOne('#selectDefault');
@@ -195,6 +226,7 @@
         const selectDisabledOptions = dom.findOne('#selectDisabledOptions');
         const selectDisabledOptionsMulti = dom.findOne('#selectDisabledOptionsMulti');
         const selectDiacratics = dom.findOne('#selectDiacratics');
+        const selectModal = dom.findOne('#selectModal');
 
         const sampleData = {
             1: 'Option 1',
@@ -360,6 +392,8 @@
                 4: 'Optiön 4'
             }
         });
+
+        UI.SelectMenu.init(selectModal);
     </script>
 </body>
 

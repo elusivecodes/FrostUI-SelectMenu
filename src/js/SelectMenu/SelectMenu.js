@@ -159,7 +159,7 @@ class SelectMenu extends UI.BaseComponent {
         if (this._settings.appendTo) {
             dom.append(document.body, this._menuNode);
         } else {
-            dom.after(this._node, this._menuNode);
+            dom.after(this._toggle, this._menuNode);
         }
 
         this.update();
