@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.0.8
+ * FrostUI-SelectMenu v1.0.9
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -187,7 +187,7 @@
             this._animating = true;
 
             if (this._settings.appendTo) {
-                dom.append(document.body, this._menuNode);
+                dom.append(this._settings.appendTo, this._menuNode);
             } else {
                 dom.after(this._toggle, this._menuNode);
             }
