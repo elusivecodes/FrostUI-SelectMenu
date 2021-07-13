@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.0.10
+ * FrostUI-SelectMenu v1.0.11
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -335,12 +335,12 @@
                 e.preventDefault();
             });
 
-            dom.addEvent(this._menuNode, 'click.ui.datetimepicker', e => {
+            dom.addEvent(this._menuNode, 'click.ui.selectmenu', e => {
                 // prevent menu node from closing modal
                 e.stopPropagation();
             });
 
-            dom.addEventDelegate(this._menuNode, 'contextmenu.ui.datetimepicker', '[data-ui-action="select"]', e => {
+            dom.addEventDelegate(this._menuNode, 'contextmenu.ui.selectmenu', '[data-ui-action="select"]', e => {
                 // prevent menu node from showing right click menu
                 e.preventDefault();
             });

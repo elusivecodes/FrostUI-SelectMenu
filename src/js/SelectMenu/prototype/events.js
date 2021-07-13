@@ -17,12 +17,12 @@ Object.assign(SelectMenu.prototype, {
             e.preventDefault();
         });
 
-        dom.addEvent(this._menuNode, 'click.ui.datetimepicker', e => {
+        dom.addEvent(this._menuNode, 'click.ui.selectmenu', e => {
             // prevent menu node from closing modal
             e.stopPropagation();
         });
 
-        dom.addEventDelegate(this._menuNode, 'contextmenu.ui.datetimepicker', '[data-ui-action="select"]', e => {
+        dom.addEventDelegate(this._menuNode, 'contextmenu.ui.selectmenu', '[data-ui-action="select"]', e => {
             // prevent menu node from showing right click menu
             e.preventDefault();
         });
