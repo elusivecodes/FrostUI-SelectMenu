@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.0.11
+ * FrostUI-SelectMenu v1.1.0
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -75,7 +75,13 @@
                 this._getDataInit();
             }
 
-            const value = dom.getValue(this._node);
+            let value;
+            if (this._multiple) {
+                value = [...this._node.selectedOptions].map(option => dom.getValue(option));
+            } else {
+                value = dom.getValue(this._node);
+            }
+
             this._render();
             this._loadValue(value);
             this._events();
@@ -1222,7 +1228,9 @@
             });
             dom.append(group, close);
 
-            const content = this._settings.renderSelection(item);
+            const { option, ...data } = item;
+
+            const content = this._settings.renderSelection(data);
             const tag = dom.create('div', {
                 html: this._settings.sanitize(content),
                 class: this.constructor.classes.multiItem

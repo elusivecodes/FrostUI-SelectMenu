@@ -45,7 +45,13 @@ class SelectMenu extends UI.BaseComponent {
             this._getDataInit();
         }
 
-        const value = dom.getValue(this._node);
+        let value;
+        if (this._multiple) {
+            value = [...this._node.selectedOptions].map(option => dom.getValue(option));
+        } else {
+            value = dom.getValue(this._node);
+        }
+
         this._render();
         this._loadValue(value);
         this._events();

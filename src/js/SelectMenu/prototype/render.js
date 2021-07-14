@@ -199,7 +199,9 @@ Object.assign(SelectMenu.prototype, {
         });
         dom.append(group, close);
 
-        const content = this._settings.renderSelection(item);
+        const { option, ...data } = item;
+
+        const content = this._settings.renderSelection(data);
         const tag = dom.create('div', {
             html: this._settings.sanitize(content),
             class: this.constructor.classes.multiItem
