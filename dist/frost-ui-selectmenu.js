@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.0
+ * FrostUI-SelectMenu v1.1.1
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -558,8 +558,9 @@
                 // remove selection
                 const element = dom.parent(e.currentTarget);
                 const index = dom.index(element);
-                this._value.splice(index, 1)
-                this._setValue(this._value, true);
+                const value = this._value.slice();
+                value.splice(index, 1)
+                this._setValue(value, true);
                 dom.focus(this._searchInput);
             });
 
@@ -869,10 +870,18 @@
 
         /**
          * Select the selected value(s).
-         * @param {string|number} value The value to select.
+         * @param {string|number|array} value The value to select.
          * @param {Boolean} [triggerEvent] Whether to trigger the change event.
          */
         _setValue(value, triggerEvent = false) {
+            if (
+                // only set value if value actually changed
+                (!this._multiple && value === this._value) ||
+                (this._multiple && this._value && value.length === this._value.length && value.every((val, index) => val === this._value[index]))
+            ) {
+                return;
+            }
+
             this._value = value;
             this._refresh();
 

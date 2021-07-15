@@ -234,8 +234,9 @@ Object.assign(SelectMenu.prototype, {
             // remove selection
             const element = dom.parent(e.currentTarget);
             const index = dom.index(element);
-            this._value.splice(index, 1)
-            this._setValue(this._value, true);
+            const value = this._value.slice();
+            value.splice(index, 1)
+            this._setValue(value, true);
             dom.focus(this._searchInput);
         });
 

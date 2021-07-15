@@ -222,10 +222,18 @@ Object.assign(SelectMenu.prototype, {
 
     /**
      * Select the selected value(s).
-     * @param {string|number} value The value to select.
+     * @param {string|number|array} value The value to select.
      * @param {Boolean} [triggerEvent] Whether to trigger the change event.
      */
     _setValue(value, triggerEvent = false) {
+        if (
+            // only set value if value actually changed
+            (!this._multiple && value === this._value) ||
+            (this._multiple && this._value && value.length === this._value.length && value.every((val, index) => val === this._value[index]))
+        ) {
+            return;
+        }
+
         this._value = value;
         this._refresh();
 
