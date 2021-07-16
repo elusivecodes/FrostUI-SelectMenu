@@ -141,7 +141,10 @@ Object.assign(SelectMenu.prototype, {
             this._searchInput = dom.create('input', {
                 class: this._settings.searchInputStyle === 'filled' ?
                     this.constructor.classes.searchInputFilled :
-                    this.constructor.classes.searchInputOutline
+                    this.constructor.classes.searchInputOutline,
+                attributes: {
+                    autocomplete: 'off'
+                }
             });
             dom.append(searchContainer, this._searchInput);
 
@@ -158,7 +161,7 @@ Object.assign(SelectMenu.prototype, {
         });
         dom.append(this._menuNode, this._itemsList);
 
-        const popperOptions = {
+        this._popperOptions = {
             reference: this._toggle,
             placement: this._settings.placement,
             position: this._settings.position,
@@ -168,16 +171,15 @@ Object.assign(SelectMenu.prototype, {
         };
 
         if (this._settings.fullWidth) {
-            popperOptions.afterUpdate = (node, reference) => {
+            this._popperOptions.afterUpdate = (node, reference) => {
                 const width = dom.width(reference, DOM.BORDER_BOX);
                 dom.setStyle(node, 'width', width);
             };
-            popperOptions.beforeUpdate = node => {
+
+            this._popperOptions.beforeUpdate = node => {
                 dom.setStyle(node, 'width', '');
             };
         }
-
-        this._popper = new UI.Popper(this._menuNode, popperOptions);
     },
 
     /**
@@ -284,7 +286,10 @@ Object.assign(SelectMenu.prototype, {
         });
 
         this._searchInput = dom.create('input', {
-            class: this.constructor.classes.multiSearchInput
+            class: this.constructor.classes.multiSearchInput,
+            attributes: {
+                autocomplete: 'off'
+            }
         });
     }
 

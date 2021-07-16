@@ -93,6 +93,7 @@ class SelectMenu extends UI.BaseComponent {
         this._lookup = null;
         this._value = null;
         this._request = null;
+        this._popperOptions = null;
 
         super.dispose();
     }
@@ -128,6 +129,9 @@ class SelectMenu extends UI.BaseComponent {
         dom.fadeOut(this._menuNode, {
             duration: this._settings.duration
         }).then(_ => {
+            this._popper.dispose();
+            this._popper = null;
+
             dom.empty(this._itemsList);
             dom.detach(this._menuNode);
             dom.setAttribute(this._toggle, 'aria-expanded', false);
@@ -168,7 +172,7 @@ class SelectMenu extends UI.BaseComponent {
             dom.after(this._toggle, this._menuNode);
         }
 
-        this.update();
+        this._popper = new UI.Popper(this._menuNode, this._popperOptions);
 
         dom.fadeIn(this._menuNode, {
             duration: this._settings.duration
@@ -197,7 +201,9 @@ class SelectMenu extends UI.BaseComponent {
      * @returns {SelectMenu} The SelectMenu.
      */
     update() {
-        this._popper.update();
+        if (this._popper) {
+            this._popper.update();
+        }
 
         return this;
     }

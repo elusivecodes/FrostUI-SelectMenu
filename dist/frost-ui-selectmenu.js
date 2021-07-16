@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.1
+ * FrostUI-SelectMenu v1.1.2
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -123,6 +123,7 @@
             this._lookup = null;
             this._value = null;
             this._request = null;
+            this._popperOptions = null;
 
             super.dispose();
         }
@@ -158,6 +159,9 @@
             dom.fadeOut(this._menuNode, {
                 duration: this._settings.duration
             }).then(_ => {
+                this._popper.dispose();
+                this._popper = null;
+
                 dom.empty(this._itemsList);
                 dom.detach(this._menuNode);
                 dom.setAttribute(this._toggle, 'aria-expanded', false);
@@ -198,7 +202,7 @@
                 dom.after(this._toggle, this._menuNode);
             }
 
-            this.update();
+            this._popper = new UI.Popper(this._menuNode, this._popperOptions);
 
             dom.fadeIn(this._menuNode, {
                 duration: this._settings.duration
@@ -227,7 +231,9 @@
          * @returns {SelectMenu} The SelectMenu.
          */
         update() {
-            this._popper.update();
+            if (this._popper) {
+                this._popper.update();
+            }
 
             return this;
         }
@@ -1179,7 +1185,10 @@
                 this._searchInput = dom.create('input', {
                     class: this._settings.searchInputStyle === 'filled' ?
                         this.constructor.classes.searchInputFilled :
-                        this.constructor.classes.searchInputOutline
+                        this.constructor.classes.searchInputOutline,
+                    attributes: {
+                        autocomplete: 'off'
+                    }
                 });
                 dom.append(searchContainer, this._searchInput);
 
@@ -1196,7 +1205,7 @@
             });
             dom.append(this._menuNode, this._itemsList);
 
-            const popperOptions = {
+            this._popperOptions = {
                 reference: this._toggle,
                 placement: this._settings.placement,
                 position: this._settings.position,
@@ -1206,16 +1215,15 @@
             };
 
             if (this._settings.fullWidth) {
-                popperOptions.afterUpdate = (node, reference) => {
+                this._popperOptions.afterUpdate = (node, reference) => {
                     const width = dom.width(reference, DOM.BORDER_BOX);
                     dom.setStyle(node, 'width', width);
                 };
-                popperOptions.beforeUpdate = node => {
+
+                this._popperOptions.beforeUpdate = node => {
                     dom.setStyle(node, 'width', '');
                 };
             }
-
-            this._popper = new UI.Popper(this._menuNode, popperOptions);
         },
 
         /**
@@ -1322,7 +1330,10 @@
             });
 
             this._searchInput = dom.create('input', {
-                class: this.constructor.classes.multiSearchInput
+                class: this.constructor.classes.multiSearchInput,
+                attributes: {
+                    autocomplete: 'off'
+                }
             });
         }
 
