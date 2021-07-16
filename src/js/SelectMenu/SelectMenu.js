@@ -160,10 +160,6 @@ class SelectMenu extends UI.BaseComponent {
 
         this._getData({});
 
-        if (this._multiple && !dom.hasChildren(this._itemsList)) {
-            return this;
-        }
-
         this._animating = true;
 
         if (this._settings.appendTo) {

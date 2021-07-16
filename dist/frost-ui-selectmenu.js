@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.2
+ * FrostUI-SelectMenu v1.1.3
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -189,10 +189,6 @@
             }
 
             this._getData({});
-
-            if (this._multiple && !dom.hasChildren(this._itemsList)) {
-                return this;
-            }
 
             this._animating = true;
 
@@ -469,7 +465,6 @@
 
             // debounced input event
             const getDataDebounced = Core.debounce(term => {
-                dom.empty(this._itemsList);
                 this._getData({ term });
             }, this._settings.debounceInput);
 
@@ -478,17 +473,11 @@
                     this._updateSearchWidth();
                 }
 
-                const term = dom.getValue(this._searchInput);
-
-                // check for minimum search length
-                if (term.length < this._settings.minSearch) {
-                    return;
-                }
-
                 if (this._multiple) {
                     this.show();
                 }
 
+                const term = dom.getValue(this._searchInput);
                 getDataDebounced(term);
             }));
 
@@ -929,6 +918,8 @@
          */
         _getDataInit() {
             this._getData = ({ term = null }) => {
+                dom.empty(this._itemsList);
+
                 // check for minimum search length
                 if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
                     return this.update();

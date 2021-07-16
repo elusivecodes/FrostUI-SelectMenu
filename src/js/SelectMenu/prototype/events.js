@@ -139,7 +139,6 @@ Object.assign(SelectMenu.prototype, {
 
         // debounced input event
         const getDataDebounced = Core.debounce(term => {
-            dom.empty(this._itemsList);
             this._getData({ term });
         }, this._settings.debounceInput);
 
@@ -148,17 +147,11 @@ Object.assign(SelectMenu.prototype, {
                 this._updateSearchWidth();
             }
 
-            const term = dom.getValue(this._searchInput);
-
-            // check for minimum search length
-            if (term.length < this._settings.minSearch) {
-                return;
-            }
-
             if (this._multiple) {
                 this.show();
             }
 
+            const term = dom.getValue(this._searchInput);
             getDataDebounced(term);
         }));
 

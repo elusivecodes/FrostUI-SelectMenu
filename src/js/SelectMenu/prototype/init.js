@@ -9,6 +9,8 @@ Object.assign(SelectMenu.prototype, {
      */
     _getDataInit() {
         this._getData = ({ term = null }) => {
+            dom.empty(this._itemsList);
+
             // check for minimum search length
             if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
                 return this.update();
