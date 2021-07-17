@@ -80,6 +80,7 @@ Object.assign(SelectMenu.prototype, {
             dom.removeAttribute(element, 'tabindex');
         }
 
+
         if (dom.hasAttribute(this._node, 'readonly')) {
             dom.addClass(this._toggle, this.constructor.classes.readonly);
         }
@@ -195,8 +196,8 @@ Object.assign(SelectMenu.prototype, {
         if (this._multiple) {
             const index = this._value.indexOf(value);
             if (index >= 0) {
-                this._value.splice(index, 1)
-                value = this._value;
+                value = this._value.slice();
+                value.splice(index, 1)
             } else {
                 value = this._value.concat([value]);
             }

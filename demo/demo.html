@@ -321,8 +321,7 @@
 
         UI.SelectMenu.init(selectInfinite, {
             getResults: ({ offset = 0, term = null }) => {
-
-                results = new Array(1000).fill().map((_, i) => {
+                let results = new Array(1000).fill().map((_, i) => {
                     const num = i + 1;
                     return {
                         value: num,

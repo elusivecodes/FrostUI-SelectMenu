@@ -8,7 +8,6 @@
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 16px 12px;
-  appearance: none;
 }
 
 .selectmenu-multi {
@@ -34,7 +33,10 @@
 .selectmenu-placeholder {
   color: #808080;
   pointer-events: none;
-  user-select: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
 }
 
 .selectmenu-multi-input {

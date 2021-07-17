@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.3
+ * FrostUI-SelectMenu v1.1.4
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -526,6 +526,11 @@
         _eventsMulti() {
             let keepFocus = false;
             dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
+                if (dom.is(e.target, '[data-ui-action="clear"]')) {
+                    e.preventDefault();
+                    return;
+                }
+
                 if (dom.hasClass(this._toggle, 'focus')) {
                     // maintain focus when toggle element is already focused
                     keepFocus = true;
@@ -593,6 +598,11 @@
          */
         _eventsSingle() {
             dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
+                if (dom.is(e.target, '[data-ui-action="clear"]')) {
+                    e.preventDefault();
+                    return;
+                }
+
                 if (e.button) {
                     return;
                 }
@@ -723,6 +733,7 @@
                 dom.removeAttribute(element, 'tabindex');
             }
 
+
             if (dom.hasAttribute(this._node, 'readonly')) {
                 dom.addClass(this._toggle, this.constructor.classes.readonly);
             }
@@ -838,8 +849,8 @@
             if (this._multiple) {
                 const index = this._value.indexOf(value);
                 if (index >= 0) {
-                    this._value.splice(index, 1)
-                    value = this._value;
+                    value = this._value.slice();
+                    value.splice(index, 1)
                 } else {
                     value = this._value.concat([value]);
                 }

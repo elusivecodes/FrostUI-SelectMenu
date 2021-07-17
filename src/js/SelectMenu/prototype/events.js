@@ -200,6 +200,11 @@ Object.assign(SelectMenu.prototype, {
     _eventsMulti() {
         let keepFocus = false;
         dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
+            if (dom.is(e.target, '[data-ui-action="clear"]')) {
+                e.preventDefault();
+                return;
+            }
+
             if (dom.hasClass(this._toggle, 'focus')) {
                 // maintain focus when toggle element is already focused
                 keepFocus = true;
@@ -267,6 +272,11 @@ Object.assign(SelectMenu.prototype, {
      */
     _eventsSingle() {
         dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
+            if (dom.is(e.target, '[data-ui-action="clear"]')) {
+                e.preventDefault();
+                return;
+            }
+
             if (e.button) {
                 return;
             }
