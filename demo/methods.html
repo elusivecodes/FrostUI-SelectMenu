@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostUI SelectMenu Methods</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/elusivecodes/frostui/dist/frost-ui.css">
+    <link rel="stylesheet" href="../dist/frost-ui-selectmenu.css">
+    <script src="https://cdn.jsdelivr.net/gh/elusivecodes/frostui/dist/frost-ui-bundle.js"></script>
+    <script src="../dist/frost-ui-selectmenu.js"></script>
+</head>
+
+<body>
+    <div class="container pt-5">
+        <div class="mb-4">
+            <label for="selectDispose">Default</label>
+            <div class="form-input">
+                <select class="input-filled" id="selectDispose">
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                    <option value="4">Option 4</option>
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+            <div class="mt-1">
+                <button class="btn btn-danger ripple mb-0" id="selectDisposeBtn" type="button">Dispose</button>
+                <button class="btn btn-primary ripple mb-0" id="selectInitBtn" type="button">Init</button>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectMultiDispose">Multiple</label>
+            <div class="form-input">
+                <select class="input-filled" id="selectMultiDispose" multiple>
+                    <option value="1" selected>Option 1</option>
+                    <option value="2" selected>Option 2</option>
+                    <option value="3">Option 3</option>
+                    <option value="4">Option 4</option>
+                </select>
+                <div class="ripple-line"></div>
+            </div>
+            <div class="mt-1">
+                <button class="btn btn-danger ripple mb-0" id="selectMultiDisposeBtn" type="button">Dispose</button>
+                <button class="btn btn-primary ripple mb-0" id="selectMultiInitBtn" type="button">Init</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const selectDispose = dom.findOne('#selectDispose');
+        const selectMultiDispose = dom.findOne('#selectMultiDispose');
+        const selectDisposeBtn = dom.findOne('#selectDisposeBtn');
+        const selectInitBtn = dom.findOne('#selectInitBtn');
+        const selectMultiDisposeBtn = dom.findOne('#selectMultiDisposeBtn');
+        const selectMultiInitBtn = dom.findOne('#selectMultiInitBtn');
+
+        UI.SelectMenu.init(selectDispose);
+        UI.SelectMenu.init(selectMultiDispose);
+
+        dom.addEvent(selectDisposeBtn, 'click', e => {
+            UI.SelectMenu.init(selectDispose).dispose();
+        });
+
+        dom.addEvent(selectInitBtn, 'click', e => {
+            UI.SelectMenu.init(selectDispose);
+        });
+
+        dom.addEvent(selectMultiDisposeBtn, 'click', e => {
+            UI.SelectMenu.init(selectMultiDispose).dispose();
+        });
+
+        dom.addEvent(selectMultiInitBtn, 'click', e => {
+            UI.SelectMenu.init(selectMultiDispose);
+        });
+    </script>
+</body>
+
+</html>
