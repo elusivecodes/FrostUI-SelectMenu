@@ -94,6 +94,8 @@ class SelectMenu extends UI.BaseComponent {
         this._value = null;
         this._request = null;
         this._popperOptions = null;
+        this._getData = null;
+        this._getResults = null;
 
         super.dispose();
     }
