@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.6
+ * FrostUI-SelectMenu v1.1.7
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
