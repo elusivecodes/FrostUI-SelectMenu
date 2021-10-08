@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.10
+ * FrostUI-SelectMenu v1.1.11
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -566,14 +566,13 @@
                     dom.addClass(this._toggle, 'focus');
                 }
 
-                if (!e.button) {
-                    this.show();
-                }
-
-                dom.focus(this._searchInput);
                 dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
                     keepFocus = false;
                     dom.focus(this._searchInput);
+
+                    if (!e.button) {
+                        this.show();
+                    }
                 });
             });
 

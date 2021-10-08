@@ -238,14 +238,13 @@ Object.assign(SelectMenu.prototype, {
                 dom.addClass(this._toggle, 'focus');
             }
 
-            if (!e.button) {
-                this.show();
-            }
-
-            dom.focus(this._searchInput);
             dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
                 keepFocus = false;
                 dom.focus(this._searchInput);
+
+                if (!e.button) {
+                    this.show();
+                }
             });
         });
 

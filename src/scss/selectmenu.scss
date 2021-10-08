@@ -35,6 +35,10 @@
         padding: $input-lg-padding-y $input-lg-padding-x;
         font-size: $input-lg-font-size;
     }
+
+    &.focus ~ .ripple-line {
+        z-index: 3;
+    }
 }
 
 .selectmenu-placeholder {
