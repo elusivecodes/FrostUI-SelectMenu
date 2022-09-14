@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.13
+ * FrostUI-SelectMenu v1.1.14
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -993,8 +993,14 @@
                     return this._renderInfo(this._settings.lang.maxSelections);
                 }
 
+                const options = { offset };
+
+                if (term) {
+                    options.term = term;
+                }
+
                 const loading = this._renderInfo(this._settings.lang.loading);
-                const request = this._getResults({ offset, term });
+                const request = this._getResults(options);
 
                 request.then(response => {
                     this._renderResults(response.results);
