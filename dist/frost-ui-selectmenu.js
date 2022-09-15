@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.15
+ * FrostUI-SelectMenu v1.1.16
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -848,7 +848,7 @@
 
             // toggle selected values for multiple select
             if (this._multiple) {
-                const index = this._value.indexOf(value);
+                const index = this._value.findIndex(otherValue => otherValue == value);
                 if (index >= 0) {
                     value = this._value.slice();
                     value.splice(index, 1)
