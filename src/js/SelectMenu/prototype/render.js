@@ -84,7 +84,7 @@ Object.assign(SelectMenu.prototype, {
         const active =
             (
                 this._multiple &&
-                this._value.includes(item.value)
+                this._value.some(value => value == item.value)
             ) || (
                 !this._multiple &&
                 item.value == this._value

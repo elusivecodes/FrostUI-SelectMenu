@@ -1,5 +1,5 @@
 /**
- * FrostUI-SelectMenu v1.1.14
+ * FrostUI-SelectMenu v1.1.15
  * https://github.com/elusivecodes/FrostUI-SelectMenu
  */
 (function(global, factory) {
@@ -1137,7 +1137,7 @@
             const active =
                 (
                     this._multiple &&
-                    this._value.includes(item.value)
+                    this._value.some(value => value == item.value)
                 ) || (
                     !this._multiple &&
                     item.value == this._value
