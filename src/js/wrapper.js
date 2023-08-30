@@ -1,32 +1,3 @@
-/**
- * FrostUI-SelectMenu v1.1.16
- * https://github.com/elusivecodes/FrostUI-SelectMenu
- */
-(function(global, factory) {
-    'use strict';
+import SelectMenu from './index.js';
 
-    if (typeof module === 'object' && typeof module.exports === 'object') {
-        module.exports = factory;
-    } else {
-        factory(global);
-    }
-
-})(window, function(window) {
-    'use strict';
-
-    if (!window) {
-        throw new Error('FrostUI-SelectMenu requires a Window.');
-    }
-
-    if (!('UI' in window)) {
-        throw new Error('FrostUI-SelectMenu requires FrostUI.');
-    }
-
-    const Core = window.Core;
-    const DOM = window.DOM;
-    const dom = window.dom;
-    const UI = window.UI;
-    const document = window.document;
-
-    // {{code}}
-});
+export { SelectMenu };

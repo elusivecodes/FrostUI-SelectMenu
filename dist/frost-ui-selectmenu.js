@@ -1,85 +1,60 @@
-/**
- * FrostUI-SelectMenu v1.1.16
- * https://github.com/elusivecodes/FrostUI-SelectMenu
- */
-(function(global, factory) {
-    'use strict';
-
-    if (typeof module === 'object' && typeof module.exports === 'object') {
-        module.exports = factory;
-    } else {
-        factory(global);
-    }
-
-})(window, function(window) {
-    'use strict';
-
-    if (!window) {
-        throw new Error('FrostUI-SelectMenu requires a Window.');
-    }
-
-    if (!('UI' in window)) {
-        throw new Error('FrostUI-SelectMenu requires FrostUI.');
-    }
-
-    const Core = window.Core;
-    const DOM = window.DOM;
-    const dom = window.dom;
-    const UI = window.UI;
-    const document = window.document;
+(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@fr0st/query'), require('@fr0st/ui')) :
+    typeof define === 'function' && define.amd ? define(['exports', '@fr0st/query', '@fr0st/ui'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.UI = global.UI || {}, global.fQuery, global.UI));
+})(this, (function (exports, $, ui) { 'use strict';
 
     /**
      * SelectMenu Class
      * @class
      */
-    class SelectMenu extends UI.BaseComponent {
-
+    class SelectMenu extends ui.BaseComponent {
         /**
          * New SelectMenu constructor.
          * @param {HTMLElement} node The input node.
-         * @param {object} [settings] The options to create the SelectMenu with.
-         * @returns {SelectMenu} A new SelectMenu object.
+         * @param {object} [options] The options to create the SelectMenu with.
          */
-        constructor(node, settings) {
-            super(node, settings);
+        constructor(node, options) {
+            super(node, options);
 
-            if (!dom.is(this._node, 'select')) {
+            if (!$.is(this._node, 'select')) {
                 throw new Error('SelectMenu must be created on a select element');
             }
 
-            this._placeholderText = this._settings.placeholder;
-            this._maxSelections = this._settings.maxSelections;
-            this._multiple = dom.getProperty(this._node, 'multiple');
+            this._placeholderText = this._options.placeholder;
+            this._maxSelections = this._options.maxSelections;
+            this._multiple = $.getProperty(this._node, 'multiple');
 
             this._data = [];
             this._lookup = {};
+            this._activeItems = [];
 
             this._getData = null;
             this._getResults = null;
 
             let data;
-            if (Core.isFunction(this._settings.getResults)) {
+            if ($._isFunction(this._options.getResults)) {
                 this._getResultsCallbackInit();
                 this._getResultsInit();
-            } else if (Core.isPlainObject(this._settings.data)) {
-                data = this.constructor._getDataFromObject(this._settings.data);
-            } else if (Core.isArray(this._settings.data)) {
-                data = this._settings.data;
+            } else if ($._isPlainObject(this._options.data)) {
+                data = this._getDataFromObject(this._options.data);
+            } else if ($._isArray(this._options.data)) {
+                data = this._options.data;
             } else {
-                data = this.constructor._getDataFromDOM(this._node);
+                data = this._getDataFromDOM(this._node);
             }
 
             if (data) {
-                this._data = this.constructor._parseData(data);
-                this._lookup = this.constructor._parseDataLookup(data);
+                this._data = this._parseData(data);
+                this._lookup = this._parseDataLookup(data);
                 this._getDataInit();
             }
 
             let value;
             if (this._multiple) {
-                value = [...this._node.selectedOptions].map(option => dom.getValue(option));
+                value = [...this._node.selectedOptions].map((option) => $.getValue(option));
             } else {
-                value = dom.getValue(this._node);
+                value = $.getValue(this._node);
             }
 
             this._render();
@@ -89,13 +64,10 @@
 
         /**
          * Disable the SelectMenu.
-         * @returns {SelectMenu} The SelectMenu.
          */
         disable() {
-            dom.setAttribute(this._node, 'disabled', true);
+            $.setAttribute(this._node, { disabled: true });
             this._refreshDisabled();
-
-            return this;
         }
 
         /**
@@ -107,11 +79,11 @@
                 this._popper = null;
             }
 
-            dom.removeAttribute(this._node, 'tabindex');
-            dom.removeEvent(this._node, 'focus.ui.selectmenu');
-            dom.removeClass(this._node, this.constructor.classes.hide);
-            dom.remove(this._menuNode);
-            dom.remove(this._toggle);
+            $.removeAttribute(this._node, 'tabindex');
+            $.removeEvent(this._node, 'focus.ui.selectmenu');
+            $.removeClass(this._node, this.constructor.classes.hide);
+            $.remove(this._menuNode);
+            $.remove(this._toggle);
 
             this._toggle = null;
             this._clear = null;
@@ -121,8 +93,9 @@
             this._itemsList = null;
             this._data = null;
             this._lookup = null;
+            this._activeItems = null;
             this._value = null;
-            this._request = null;
+            this._requests = null;
             this._popperOptions = null;
             this._getData = null;
             this._getResults = null;
@@ -132,101 +105,104 @@
 
         /**
          * Enable the SelectMenu.
-         * @returns {SelectMenu} The SelectMenu.
          */
         enable() {
-            dom.removeAttribute(this._node, 'disabled');
+            $.removeAttribute(this._node, 'disabled');
             this._refreshDisabled();
-
-            return this;
         }
 
         /**
          * Hide the SelectMenu.
-         * @returns {SelectMenu} The SelectMenu.
          */
         hide() {
             if (
-                this._animating ||
-                !dom.isConnected(this._menuNode) ||
-                !dom.triggerOne(this._node, 'hide.ui.selectmenu')
+                !$.isConnected(this._menuNode) ||
+                $.getDataset(this._menuNode, 'uiAnimating') ||
+                !$.triggerOne(this._node, 'hide.ui.selectmenu')
             ) {
-                return this;
+                return;
             }
 
-            this._animating = true;
-            this._refreshPlaceholder();
-            dom.setValue(this._searchInput, '');
+            $.setDataset(this._menuNode, { uiAnimating: 'out' });
 
-            dom.fadeOut(this._menuNode, {
-                duration: this._settings.duration
-            }).then(_ => {
+            this._refreshPlaceholder();
+            $.setValue(this._searchInput, '');
+
+            $.fadeOut(this._menuNode, {
+                duration: this._options.duration,
+            }).then((_) => {
                 this._popper.dispose();
                 this._popper = null;
 
-                dom.empty(this._itemsList);
-                dom.detach(this._menuNode);
-                dom.setAttribute(this._toggle, 'aria-expanded', false);
-                dom.triggerEvent(this._node, 'hidden.ui.selectmenu');
-            }).catch(_ => { }).finally(_ => {
-                this._animating = false;
+                this._activeItems = [];
+                $.empty(this._itemsList);
+                $.detach(this._menuNode);
+                $.removeDataset(this._menuNode, 'uiAnimating');
+                $.setAttribute(this._toggle, {
+                    'aria-expanded': false,
+                    'aria-activedescendent': '',
+                });
+                $.setAttribute(this._searchInput, { 'aria-activedescendent': '' });
+                $.triggerEvent(this._node, 'hidden.ui.selectmenu');
+            }).catch((_) => {
+                if ($.getDataset(this._menuNode, 'uiAnimating') === 'out') {
+                    $.removeDataset(this._menuNode, 'uiAnimating');
+                }
             });
-
-            return this;
         }
 
         /**
          * Show the SelectMenu.
-         * @returns {SelectMenu} The SelectMenu.
          */
         show() {
             if (
-                dom.is(this._node, ':disabled') ||
-                dom.hasAttribute(this._node, 'readonly') ||
-                this._animating ||
-                dom.isConnected(this._menuNode) ||
-                !dom.triggerOne(this._node, 'show.ui.selectmenu')
+                $.is(this._node, ':disabled') ||
+                $.hasAttribute(this._node, 'readonly') ||
+                $.isConnected(this._menuNode) ||
+                $.getDataset(this._menuNode, 'uiAnimating') ||
+                !$.triggerOne(this._node, 'show.ui.selectmenu')
             ) {
-                return this;
+                return;
             }
 
             this._getData({});
 
-            this._animating = true;
+            $.setDataset(this._menuNode, { uiAnimating: 'in' });
 
-            if (this._settings.appendTo) {
-                dom.append(this._settings.appendTo, this._menuNode);
+            if (this._options.appendTo) {
+                $.append(this._options.appendTo, this._menuNode);
             } else {
-                dom.after(this._toggle, this._menuNode);
+                $.after(this._toggle, this._menuNode);
             }
 
-            this._popper = new UI.Popper(this._menuNode, this._popperOptions);
+            this._popper = new ui.Popper(this._menuNode, this._popperOptions);
 
-            dom.fadeIn(this._menuNode, {
-                duration: this._settings.duration
-            }).then(_ => {
-                dom.setAttribute(this._toggle, 'aria-expanded', true);
-                dom.triggerEvent(this._node, 'shown.ui.selectmenu');
-            }).catch(_ => { }).finally(_ => {
-                this._animating = false;
+            $.fadeIn(this._menuNode, {
+                duration: this._options.duration,
+            }).then((_) => {
+                $.removeDataset(this._menuNode, 'uiAnimating');
+                $.setAttribute(this._toggle, { 'aria-expanded': true });
+                $.triggerEvent(this._node, 'shown.ui.selectmenu');
+            }).catch((_) => {
+                if ($.getDataset(this._menuNode, 'uiAnimating') === 'in') {
+                    $.removeDataset(this._menuNode, 'uiAnimating');
+                }
             });
-
-            return this;
         }
 
         /**
          * Toggle the SelectMenu.
-         * @returns {SelectMenu} The SelectMenu.
+         * @return {SelectMenu} The SelectMenu.
          */
         toggle() {
-            return dom.isConnected(this._menuNode) ?
+            return $.isConnected(this._menuNode) ?
                 this.hide() :
                 this.show();
         }
 
         /**
          * Update the SelectMenu position.
-         * @returns {SelectMenu} The SelectMenu.
+         * @return {SelectMenu} The SelectMenu.
          */
         update() {
             if (this._popper) {
@@ -235,1238 +211,1361 @@
 
             return this;
         }
-
     }
 
-
     /**
-     * SelectMenu API
+     * Get data for the selected value(s).
+     * @return {array|object} The selected item(s).
      */
-
-    Object.assign(SelectMenu.prototype, {
-
-        /**
-         * Get data for the selected value(s).
-         * @returns {array|object} The selected item(s).
-         */
-        data() {
-            if (this._multiple) {
-                return this._value.map(value => this._cloneValue(value));
-            }
-
-            return this._cloneValue(this._value);
-        },
-
-        /**
-         * Get the maximum selections.
-         * @returns {number} The maximum selections.
-         */
-        getMaxSelections() {
-            return this._maxSelections;
-        },
-
-        /**
-         * Get the placeholder text.
-         * @returns {string} The placeholder text.
-         */
-        getPlaceholder() {
-            return this._placeholderText;
-        },
-
-        /**
-         * Get the selected value(s).
-         * @returns {string|number|array} The selected value(s).
-         */
-        getValue() {
-            return this._value;
-        },
-
-        /**
-         * Set the maximum selections.
-         * @param {number} maxSelections The maximum selections.
-         * @returns {SelectMenu} The SelectMenu.
-         */
-        setMaxSelections(maxSelections) {
-            this._maxSelections = maxSelections;
-
-            this.hide();
-            this._refresh();
-
-            return this;
-        },
-
-        /**
-         * Set the placeholder text.
-         * @param {string} placeholder The placeholder text.
-         * @returns {SelectMenu} The SelectMenu.
-         */
-        setPlaceholder(placeholder) {
-            this._placeholderText = placeholder;
-
-            dom.remove(this._placeholder);
-            this._renderPlaceholder();
-            this._refresh();
-
-            return this;
-        },
-
-        /**
-         * Set the selected value(s).
-         * @param {string|number|array} value The value to set.
-         * @returns {SelectMenu} The SelectMenu.
-         */
-        setValue(value) {
-            if (!dom.is(this._node, ':disabled')) {
-                this._loadValue(value);
-            }
-
-            return this;
+    function data() {
+        if (!this._multiple) {
+            return this._cloneItem(this._findValue(this._value));
         }
 
-    });
+        return this._value.map((value) => this._cloneItem(this._findValue(value)));
+    }
+    /**
+     * Get the maximum selections.
+     * @return {number} The maximum selections.
+     */
+    function getMaxSelections() {
+        return this._maxSelections;
+    }
+    /**
+     * Get the placeholder text.
+     * @return {string} The placeholder text.
+     */
+    function getPlaceholder() {
+        return this._placeholderText;
+    }
+    /**
+     * Get the selected value(s).
+     * @return {string|number|array} The selected value(s).
+     */
+    function getValue() {
+        return this._value;
+    }
+    /**
+     * Set the maximum selections.
+     * @param {number} maxSelections The maximum selections.
+     */
+    function setMaxSelections(maxSelections) {
+        this._maxSelections = maxSelections;
 
+        this.hide();
+        this._refresh();
+    }
+    /**
+     * Set the placeholder text.
+     * @param {string} placeholder The placeholder text.
+     */
+    function setPlaceholder(placeholder) {
+        this._placeholderText = placeholder;
+
+        $.remove(this._placeholder);
+        this._renderPlaceholder();
+        this._refresh();
+    }
+    /**
+     * Set the selected value(s).
+     * @param {string|number|array} value The value to set.
+     */
+    function setValue(value) {
+        this._loadValue(value);
+    }
 
     /**
-     * SelectMenu Events
+     * Initialize preloaded get data.
      */
+    function _getDataInit() {
+        this._getData = ({ term = null }) => {
+            this._activeItems = [];
+            $.empty(this._itemsList);
+            $.setAttribute(this._toggle, { 'aria-activedescendent': '' });
+            $.setAttribute(this._searchInput, { 'aria-activedescendent': '' });
 
-    Object.assign(SelectMenu.prototype, {
-
-        /**
-         * Attach events for the SelectMenu.
-         */
-        _events() {
-            dom.addEventDelegate(this._menuNode, 'contextmenu.ui.selectmenu', '[data-ui-action="select"]', e => {
-                // prevent menu node from showing right click menu
-                e.preventDefault();
-            });
-
-            dom.addEvent(this._menuNode, 'mousedown.ui.selectmenu', e => {
-                if (dom.isSame(this._searchInput, e.target)) {
-                    return;
-                }
-
-                // prevent search input from triggering blur event
-                e.preventDefault();
-            });
-
-            dom.addEvent(this._menuNode, 'click.ui.selectmenu', e => {
-                // prevent menu node from closing modal
-                e.stopPropagation();
-            });
-
-            dom.addEvent(this._node, 'focus.ui.selectmenu', _ => {
-                if (this._multiple) {
-                    dom.focus(this._searchInput);
-                } else {
-                    dom.focus(this._toggle);
-                }
-            });
-
-            dom.addEventDelegate(this._itemsList, 'mouseup.ui.selectmenu', '[data-ui-action="select"]', e => {
-                e.preventDefault();
-
-                const value = dom.getDataset(e.currentTarget, 'uiValue');
-                this._selectValue(value);
-            });
-
-            dom.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '[data-ui-action="select"]', DOM.debounce(e => {
-                const focusedNode = dom.find('[data-ui-focus]', this._itemsList);
-                dom.removeClass(focusedNode, this.constructor.classes.focus);
-                dom.removeDataset(focusedNode, 'uiFocus');
-
-                dom.addClass(e.currentTarget, this.constructor.classes.focus);
-                dom.setDataset(e.currentTarget, 'uiFocus', true);
-            }));
-
-            // debounced input event
-            const getDataDebounced = Core.debounce(term => {
-                this._getData({ term });
-            }, this._settings.debounceInput);
-
-            dom.addEvent(this._searchInput, 'input.ui.selectmenu', DOM.debounce(_ => {
-                if (this._multiple) {
-                    this._updateSearchWidth();
-                    this.show();
-                }
-
-                const term = dom.getValue(this._searchInput);
-                getDataDebounced(term);
-            }));
-
-            dom.addEvent(this._searchInput, 'keydown.ui.selectmenu', e => {
-                if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter'].includes(e.code)) {
-                    return;
-                }
-
-                if (e.code === 'Backspace') {
-                    if (this._multiple && this._value.length && !dom.getValue(this._searchInput)) {
-                        e.preventDefault();
-
-                        // remove the last selected item and populate the search input with it's value
-                        const lastValue = this._value.pop();
-                        const lastItem = this._findValue(lastValue);
-
-                        this._refreshMulti();
-                        dom.setValue(this._searchInput, lastItem.text);
-                        dom.focus(this._searchInput);
-                        this._updateSearchWidth();
-
-                        // trigger input
-                        dom.triggerEvent(this._searchInput, 'input.ui.selectmenu');
-                    }
-
-                    return;
-                }
-
-                if (this._multiple && !dom.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
-                    return this.show();
-                }
-
-                const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
-
-                if (e.code === 'Enter') {
-                    // select the focused item
-                    if (focusedNode) {
-                        const value = dom.getDataset(focusedNode, 'uiValue');
-                        this._selectValue(value);
-                    }
-
-                    return;
-                }
-
-                // focus the previous/next item
-
-                let focusNode;
-                if (!focusedNode) {
-                    focusNode = dom.findOne('[data-ui-action="select"]', this._itemsList);
-                } else {
-                    switch (e.code) {
-                        case 'ArrowDown':
-                            focusNode = dom.nextAll(focusedNode, '[data-ui-action="select"]').shift();
-                            break;
-                        case 'ArrowUp':
-                            focusNode = dom.prevAll(focusedNode, '[data-ui-action="select"]').pop();
-                            break;
-                    }
-                }
-
-                if (!focusNode) {
-                    return;
-                }
-
-                dom.removeClass(focusedNode, this.constructor.classes.focus);
-                dom.removeDataset(focusedNode, 'uiFocus');
-                dom.addClass(focusNode, this.constructor.classes.focus);
-                dom.setDataset(focusNode, 'uiFocus', true);
-
-                const itemsScrollY = dom.getScrollY(this._itemsList);
-                const itemsRect = dom.rect(this._itemsList, true);
-                const nodeRect = dom.rect(focusNode, true);
-
-                if (nodeRect.top < itemsRect.top) {
-                    dom.setScrollY(this._itemsList, itemsScrollY + nodeRect.top - itemsRect.top);
-                } else if (nodeRect.bottom > itemsRect.bottom) {
-                    dom.setScrollY(this._itemsList, itemsScrollY + nodeRect.bottom - itemsRect.bottom);
-                }
-            });
-
-            dom.addEvent(this._searchInput, 'keyup.ui.selectmenu', e => {
-                if (e.code !== 'Escape' || !dom.isConnected(this._menuNode)) {
-                    return;
-                }
-
-                e.stopPropagation();
-
-                // close the menu
-                this.hide();
-
-                if (this._multiple) {
-                    dom.blur(this._searchInput);
-                    dom.focus(this._searchInput);
-                } else {
-                    dom.focus(this._toggle);
-                }
-            });
-
-            if (this._settings.getResults) {
-                // infinite scrolling event
-                dom.addEvent(this._itemsList, 'scroll.ui.selectmenu', Core.throttle(_ => {
-                    if (this._request || !this._showMore) {
-                        return;
-                    }
-
-                    const height = dom.height(this._itemsList);
-                    const scrollHeight = dom.height(this._itemsList, DOM.SCROLL_BOX);
-                    const scrollTop = dom.getScrollY(this._itemsList);
-
-                    if (scrollTop >= scrollHeight - height - (height / 4)) {
-                        const term = dom.getValue(this._searchInput);
-                        const offset = this._data.length;
-
-                        this._getData({ term, offset });
-                    }
-                }, 250, false));
+            // check for minimum search length
+            if (this._options.minSearch && (!term || term.length < this._options.minSearch)) {
+                this.update();
+                return;
             }
+
+            // check for max selections
+            if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
+                const info = this._renderInfo(this._options.lang.maxSelections);
+                $.append(this._itemsList, info);
+                this.update();
+                return;
+            }
+
+            let results = this._data;
+
+            if (term) {
+                const isMatch = this._options.isMatch.bind(this);
+                const sortResults = this._options.sortResults.bind(this);
+
+                // filter results
+                results = this._data
+                    .flatMap((item) => 'children' in item && $._isArray(item.children) ?
+                        item.children :
+                        item,
+                    )
+                    .map((item) => this._cloneItem(item))
+                    .filter((data) => isMatch(data, term))
+                    .sort((a, b) => sortResults(a, b, term));
+            }
+
+            this._renderResults(results);
+            this.update();
+        };
+    }
+    /**
+     * Initialize get data callback.
+     */
+    function _getResultsCallbackInit() {
+        this._getResults = (options) => {
+            // reset data for starting offset
+            if (!options.offset) {
+                this._data = [];
+            }
+
+            const request = Promise.resolve(this._options.getResults(options));
+
+            request.then((response) => {
+                const newData = this._parseData(response.results);
+                this._data.push(...newData);
+                this._showMore = response.showMore;
+
+                // update lookup
+                Object.assign(
+                    this._lookup,
+                    this._parseDataLookup(this._data),
+                );
+
+                return response;
+            }).catch((_) => { });
+
+            return request;
+        };
+    }
+    /**
+     * Initialize get data from callback.
+     */
+    function _getResultsInit() {
+        const load = $._debounce(({ offset, term }) => {
+            const options = { offset };
+
+            if (term) {
+                options.term = term;
+            }
+
+            const request = this._getResults(options);
+
+            request.then((response) => {
+                if (this._request !== request) {
+                    return;
+                }
+
+                if (!offset) {
+                    $.empty(this._itemsList);
+                } else {
+                    $.detach(this._loader);
+                }
+
+                this._renderResults(response.results);
+
+                this._request = null;
+            }).catch((_) => {
+                if (this._request !== request) {
+                    return;
+                }
+
+                $.detach(this._loader);
+                $.append(this._itemsList, this._error);
+
+                this._request = null;
+            }).finally((_) => {
+                this._loadingScroll = false;
+                this.update();
+            });
+
+            this._request = request;
+        }, this._options.debounce);
+
+        this._getData = ({ offset = 0, term = null }) => {
+            // cancel last request
+            if (this._request && this._request.cancel) {
+                this._request.cancel();
+            }
+
+            this._request = null;
+
+            if (!offset) {
+                this._activeItems = [];
+                $.setAttribute(this._toggle, { 'aria-activedescendent': '' });
+                $.setAttribute(this._searchInput, { 'aria-activedescendent': '' });
+
+                const children = $.children(this._itemsList, (node) => !$.isSame(node, this._loader));
+                $.detach(children);
+            } else {
+                $.detach(this._error);
+            }
+
+            // check for minimum search length
+            if (this._options.minSearch && (!term || term.length < this._options.minSearch)) {
+                $.hide(this._menuNode);
+                this.update();
+                return;
+            }
+
+            // check for max selections
+            if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
+                const info = this._renderInfo(this._options.lang.maxSelections);
+                $.append(this._itemsList, info);
+                this.update();
+                return;
+            }
+
+            const lastChild = $.child(this._itemsList, ':last-child');
+            if (!lastChild || !$.isSame(lastChild, this._loader)) {
+                $.append(this._itemsList, this._loader);
+            }
+
+            load({ offset, term });
+        };
+    }
+
+    /**
+     * Attach events for the SelectMenu.
+     */
+    function _events() {
+        $.addEvent(this._itemsList, 'contextmenu.ui.selectmenu', (e) => {
+            // prevent menu node from showing right click menu
+            e.preventDefault();
+        });
+
+        $.addEvent(this._menuNode, 'mousedown.ui.selectmenu', (e) => {
+            if ($.isSame(this._searchInput, e.target)) {
+                return;
+            }
+
+            // prevent search input from triggering blur event
+            e.preventDefault();
+        });
+
+        $.addEvent(this._menuNode, 'click.ui.selectmenu', (e) => {
+            // prevent menu node from closing modal
+            e.stopPropagation();
+        });
+
+        $.addEvent(this._node, 'focus.ui.selectmenu', (_) => {
+            if (this._multiple) {
+                $.focus(this._searchInput);
+            } else {
+                $.focus(this._toggle);
+            }
+        });
+
+        $.addEventDelegate(this._itemsList, 'mouseup.ui.selectmenu', '[data-ui-action="select"]', (e) => {
+            e.preventDefault();
+
+            const value = $.getDataset(e.currentTarget, 'uiValue');
+            this._selectValue(value);
+        });
+
+        $.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '[data-ui-action="select"]', $.debounce((e) => {
+            const focusedNode = $.find('[data-ui-focus]', this._itemsList);
+            $.removeClass(focusedNode, this.constructor.classes.focus);
+            $.removeDataset(focusedNode, 'uiFocus');
+
+            $.addClass(e.currentTarget, this.constructor.classes.focus);
+            $.setDataset(e.currentTarget, { uiFocus: true });
+
+            const id = $.getAttribute(e.currentTarget, 'id');
+            $.setAttribute(this._toggle, { 'aria-activedescendent': id });
+            $.setAttribute(this._searchInput, { 'aria-activedescendent': id });
+        }));
+
+        $.addEvent(this._searchInput, 'input.ui.selectmenu', $.debounce((_) => {
+            if (this._multiple) {
+                this._updateSearchWidth();
+                this.show();
+            }
+
+            const term = $.getValue(this._searchInput);
+            this._getData({ term });
+        }));
+
+        $.addEvent(this._searchInput, 'keydown.ui.selectmenu', (e) => {
+            if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter'].includes(e.code)) {
+                return;
+            }
+
+            if (e.code === 'Backspace') {
+                if (this._multiple && this._value.length && !$.getValue(this._searchInput)) {
+                    e.preventDefault();
+
+                    // remove the last selected item and populate the search input with it's value
+                    const lastValue = this._value.pop();
+                    const lastItem = this._findValue(lastValue);
+                    const { element: _, ...lastData } = lastItem;
+                    const lastLabel = this._options.getLabel(lastData);
+
+                    this._refreshMulti();
+                    $.setValue(this._searchInput, lastLabel);
+                    $.focus(this._searchInput);
+                    this._updateSearchWidth();
+
+                    // trigger input
+                    $.triggerEvent(this._searchInput, 'input.ui.selectmenu');
+                }
+
+                return;
+            }
+
+            if (this._multiple && !$.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
+                return this.show();
+            }
+
+            const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
+
+            if (e.code === 'Enter') {
+                // select the focused item
+                if (focusedNode) {
+                    const value = $.getDataset(focusedNode, 'uiValue');
+                    this._selectValue(value);
+                }
+
+                return;
+            }
+
+            // focus the previous/next item
+
+            let focusNode;
+            if (!focusedNode) {
+                focusNode = this._activeItems[0];
+            } else {
+                let focusIndex = this._activeItems.indexOf(focusedNode);
+
+                switch (e.code) {
+                    case 'ArrowDown':
+                        focusIndex++;
+                        break;
+                    case 'ArrowUp':
+                        focusIndex--;
+                        break;
+                }
+
+                focusNode = this._activeItems[focusIndex];
+            }
+
+            if (!focusNode) {
+                return;
+            }
+
+            $.removeClass(focusedNode, this.constructor.classes.focus);
+            $.removeDataset(focusedNode, 'uiFocus');
+            $.addClass(focusNode, this.constructor.classes.focus);
+            $.setDataset(focusNode, { uiFocus: true });
+
+            const id = $.getAttribute(focusNode, 'id');
+            $.setAttribute(this._toggle, { 'aria-activedescendent': id });
+            $.setAttribute(this._searchInput, { 'aria-activedescendent': id });
+
+            const itemsScrollY = $.getScrollY(this._itemsList);
+            const itemsRect = $.rect(this._itemsList, { offset: true });
+            const nodeRect = $.rect(focusNode, { offset: true });
+
+            if (nodeRect.top < itemsRect.top) {
+                $.setScrollY(this._itemsList, itemsScrollY + nodeRect.top - itemsRect.top);
+            } else if (nodeRect.bottom > itemsRect.bottom) {
+                $.setScrollY(this._itemsList, itemsScrollY + nodeRect.bottom - itemsRect.bottom);
+            }
+        });
+
+        $.addEvent(this._searchInput, 'keyup.ui.selectmenu', (e) => {
+            if (e.code !== 'Escape' || !$.isConnected(this._menuNode)) {
+                return;
+            }
+
+            e.stopPropagation();
+
+            // close the menu
+            this.hide();
 
             if (this._multiple) {
-                this._eventsMulti()
+                $.blur(this._searchInput);
+                $.focus(this._searchInput);
             } else {
-                this._eventsSingle();
+                $.focus(this._toggle);
             }
-        },
+        });
 
-        /**
-         * Attach events for a multiple SelectMenu.
-         */
-        _eventsMulti() {
-            dom.addEvent(this._searchInput, 'focus.ui.selectmenu', _ => {
-                if (!dom.isSame(this._searchInput, document.activeElement)) {
+        if (this._options.getResults) {
+            // infinite scrolling event
+            $.addEvent(this._itemsList, 'scroll.ui.selectmenu', $._throttle((_) => {
+                if (this._request || !this._showMore) {
                     return;
                 }
 
-                dom.hide(this._placeholder);
-                dom.detach(this._placeholder);
-                dom.addClass(this._toggle, 'focus');
+                const height = $.height(this._itemsList);
+                const scrollHeight = $.height(this._itemsList, { boxSize: $.SCROLL_BOX });
+                const scrollTop = $.getScrollY(this._itemsList);
+
+                if (scrollTop >= scrollHeight - height - (height / 4)) {
+                    const term = $.getValue(this._searchInput);
+                    const offset = this._data.length;
+
+                    this._loadingScroll = true;
+                    this._getData({ term, offset });
+                }
+            }, 250, { leading: false }));
+        }
+
+        if (this._multiple) {
+            this._eventsMulti();
+        } else {
+            this._eventsSingle();
+        }
+    }
+    /**
+     * Attach events for a multiple SelectMenu.
+     */
+    function _eventsMulti() {
+        $.addEvent(this._searchInput, 'focus.ui.selectmenu', (_) => {
+            if (!$.isSame(this._searchInput, document.activeElement)) {
+                return;
+            }
+
+            $.hide(this._placeholder);
+            $.detach(this._placeholder);
+            $.addClass(this._toggle, 'focus');
+        });
+
+        let keepFocus = false;
+        $.addEvent(this._searchInput, 'blur.ui.selectmenu', (_) => {
+            if ($.isSame(this._searchInput, document.activeElement)) {
+                return;
+            }
+
+            if (keepFocus) {
+                // prevent losing focus when toggle element is focused
+                return;
+            }
+
+            $.removeClass(this._toggle, 'focus');
+
+            if (!$.isConnected(this._menuNode)) {
+                this._refreshPlaceholder();
+                return;
+            }
+
+            if ($.getDataset(this._menuNode, 'uiAnimating') === 'out') {
+                return;
+            }
+
+            $.stop(this._menuNode);
+            $.removeDataset(this._menuNode, 'uiAnimating');
+
+            this.hide();
+        });
+
+        $.addEvent(this._toggle, 'mousedown.ui.selectmenu', (e) => {
+            if ($.is(e.target, '[data-ui-action="clear"]')) {
+                e.preventDefault();
+                return;
+            }
+
+            if ($.hasClass(this._toggle, 'focus')) {
+                // maintain focus when toggle element is already focused
+                keepFocus = true;
+            } else {
+                $.hide(this._placeholder);
+                $.addClass(this._toggle, 'focus');
+            }
+
+            $.addEventOnce(window, 'mouseup.ui.selectmenu', (_) => {
+                keepFocus = false;
+                $.focus(this._searchInput);
+
+                if (!e.button) {
+                    this.show();
+                }
             });
+        });
 
-            let keepFocus = false;
-            dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
-                if (dom.isSame(this._searchInput, document.activeElement)) {
-                    return;
-                }
+        $.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', (e) => {
+            if (e.button) {
+                return;
+            }
 
-                if (keepFocus) {
-                    // prevent losing focus when toggle element is focused
-                    return;
-                }
+            // remove selection
+            const element = $.parent(e.currentTarget);
+            const index = $.index(element);
+            const value = this._value.slice();
+            value.splice(index, 1);
+            this._setValue(value, { triggerEvent: true });
+            $.focus(this._searchInput);
+        });
+    }
+    /**
+     * Attach events for a single SelectMenu.
+     */
+    function _eventsSingle() {
+        $.addEvent(this._searchInput, 'blur.ui.selectmenu', (_) => {
+            if ($.isSame(this._searchInput, document.activeElement)) {
+                return;
+            }
 
-                dom.removeClass(this._toggle, 'focus');
-                if (dom.isConnected(this._menuNode)) {
-                    dom.stop(this._menuNode);
-                    this._animating = false;
+            if ($.getDataset(this._menuNode, 'uiAnimating') === 'out') {
+                return;
+            }
 
-                    this.hide();
-                } else {
-                    this._refreshPlaceholder();
-                }
-            });
+            $.stop(this._menuNode);
+            $.removeDataset(this._menuNode, 'uiAnimating');
 
-            dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
-                if (dom.is(e.target, '[data-ui-action="clear"]')) {
-                    e.preventDefault();
-                    return;
-                }
+            this.hide();
+        });
 
-                if (dom.hasClass(this._toggle, 'focus')) {
-                    // maintain focus when toggle element is already focused
-                    keepFocus = true;
-                } else {
-                    dom.hide(this._placeholder);
-                    dom.addClass(this._toggle, 'focus');
-                }
+        $.addEvent(this._toggle, 'mousedown.ui.selectmenu', (e) => {
+            if ($.is(e.target, '[data-ui-action="clear"]')) {
+                e.preventDefault();
+                return;
+            }
 
-                dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
-                    keepFocus = false;
-                    dom.focus(this._searchInput);
+            if (e.button) {
+                return;
+            }
 
-                    if (!e.button) {
-                        this.show();
-                    }
+            if ($.isConnected(this._menuNode)) {
+                this.hide();
+            } else {
+                this.show();
+
+                $.addEventOnce(window, 'mouseup.ui.selectmenu', (_) => {
+                    // focus search input when mouse is released
+                    $.focus(this._searchInput);
                 });
-            });
+            }
+        });
 
-            dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', e => {
+        $.addEvent(this._toggle, 'keydown.ui.selectmenu', (e) => {
+            if (!/^.$/u.test(e.key)) {
+                return;
+            }
+
+            this.show();
+            $.focus(this._searchInput);
+        });
+
+        if (this._options.allowClear) {
+            $.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', (e) => {
                 if (e.button) {
                     return;
                 }
 
                 // remove selection
-                const element = dom.parent(e.currentTarget);
-                const index = dom.index(element);
-                const value = this._value.slice();
-                value.splice(index, 1)
-                this._setValue(value, true);
-                dom.focus(this._searchInput);
-            });
-        },
+                this._setValue(null, { triggerEvent: true });
 
-        /**
-         * Attach events for a single SelectMenu.
-         */
-        _eventsSingle() {
-            dom.addEvent(this._searchInput, 'blur.ui.selectmenu', _ => {
-                if (dom.isSame(this._searchInput, document.activeElement)) {
-                    return;
-                }
-
-                dom.stop(this._menuNode);
-                this._animating = false;
-
-                this.hide();
-            });
-
-            dom.addEvent(this._toggle, 'mousedown.ui.selectmenu', e => {
-                if (dom.is(e.target, '[data-ui-action="clear"]')) {
-                    e.preventDefault();
-                    return;
-                }
-
-                if (e.button) {
-                    return;
-                }
-
-                if (dom.isConnected(this._menuNode)) {
+                if ($.isConnected(this._menuNode)) {
                     this.hide();
-                } else {
-                    this.show();
-
-                    dom.addEventOnce(window, 'mouseup.ui.selectmenu', _ => {
-                        // focus search input when mouse is released
-                        dom.focus(this._searchInput);
-                    });
                 }
             });
-
-            dom.addEvent(this._toggle, 'keydown.ui.selectmenu', e => {
-                if (!/^.$/u.test(e.key)) {
-                    return;
-                }
-
-                this.show();
-                dom.focus(this._searchInput);
-            });
-
-            if (this._settings.allowClear) {
-                dom.addEventDelegate(this._toggle, 'click.ui.selectmenu', '[data-ui-action="clear"]', e => {
-                    if (e.button) {
-                        return;
-                    }
-
-                    // remove selection
-                    this._setValue(null, true);
-                });
-            }
         }
-
-    });
-
+    }
 
     /**
-     * SelectMenu Helpers
+     * Clone data for an item.
+     * @param {object} item The item to clone.
+     * @return {object} The cloned data.
      */
+    function _cloneItem(item) {
+        if (!item) {
+            return item;
+        }
 
-    Object.assign(SelectMenu.prototype, {
+        const { element: _, ...data } = item;
 
-        /**
-         * Retrieve cloned data for a value.
-         * @param {string|number} value The value to retrieve data for.
-         * @returns {object} The cloned data.
-         */
-        _cloneValue(value) {
-            const data = this._findValue(value);
+        return $._extend({}, data);
+    }
+    /**
+     * Retrieve data for a value.
+     * @param {string|number} value The value to retrieve data for.
+     * @return {object} The data.
+     */
+    function _findValue(value) {
+        if (value in this._lookup) {
+            return this._lookup[value];
+        }
 
-            if (!data) {
-                return data;
-            }
+        return null;
+    }
+    /**
+     * Set a new value, loading the data if it has not already been loaded.
+     * @param {string|number|array} value The value to load.
+     */
+    function _loadValue(value) {
+        if (!value || !this._getResults) {
+            this._setValue(value);
+            return;
+        }
 
-            const clone = Core.extend({}, data);
-
-            delete clone.element;
-
-            return clone;
-        },
-
-        /**
-         * Retrieve data for a value.
-         * @param {string|number} value The value to retrieve data for.
-         * @returns {object} The data.
-         */
-        _findValue(value) {
-            if (value in this._lookup) {
-                return this._lookup[value];
-            }
-
-            return null;
-        },
-
-        /**
-         * Set a new value, loading the data if it has not already been loaded.
-         * @param {string|number} value The value to load.
-         */
-        _loadValue(value) {
-            if (
-                !value ||
-                !this._getResults ||
-                (!this._multiple && this._findValue(value)) ||
-                (this._multiple && value.every(val => this._findValue(val)))
-            ) {
+        if (!this._multiple) {
+            if (this._findValue(value)) {
                 this._setValue(value);
-            } else {
-                this._getResults({ value }).then(_ => this._setValue(value));
-            }
-        },
-
-        /**
-         * Refresh the selected value(s).
-         */
-        _refresh() {
-            if (this._multiple) {
-                this._refreshMulti();
-            } else {
-                this._refreshSingle();
-            }
-        },
-
-        /**
-         * Refresh the toggle disabled class.
-         */
-        _refreshDisabled() {
-            const element = this._multiple ?
-                this._searchInput :
-                this._toggle;
-
-            if (dom.is(this._node, ':disabled')) {
-                dom.addClass(this._toggle, this.constructor.classes.disabled);
-                dom.setAttribute(element, 'tabindex', '-1');
-            } else {
-                dom.removeClass(this._toggle, this.constructor.classes.disabled);
-                dom.removeAttribute(element, 'tabindex');
-            }
-
-
-            if (dom.hasAttribute(this._node, 'readonly')) {
-                dom.addClass(this._toggle, this.constructor.classes.readonly);
-            }
-        },
-
-        /**
-         * Refresh the selected value(s) for a multiple SelectMenu.
-         */
-        _refreshMulti() {
-            if (!this._value) {
-                this._value = [];
-            }
-
-            // check max selections
-            if (this._maxSelections && this._value.length > this._maxSelections) {
-                this._value = this._value.slice(0, this._maxSelections);
-            }
-
-            // check values have been loaded and are not disabled
-            this._value = this._value.filter(value => {
-                const item = this._findValue(value);
-                return item && !item.disabled;
-            });
-
-            // prevent events from being removed
-            dom.detach(this._searchInput);
-
-            dom.empty(this._node);
-            dom.empty(this._toggle);
-
-            this._refreshDisabled();
-            this._refreshPlaceholder();
-
-            // add values
-            if (this._value.length) {
-                for (const value of this._value) {
-                    const item = this._findValue(value);
-
-                    dom.append(this._node, item.element);
-
-                    const group = this._renderMultiSelection(item);
-                    dom.append(this._toggle, group);
-                }
-            }
-
-            dom.append(this._toggle, this._searchInput);
-        },
-
-        /**
-         * Refresh the placeholder.
-         */
-        _refreshPlaceholder() {
-            if (
-                (this._multiple && this._value.length) ||
-                (!this._multiple && this._value)
-            ) {
-                dom.hide(this._placeholder);
-            } else {
-                dom.show(this._placeholder);
-                dom.prepend(this._toggle, this._placeholder);
-            }
-        },
-
-        /**
-         * Refresh the selected value for a single SelectMenu.
-         */
-        _refreshSingle() {
-            // check value has been loaded and is not disabled
-            const item = this._findValue(this._value);
-
-            if (!item || item.disabled) {
-                this._value = null;
-            }
-
-            dom.empty(this._node);
-            dom.empty(this._toggle);
-
-            this._refreshDisabled();
-            this._refreshPlaceholder();
-
-            if (!this._value) {
                 return;
             }
 
-            // add value
+            this._getResults({ value })
+                .then((_) => this._setValue(value));
+        }
 
-            dom.append(this._node, item.element);
+        const loadValues = value.filter((val) => !this._findValue(val));
 
-            const content = this._settings.renderSelection(item);
-            dom.setHTML(this._toggle, this._settings.sanitize(content));
+        if (!loadValues.length) {
+            this._setValue(value);
+            return;
+        }
 
-            if (this._settings.allowClear) {
-                dom.append(this._toggle, this._clear);
-            }
-        },
+        this._getResults({ value: loadValues })
+            .then((_) => this._setValue(value));
+    }
+    /**
+     * Refresh the selected value(s).
+     */
+    function _refresh() {
+        if (this._multiple) {
+            this._refreshMulti();
+        } else {
+            this._refreshSingle();
+        }
+    }
+    /**
+     * Refresh the toggle disabled class.
+     */
+    function _refreshDisabled() {
+        const element = this._multiple ?
+            this._searchInput :
+            this._toggle;
+        const disabled = $.is(this._node, ':disabled');
 
-        /**
-         * Select a value (from DOM event).
-         * @param {string|number} value The value to select.
-         */
-        _selectValue(value) {
-            // check item has been loaded
+        if (disabled) {
+            $.addClass(this._toggle, this.constructor.classes.disabled);
+            $.setAttribute(element, { tabindex: -1 });
+        } else {
+            $.removeClass(this._toggle, this.constructor.classes.disabled);
+            $.removeAttribute(element, 'tabindex');
+        }
+
+        $.setAttribute(this._toggle, { 'aria-disabled': disabled });
+    }
+    /**
+     * Refresh the selected value(s) for a multiple SelectMenu.
+     */
+    function _refreshMulti() {
+        if (!this._value) {
+            this._value = [];
+        }
+
+        // check values have been loaded and are not disabled
+        this._value = this._value.filter((value) => {
             const item = this._findValue(value);
+            return item && !item.disabled;
+        });
 
-            if (!item) {
-                return;
-            }
-
-            // get actual value from item
-            value = item.value;
-
-            // toggle selected values for multiple select
-            if (this._multiple) {
-                const index = this._value.findIndex(otherValue => otherValue == value);
-                if (index >= 0) {
-                    value = this._value.slice();
-                    value.splice(index, 1)
-                } else {
-                    value = this._value.concat([value]);
-                }
-            }
-
-            this._setValue(value, true);
-
-            if (this._settings.closeOnSelect) {
-                this.hide();
-            } else {
-                this._getData({});
-            }
-
-            this._refreshPlaceholder();
-            dom.setValue(this._searchInput, '');
-
-            if (this._multiple) {
-                dom.focus(this._searchInput);
-            } else {
-                dom.focus(this._toggle);
-            }
-        },
-
-        /**
-         * Select the selected value(s).
-         * @param {string|number|array} value The value to select.
-         * @param {Boolean} [triggerEvent] Whether to trigger the change event.
-         */
-        _setValue(value, triggerEvent = false) {
-            if (
-                // only set value if value actually changed
-                (!this._multiple && value === this._value) ||
-                (this._multiple && this._value && value.length === this._value.length && value.every((val, index) => val === this._value[index]))
-            ) {
-                return;
-            }
-
-            this._value = value;
-            this._refresh();
-
-            if (triggerEvent) {
-                dom.triggerEvent(this._node, 'change.ui.selectmenu');
-            }
-        },
-
-        /**
-         * Update the search input width.
-         */
-        _updateSearchWidth() {
-            const span = dom.create('span', {
-                text: dom.getValue(this._searchInput),
-                style: {
-                    display: 'inline-block',
-                    fontSize: dom.css(this._searchInput, 'fontSize'),
-                    whiteSpace: 'pre-wrap'
-                }
-            });
-            dom.append(document.body, span);
-
-            const width = dom.width(span);
-            dom.setStyle(this._searchInput, 'width', width + 2);
-            dom.remove(span);
+        // check max selections
+        if (this._maxSelections && this._value.length > this._maxSelections) {
+            this._value = this._value.slice(0, this._maxSelections);
         }
 
-    });
+        // prevent events from being removed
+        $.detach(this._searchInput);
 
+        $.empty(this._node);
+        $.empty(this._toggle);
 
-    /**
-     * SelectMenu Init
-     */
+        this._refreshDisabled();
+        this._refreshPlaceholder();
 
-    Object.assign(SelectMenu.prototype, {
+        // add values
+        if (this._value.length) {
+            for (const value of this._value) {
+                const item = this._findValue(value);
 
-        /**
-         * Initialize preloaded get data.
-         */
-        _getDataInit() {
-            this._getData = ({ term = null }) => {
-                dom.empty(this._itemsList);
+                $.append(this._node, item.element);
 
-                // check for minimum search length
-                if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
-                    return this.update();
-                }
-
-                // check for max selections
-                if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
-                    return this._renderInfo(this._settings.lang.maxSelections);
-                }
-
-                let results = this._data;
-
-                if (term) {
-                    // filter results
-                    results = this._settings.sortResults(
-                        results.reduce(
-                            (acc, result) => {
-                                if (result.children) {
-                                    acc.push(...result.children)
-                                } else {
-                                    acc.push(result);
-                                }
-                                return acc;
-                            },
-                            []
-                        ),
-                        term
-                    ).filter(item => this._settings.isMatch(item, term));
-                }
-
-                this._renderResults(results);
-                this.update();
-            };
-        },
-
-        /**
-         * Initialize get data from callback.
-         */
-        _getResultsInit() {
-            this._getData = ({ offset = 0, term = null }) => {
-
-                // cancel last request
-                if (this._request && this._request.cancel) {
-                    this._request.cancel();
-                    this._request = null;
-                }
-
-                if (!offset) {
-                    dom.empty(this._itemsList);
-                }
-
-                // check for minimum search length
-                if (this._settings.minSearch && (!term || term.length < this._settings.minSearch)) {
-                    return this.update();
-                }
-
-                // check for max selections
-                if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
-                    return this._renderInfo(this._settings.lang.maxSelections);
-                }
-
-                const options = { offset };
-
-                if (term) {
-                    options.term = term;
-                }
-
-                const loading = this._renderInfo(this._settings.lang.loading);
-                const request = this._getResults(options);
-
-                request.then(response => {
-                    this._renderResults(response.results);
-                }).catch(_ => {
-                    // error
-                }).finally(_ => {
-                    dom.remove(loading);
-                    this.update();
-
-                    if (this._request === request) {
-                        this._request = null;
-                    }
-                });
-            };
-        },
-
-        /**
-         * Initialize get data callback.
-         */
-        _getResultsCallbackInit() {
-            this._getResults = options => {
-                // reset data for starting offset
-                if (!options.offset) {
-                    this._data = [];
-                }
-
-                const request = this._settings.getResults(options);
-                this._request = Promise.resolve(request);
-
-                this._request.then(response => {
-                    const newData = this.constructor._parseData(response.results);
-                    this._data.push(...newData);
-                    this._showMore = response.showMore;
-
-                    // update lookup
-                    Object.assign(
-                        this._lookup,
-                        this.constructor._parseDataLookup(this._data)
-                    );
-
-                    return response;
-                });
-
-                return this._request;
-            };
+                this._renderMultiSelection(item);
+            }
         }
 
-    });
-
-
+        $.append(this._toggle, this._searchInput);
+    }
     /**
-     * SelectMenu Render
+     * Refresh the placeholder.
      */
+    function _refreshPlaceholder() {
+        if (
+            (this._multiple && this._value.length) ||
+            (!this._multiple && this._value)
+        ) {
+            $.hide(this._placeholder);
+        } else {
+            $.show(this._placeholder);
+            $.prepend(this._toggle, this._placeholder);
+        }
+    }
+    /**
+     * Refresh the selected value for a single SelectMenu.
+     */
+    function _refreshSingle() {
+        // check value has been loaded and is not disabled
+        const item = this._findValue(this._value);
 
-    Object.assign(SelectMenu.prototype, {
-
-        /**
-         * Render the toggle element.
-         */
-        _render() {
-            if (this._multiple) {
-                this._renderToggleMulti();
-            } else {
-                if (this._settings.allowClear) {
-                    this._renderClear();
-                }
-
-                this._renderToggleSingle();
-            }
-
-            this._renderPlaceholder();
-            this._renderMenu();
-
-            // hide the input node
-            dom.addClass(this._node, this.constructor.classes.hide);
-            dom.setAttribute(this._node, 'tabindex', '-1');
-
-            dom.after(this._node, this._toggle);
-        },
-
-        /**
-         * Render the clear button.
-         */
-        _renderClear() {
-            this._clear = dom.create('button', {
-                class: this.constructor.classes.clear,
-                attributes: {
-                    type: 'button'
-                },
-                dataset: {
-                    uiAction: 'clear'
-                }
-            });
-        },
-
-        /**
-         * Render a group item.
-         * @param {object} group The group item to render.
-         * @returns {HTMLElement} The group element.
-         */
-        _renderGroup(group) {
-            return dom.create('div', {
-                html: this._settings.sanitize(
-                    this._settings.renderResult(group)
-                ),
-                class: this.constructor.classes.group
-            });
-        },
-
-        /**
-         * Render an information item.
-         * @param {string} text The text to render.
-         * @returns {HTMLElement} The information element.
-         */
-        _renderInfo(text) {
-            const element = dom.create('button', {
-                html: this._settings.sanitize(text),
-                class: this.constructor.classes.info,
-                attributes: {
-                    type: 'button'
-                }
-            });
-            dom.append(this._itemsList, element);
-            this.update();
-            return element;
-        },
-
-        /**
-         * Render an item.
-         * @param {object} item The item to render.
-         * @returns {HTMLElement} The item element.
-         */
-        _renderItem(item) {
-            const active =
-                (
-                    this._multiple &&
-                    this._value.some(value => value == item.value)
-                ) || (
-                    !this._multiple &&
-                    item.value == this._value
-                );
-
-            const { option, ...data } = item;
-
-            const element = dom.create('div', {
-                html: this._settings.sanitize(
-                    this._settings.renderResult(data, active)
-                ),
-                class: this.constructor.classes.item
-            });
-
-            if (active) {
-                dom.addClass(element, this.constructor.classes.active);
-                dom.setDataset(element, 'uiActive', true);
-            }
-
-            if (item.disabled) {
-                dom.addClass(element, this.constructor.classes.disabledItem);
-            } else {
-                dom.addClass(element, this.constructor.classes.action)
-                dom.setDataset(element, {
-                    uiAction: 'select',
-                    uiValue: item.value
-                });
-            }
-
-            return element;
-        },
-
-        /**
-         * Render the menu.
-         */
-        _renderMenu() {
-            this._menuNode = dom.create('div', {
-                class: this.constructor.classes.menu
-            });
-
-            if (!this._multiple) {
-                // add search input for single select menus
-
-                const searchOuter = dom.create('div', {
-                    class: this.constructor.classes.searchOuter
-                });
-                dom.append(this._menuNode, searchOuter);
-
-                const searchContainer = dom.create('div', {
-                    class: this.constructor.classes.searchContainer
-                });
-                dom.append(searchOuter, searchContainer);
-
-                this._searchInput = dom.create('input', {
-                    class: this._settings.searchInputStyle === 'filled' ?
-                        this.constructor.classes.searchInputFilled :
-                        this.constructor.classes.searchInputOutline,
-                    attributes: {
-                        autocomplete: 'off'
-                    }
-                });
-                dom.append(searchContainer, this._searchInput);
-
-                if (this._settings.searchInputStyle === 'filled') {
-                    const ripple = dom.create('div', {
-                        class: this.constructor.classes.searchInputRipple
-                    });
-                    dom.append(searchContainer, ripple);
-                }
-            }
-
-            this._itemsList = dom.create('div', {
-                class: this.constructor.classes.items
-            });
-            dom.append(this._menuNode, this._itemsList);
-
-            this._popperOptions = {
-                reference: this._toggle,
-                placement: this._settings.placement,
-                position: this._settings.position,
-                fixed: this._settings.fixed,
-                spacing: this._settings.spacing,
-                minContact: this._settings.minContact
-            };
-
-            if (this._settings.fullWidth) {
-                this._popperOptions.afterUpdate = (node, reference) => {
-                    const width = dom.width(reference, DOM.BORDER_BOX);
-                    dom.setStyle(node, 'width', width);
-                };
-
-                this._popperOptions.beforeUpdate = node => {
-                    dom.setStyle(node, 'width', '');
-                };
-            }
-        },
-
-        /**
-         * Render a multiple selection item.
-         * @param {object} item The item to render.
-         * @returns {HTMLElement} The selection element.
-         */
-        _renderMultiSelection(item) {
-            const group = dom.create('div', {
-                class: this.constructor.classes.multiGroup
-            });
-
-            const close = dom.create('div', {
-                html: `<span class="${this.constructor.classes.multiClearIcon}"></span>`,
-                class: this.constructor.classes.multiClear,
-                dataset: {
-                    uiAction: 'clear'
-                }
-            });
-            dom.append(group, close);
-
-            const { option, ...data } = item;
-
-            const content = this._settings.renderSelection(data);
-            const tag = dom.create('div', {
-                html: this._settings.sanitize(content),
-                class: this.constructor.classes.multiItem
-            });
-            dom.append(group, tag);
-
-            return group;
-        },
-
-        /**
-         * Render the placeholder.
-         */
-        _renderPlaceholder() {
-            this._placeholder = dom.create('span', {
-                html: this._placeholderText ?
-                    this._settings.sanitize(this._placeholderText) :
-                    '&nbsp;',
-                class: this.constructor.classes.placeholder
-            });
-        },
-
-        /**
-         * Render results.
-         * @param {array} results The results to render.
-         */
-        _renderResults(results) {
-            if (!results.length) {
-                return this._renderInfo(this._settings.lang.noResults);
-            }
-
-            for (const item of results) {
-                const element = item.children ?
-                    this._renderGroup(item) :
-                    this._renderItem(item);
-                dom.append(this._itemsList, element);
-            }
-
-            const focusedNode = dom.findOne('[data-ui-focus]', this._itemsList);
-
-            if (focusedNode) {
-                return;
-            }
-
-            let focusNode = dom.findOne('[data-ui-active]', this._itemsList);
-
-            if (!focusNode) {
-                focusNode = dom.findOne('[data-ui-action="select"]', this._itemsList);
-            }
-
-            if (focusNode) {
-                dom.addClass(focusNode, this.constructor.classes.focus);
-                dom.setDataset(focusNode, 'uiFocus', true);
-            }
-        },
-
-        /**
-         * Render the single toggle element.
-         */
-        _renderToggleSingle() {
-            this._toggle = dom.create('button', {
-                class: [
-                    dom.getAttribute(this._node, 'class') || '',
-                    this.constructor.classes.toggle
-                ],
-                attributes: {
-                    type: 'button'
-                }
-            });
-        },
-
-        /**
-         * Render the multiple toggle element.
-         */
-        _renderToggleMulti() {
-            this._toggle = dom.create('div', {
-                class: [
-                    dom.getAttribute(this._node, 'class') || '',
-                    this.constructor.classes.multiToggle
-                ]
-            });
-
-            this._searchInput = dom.create('input', {
-                class: this.constructor.classes.multiSearchInput,
-                attributes: {
-                    autocomplete: 'off'
-                }
-            });
+        if (!item || item.disabled) {
+            this._value = null;
         }
 
-    });
+        $.empty(this._node);
+        $.empty(this._toggle);
 
+        this._refreshDisabled();
+        this._refreshPlaceholder();
+
+        if (!this._value) {
+            return;
+        }
+
+        // add value
+
+        $.append(this._node, item.element);
+
+        const data = this._cloneItem(item);
+
+        const element = $.create('div', {
+            class: this.constructor.classes.selectionSingle,
+        });
+
+        $.append(this._toggle, element);
+
+        if (this._options.allowClear) {
+            $.append(this._toggle, this._clear);
+        }
+
+        const content = this._options.renderSelection.bind(this)(data, element);
+
+        if ($._isString(content)) {
+            $.setHTML(element, this._options.sanitize(content));
+        } else if ($._isElement(content) && !$.isSame(tag, content)) {
+            $.append(element, content);
+        }
+    }
+    /**
+     * Select a value (from DOM event).
+     * @param {string|number} value The value to select.
+     */
+    function _selectValue(value) {
+        // check item has been loaded
+        const item = this._findValue(value);
+
+        if (!item) {
+            return;
+        }
+
+        const data = this._cloneItem(item);
+
+        value = this._options.getValue(data);
+
+        // toggle selected values for multiple select
+        if (this._multiple) {
+            const index = this._value.findIndex((otherValue) => otherValue == value);
+            if (index >= 0) {
+                value = this._value.slice();
+                value.splice(index, 1);
+            } else {
+                value = this._value.concat([value]);
+            }
+        }
+
+        this._setValue(value, { triggerEvent: true });
+
+        this._refreshPlaceholder();
+        $.setValue(this._searchInput, '');
+
+        if (this._options.closeOnSelect) {
+            this.hide();
+        } else {
+            this._getData({});
+        }
+
+        if (this._multiple) {
+            $.focus(this._searchInput);
+        } else {
+            $.focus(this._toggle);
+        }
+    }
+    /**
+     * Select the selected value(s).
+     * @param {string|number|array} value The value to select.
+     * @param {object} [options] Options for setting the value(s).
+     * @param {Boolean} [options.triggerEvent] Whether to trigger the change event.
+     */
+    function _setValue(value, { triggerEvent = false } = {}) {
+        let valueChanged;
+        if (this._multiple) {
+            valueChanged =
+                !this._value ||
+                value.length !== this._value.length ||
+                value.some((val, index) => val !== this._value[index]);
+        } else {
+            valueChanged = value !== this._value;
+        }
+
+        if (!valueChanged) {
+            return;
+        }
+
+        this._value = value;
+        this._refresh();
+
+        if (triggerEvent) {
+            $.triggerEvent(this._node, 'change.ui.selectmenu');
+        }
+    }
+    /**
+     * Update the search input width.
+     */
+    function _updateSearchWidth() {
+        const span = $.create('span', {
+            text: $.getValue(this._searchInput),
+            style: {
+                display: 'inline-block',
+                fontSize: $.css(this._searchInput, 'fontSize'),
+                whiteSpace: 'pre-wrap',
+            },
+        });
+        $.append(document.body, span);
+
+        const width = $.width(span);
+        $.setStyle(this._searchInput, { width: width + 2 });
+        $.remove(span);
+    }
 
     /**
-     * SelectMenu (Static) Helpers
+     * Build an option element for an item.
+     * @param {object} item The item to use.
+     * @return {HTMLElement} The option element.
      */
+    function _buildOption(item) {
+        return $.create('option', {
+            text: this._options.getLabel(item),
+            value: this._options.getValue(item),
+            properties: {
+                selected: true,
+            },
+        });
+    }
+    /**
+     * Build a data array from a DOM element.
+     * @param {HTMLElement} element The element to parse.
+     * @return {array} The parsed data.
+     */
+    function _getDataFromDOM(element) {
+        return $.children(element).map((child) => {
+            const data = $.getDataset(child);
 
-    Object.assign(SelectMenu, {
-
-        /**
-         * Build an option element for an item.
-         * @param {object} item The item to use.
-         * @returns {HTMLElement} The option element.
-         */
-        _buildOption(item) {
-            return dom.create('option', {
-                text: item.text,
-                value: item.value,
-                properties: {
-                    selected: true
-                }
-            });
-        },
-
-        /**
-         * Build a data array from a DOM element.
-         * @param {HTMLElement} element The element to parse.
-         * @returns {array} The parsed data.
-         */
-        _getDataFromDOM(element) {
-            return dom.children(element).map(child => {
-                const data = dom.getDataset(child);
-
-                if (dom.is(child, 'option')) {
-                    return {
-                        text: dom.getText(child),
-                        value: dom.getValue(child),
-                        ...data
-                    };
-                }
-
+            if ($.is(child, 'option')) {
                 return {
-                    text: dom.getAttribute(child, 'label'),
-                    children: this._getDataFromDOM(child),
-                    ...data
+                    text: $.getText(child),
+                    value: $.getValue(child),
+                    disabled: $.is(child, ':disabled'),
+                    ...data,
                 };
-            });
-        },
-
-        /**
-         * Build a data array from an object.
-         * @param {object} data The data to parse.
-         * @returns {array} The parsed data.
-         */
-        _getDataFromObject(data) {
-            return Object.entries(data)
-                .map(([value, text]) => ({ value, text }));
-        },
-
-        /**
-         * Add option elements to data.
-         * @param {array} data The data to parse.
-         * @returns {array} The parsed data.
-         */
-        _parseData(data) {
-            for (const item of data) {
-                if (item.children) {
-                    this._parseData(item.children);
-                } else {
-                    item.element = this._buildOption(item);
-                }
             }
 
-            return data;
-        },
-
-        /**
-         * Populate lookup with data.
-         * @param {array} data The data to parse.
-         * @param {object} [lookup] The lookup.
-         * @returns {object} The populated lookup.
-         */
-        _parseDataLookup(data, lookup = {}) {
-            for (const item of data) {
-                if (data.children) {
-                    this._parseDataLookup(data.children, lookup);
-                } else {
-                    lookup[item.value] = Core.extend({}, item);
-                }
+            return {
+                text: $.getAttribute(child, 'label'),
+                children: this._getDataFromDOM(child),
+                ...data,
+            };
+        });
+    }
+    /**
+     * Build a data array from an object.
+     * @param {object} data The data to parse.
+     * @return {array} The parsed data.
+     */
+    function _getDataFromObject(data) {
+        return Object.entries(data)
+            .map(([value, text]) => ({ value, text }));
+    }
+    /**
+     * Add option elements to data.
+     * @param {array} data The data to parse.
+     * @return {array} The parsed data.
+     */
+    function _parseData(data) {
+        for (const item of data) {
+            if ('children' in item && $._isArray(item.children)) {
+                this._parseData(item.children);
+            } else {
+                item.element = this._buildOption(item);
             }
-
-            return lookup;
         }
 
-    });
+        return data;
+    }
+    /**
+     * Populate lookup with data.
+     * @param {array} data The data to parse.
+     * @param {object} [lookup] The lookup.
+     * @return {object} The populated lookup.
+     */
+    function _parseDataLookup(data, lookup = {}) {
+        for (const item of data) {
+            if ('children' in item) {
+                this._parseDataLookup(item.children, lookup);
+            } else {
+                const key = this._options.getValue(item);
+                lookup[key] = $._extend({}, item);
+            }
+        }
 
+        return lookup;
+    }
+
+    /**
+     * Render the toggle element.
+     */
+    function _render() {
+        this._renderPlaceholder();
+        this._renderMenu();
+
+        if (this._multiple) {
+            this._renderToggleMulti();
+        } else {
+            if (this._options.allowClear) {
+                this._renderClear();
+            }
+
+            this._renderToggleSingle();
+        }
+
+        if (this._options.getResults) {
+            this._loader = this._renderInfo(this._options.lang.loading);
+            this._error = this._renderInfo(this._options.lang.error);
+        }
+
+        this._popperOptions = {
+            reference: this._toggle,
+            placement: this._options.placement,
+            position: this._options.position,
+            fixed: this._options.fixed,
+            spacing: this._options.spacing,
+            minContact: this._options.minContact,
+        };
+
+        if (this._options.fullWidth) {
+            this._popperOptions.beforeUpdate = (node) => {
+                $.setStyle(node, { width: '' });
+            };
+
+            this._popperOptions.afterUpdate = (node, reference) => {
+                const width = $.width(reference, { boxSize: $.BORDER_BOX });
+                $.setStyle(node, 'width', width);
+            };
+        }
+
+        if ($.hasAttribute(this._node, 'readonly')) {
+            $.addClass(this._toggle, this.constructor.classes.readonly);
+            $.setAttribute(this._toggle, { 'aria-readonly': true });
+        }
+
+        // hide the input node
+        $.addClass(this._node, this.constructor.classes.hide);
+        $.setAttribute(this._node, { tabindex: -1 });
+
+        $.after(this._node, this._toggle);
+    }
+    /**
+     * Render the clear button.
+     */
+    function _renderClear() {
+        this._clear = $.create('span', {
+            class: this.constructor.classes.clear,
+            attributes: {
+                'role': 'button',
+                'aria-label': this._options.lang.clear,
+            },
+            dataset: {
+                uiAction: 'clear',
+            },
+        });
+    }
+    /**
+     * Render a group item.
+     * @param {object} item The group item to render.
+     * @return {HTMLElement} The group.
+     */
+    function _renderGroup(item) {
+        const id = ui.generateId('selectmenu-group');
+
+        const data = this._cloneItem(item);
+
+        const groupContainer = $.create('li', {
+            attributes: {
+                id,
+                'role': 'group',
+                'aria-label': this._options.getLabel(data),
+            },
+        });
+
+        const element = $.create('div', {
+            class: this.constructor.classes.group,
+        });
+
+        const content = this._options.renderResult.bind(this)(data, element);
+
+        if ($._isString(content)) {
+            $.setHTML(element, this._options.sanitize(content));
+        } else if ($._isElement(content) && !$.isSame(element, content)) {
+            $.append(element, content);
+        }
+
+        $.append(groupContainer, element);
+
+        const childList = $.create('ul', {
+            class: this.constructor.classes.groupContainer,
+            attributes: {
+                role: 'none',
+            }
+        });
+
+        $.append(groupContainer, childList);
+
+        for (const item of data.children) {
+            const element = this._renderItem(item, childList);
+
+            $.append(childList, element);
+        }
+
+        return groupContainer;
+    }
+    /**
+     * Render an information item.
+     * @param {string} text The text to render.
+     * @return {HTMLElement} The information item.
+     */
+    function _renderInfo(text) {
+        const element = $.create('li', {
+            html: this._options.sanitize(text),
+            class: this.constructor.classes.info,
+        });
+
+        return element;
+    }
+    /**
+     * Render an item.
+     * @param {object} item The item to render.
+     * @return {HTMLElement} The item.
+     */
+    function _renderItem(item) {
+        const id = ui.generateId('selectmenu-item');
+
+        const data = this._cloneItem(item);
+
+        const value = this._options.getValue(data);
+        const active = this._multiple ?
+            this._value.some((otherValue) => otherValue == value) :
+            value == this._value;
+
+        const element = $.create('li', {
+            class: this.constructor.classes.item,
+            attributes: {
+                id,
+                'role': 'option',
+                'aria-label': this._options.getLabel(item),
+                'aria-selected': active,
+            },
+        });
+
+        if (active) {
+            $.addClass(element, this.constructor.classes.active);
+            $.setDataset(element, { uiActive: true });
+        }
+
+        if (item.disabled) {
+            $.addClass(element, this.constructor.classes.disabledItem);
+            $.setAttribute(element, { 'aria-disabled': true });
+        } else {
+            this._activeItems.push(element);
+            $.setDataset(element, {
+                uiAction: 'select',
+                uiValue: value,
+            });
+        }
+
+        const content = this._options.renderResult.bind(this)(data, element);
+
+        if ($._isString(content)) {
+            $.setHTML(element, this._options.sanitize(content));
+        } else if ($._isElement(content) && !$.isSame(element, content)) {
+            $.append(element, content);
+        }
+
+        return element;
+    }
+    /**
+     * Render the menu.
+     */
+    function _renderMenu() {
+        this._menuNode = $.create('div', {
+            class: this.constructor.classes.menu,
+        });
+
+        const id = ui.generateId('selectmenu');
+
+        if (!this._multiple) {
+            // add search input for single select menus
+
+            const searchOuter = $.create('div', {
+                class: this.constructor.classes.searchOuter,
+            });
+            $.append(this._menuNode, searchOuter);
+
+            const searchContainer = $.create('div', {
+                class: this.constructor.classes.searchContainer,
+            });
+            $.append(searchOuter, searchContainer);
+
+            this._searchInput = $.create('input', {
+                class: this._options.searchInputStyle === 'filled' ?
+                    this.constructor.classes.searchInputFilled :
+                    this.constructor.classes.searchInputOutline,
+                attributes: {
+                    'role': 'searchbox',
+                    'aria-autocomplete': 'list',
+                    'aria-controls': id,
+                    'aria-activedescendent': '',
+                    'aria-label': this._options.lang.search,
+                    'autocomplete': 'off',
+                },
+            });
+            $.append(searchContainer, this._searchInput);
+
+            if (this._options.searchInputStyle === 'filled') {
+                const ripple = $.create('div', {
+                    class: this.constructor.classes.searchInputRipple,
+                });
+                $.append(searchContainer, ripple);
+            }
+        }
+
+        this._itemsList = $.create('ul', {
+            class: this.constructor.classes.items,
+            style: { maxHeight: this._options.maxHeight },
+            attributes: {
+                id,
+                role: 'listbox',
+            },
+        });
+
+        if (this._multiple) {
+            $.setAttribute(this._itemsList, { 'aria-multiselectable': true });
+        }
+
+        $.append(this._menuNode, this._itemsList);
+    }
+    /**
+     * Render a multiple selection item.
+     * @param {object} item The item to render.
+     */
+    function _renderMultiSelection(item) {
+        const group = $.create('div', {
+            class: this.constructor.classes.multiGroup,
+        });
+
+        const closeBtn = $.create('div', {
+            class: this.constructor.classes.multiClear,
+            attributes: {
+                'role': 'button',
+                'aria-label': this._options.lang.clear,
+            },
+            dataset: {
+                uiAction: 'clear',
+            },
+        });
+
+        $.append(group, closeBtn);
+
+        const closeIcon = $.create('span', {
+            class: this.constructor.classes.multiClearIcon,
+        });
+
+        $.append(closeBtn, closeIcon);
+
+        const data = this._cloneItem(item);
+
+        const element = $.create('div', {
+            class: this.constructor.classes.multiItem,
+        });
+
+        const content = this._options.renderSelection.bind(this)(data, element);
+
+        if ($._isString(content)) {
+            $.setHTML(element, this._options.sanitize(content));
+        } else if ($._isElement(content) && !$.isSame(element, content)) {
+            $.append(element, content);
+        }
+
+        $.append(group, element);
+
+        $.append(this._toggle, group);
+    }
+    /**
+     * Render the placeholder.
+     */
+    function _renderPlaceholder() {
+        this._placeholder = $.create('span', {
+            html: this._placeholderText ?
+                this._options.sanitize(this._placeholderText) :
+                '&nbsp;',
+            class: this.constructor.classes.placeholder,
+        });
+    }
+    /**
+     * Render results.
+     * @param {array} results The results to render.
+     */
+    function _renderResults(results) {
+        if (!results.length) {
+            const info = this._renderInfo(this._options.lang.noResults);
+            $.append(this._itemsList, info);
+            this.update();
+            return;
+        }
+
+        for (const item of results) {
+            const element = 'children' in item && $._isArray(item.children) ?
+                this._renderGroup(item) :
+                this._renderItem(item);
+
+            $.append(this._itemsList, element);
+        }
+
+        const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
+
+        if (focusedNode) {
+            return;
+        }
+
+        let focusNode = $.findOne('[data-ui-active]', this._itemsList);
+
+        if (!focusNode) {
+            focusNode = $.findOne('[data-ui-action="select"]', this._itemsList);
+        }
+
+        if (focusNode) {
+            $.addClass(focusNode, this.constructor.classes.focus);
+            $.setDataset(focusNode, { uiFocus: true });
+        }
+    }
+    /**
+     * Render the multiple toggle element.
+     */
+    function _renderToggleMulti() {
+        const id = $.getAttribute(this._itemsList, 'id');
+
+        this._toggle = $.create('div', {
+            class: [
+                $.getAttribute(this._node, 'class') || '',
+                this.constructor.classes.multiToggle,
+            ],
+            attributes: {
+                'role': 'combobox',
+                'aria-haspopup': 'listbox',
+                'aria-expanded': false,
+                'aria-disabled': false,
+                'aria-controls': id,
+                'aria-activedescendent': '',
+            },
+        });
+
+        this._searchInput = $.create('input', {
+            class: this.constructor.classes.multiSearchInput,
+            attributes: {
+                'role': 'searchbox',
+                'aria-autocomplete': 'list',
+                'aria-label': this._options.lang.search,
+                'aria-describedby': id,
+                'aria-activedescendent': '',
+                'autocomplete': 'off',
+            },
+        });
+    }
+    /**
+     * Render the single toggle element.
+     */
+    function _renderToggleSingle() {
+        const id = $.getAttribute(this._itemsList, 'id');
+
+        this._toggle = $.create('button', {
+            class: [
+                $.getAttribute(this._node, 'class') || '',
+                this.constructor.classes.toggle,
+            ],
+            attributes: {
+                'type': 'button',
+                'role': 'combobox',
+                'aria-haspopup': 'listbox',
+                'aria-expanded': false,
+                'aria-disabled': false,
+                'aria-controls': id,
+                'aria-activedescendent': '',
+            },
+        });
+    }
+
+    ui.initComponent('selectmenu', SelectMenu);
 
     // SelectMenu default options
     SelectMenu.defaults = {
         placeholder: '',
         lang: {
+            clear: 'Remove selection',
+            error: 'Error loading data.',
             loading: 'Loading..',
             maxSelections: 'Selection limit reached.',
-            noResults: 'No results'
+            noResults: 'No results',
+            search: 'Search',
         },
         searchInputStyle: 'filled',
         data: null,
         getResults: null,
-        isMatch: (item, term) => {
-            const normalized = item.text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            const escapedTerm = Core.escapeRegExp(term);
+        getLabel: (value) => value.text,
+        getValue: (value) => value.value,
+        renderResult(data) {
+            return this._options.getLabel(data);
+        },
+        renderSelection(data) {
+            return this._options.getLabel(data);
+        },
+        sanitize: (input) => $.sanitize(input),
+        isMatch(data, term) {
+            const value = this._options.getLabel(data);
+            const escapedTerm = $._escapeRegExp(term);
             const regExp = new RegExp(escapedTerm, 'i');
 
-            return regExp.test(item.text) || regExp.test(normalized);
+            if (regExp.test(value)) {
+                return true;
+            }
+
+            const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+            return regExp.test(normalized);
         },
-        renderResult: item => item.text,
-        renderSelection: item => item.text,
-        sanitize: input => dom.sanitize(input),
-        sortResults: (results, term) => results.sort((a, b) => {
-            const aLower = a.text.toLowerCase();
-            const bLower = b.text.toLowerCase();
+        sortResults(a, b, term) {
+            const aLower = this._options.getLabel(a).toLowerCase();
+            const bLower = this._options.getLabel(b).toLowerCase();
 
             if (term) {
                 const diff = aLower.indexOf(term) - bLower.indexOf(term);
@@ -1477,40 +1576,41 @@
             }
 
             return aLower.localeCompare(bLower);
-        }),
+        },
         maxSelections: 0,
         minSearch: 0,
         allowClear: false,
         closeOnSelect: true,
-        debounceInput: 250,
+        debounce: 250,
         duration: 100,
+        maxHeight: '250px',
         appendTo: null,
         fullWidth: false,
         placement: 'bottom',
         position: 'start',
         fixed: false,
         spacing: 0,
-        minContact: false
+        minContact: false,
     };
 
     // Default classes
     SelectMenu.classes = {
-        action: 'selectmenu-action',
-        active: 'selectmenu-active',
-        clear: 'btn-close float-end mx-2 lh-base',
+        active: 'active',
+        clear: 'btn-close mx-2 lh-base',
         disabled: 'disabled',
-        disabledItem: 'selectmenu-disabled',
-        focus: 'selectmenu-focus',
+        disabledItem: 'disabled',
+        focus: 'focus',
         group: 'selectmenu-group',
+        groupContainer: 'selectmenu-group-container list-unstyled',
         hide: 'visually-hidden',
-        info: 'selectmenu-item text-secondary',
+        info: 'selectmenu-item text-body-secondary',
         item: 'selectmenu-item',
-        items: 'selectmenu-items',
+        items: 'selectmenu-items list-unstyled',
         menu: 'selectmenu-menu shadow-sm',
-        multiClear: 'btn btn-sm btn-outline-secondary',
+        multiClear: 'btn',
         multiClearIcon: 'btn-close pe-none',
-        multiGroup: 'btn-group',
-        multiItem: 'btn btn-sm btn-secondary',
+        multiGroup: 'btn-group my-n1',
+        multiItem: 'btn',
         multiSearchInput: 'selectmenu-multi-input',
         multiToggle: 'selectmenu-multi d-flex flex-wrap position-relative text-start',
         placeholder: 'selectmenu-placeholder',
@@ -1520,11 +1620,54 @@
         searchInputOutline: 'input-outline',
         searchInputRipple: 'ripple-line',
         searchOuter: 'p-1',
-        toggle: 'selectmenu-toggle position-relative text-start'
+        selectionSingle: 'me-auto',
+        toggle: 'selectmenu-toggle d-flex position-relative justify-content-between text-start',
     };
 
-    UI.initComponent('selectmenu', SelectMenu);
+    const proto = SelectMenu.prototype;
 
-    UI.SelectMenu = SelectMenu;
+    proto.data = data;
+    proto.getMaxSelections = getMaxSelections;
+    proto.getPlaceholder = getPlaceholder;
+    proto.getValue = getValue;
+    proto.setMaxSelections = setMaxSelections;
+    proto.setPlaceholder = setPlaceholder;
+    proto.setValue = setValue;
+    proto._buildOption = _buildOption;
+    proto._cloneItem = _cloneItem;
+    proto._events = _events;
+    proto._eventsMulti = _eventsMulti;
+    proto._eventsSingle = _eventsSingle;
+    proto._findValue = _findValue;
+    proto._getDataFromDOM = _getDataFromDOM;
+    proto._getDataFromObject = _getDataFromObject;
+    proto._getDataInit = _getDataInit;
+    proto._getResultsInit = _getResultsInit;
+    proto._getResultsCallbackInit = _getResultsCallbackInit;
+    proto._loadValue = _loadValue;
+    proto._parseData = _parseData;
+    proto._parseDataLookup = _parseDataLookup;
+    proto._refresh = _refresh;
+    proto._refreshDisabled = _refreshDisabled;
+    proto._refreshMulti = _refreshMulti;
+    proto._refreshPlaceholder = _refreshPlaceholder;
+    proto._refreshSingle = _refreshSingle;
+    proto._render = _render;
+    proto._renderClear = _renderClear;
+    proto._renderGroup = _renderGroup;
+    proto._renderInfo = _renderInfo;
+    proto._renderItem = _renderItem;
+    proto._renderMenu = _renderMenu;
+    proto._renderMultiSelection = _renderMultiSelection;
+    proto._renderPlaceholder = _renderPlaceholder;
+    proto._renderResults = _renderResults;
+    proto._renderToggleMulti = _renderToggleMulti;
+    proto._renderToggleSingle = _renderToggleSingle;
+    proto._selectValue = _selectValue;
+    proto._setValue = _setValue;
+    proto._updateSearchWidth = _updateSearchWidth;
 
-});
+    exports.SelectMenu = SelectMenu;
+
+}));
+//# sourceMappingURL=frost-ui-selectmenu.js.map

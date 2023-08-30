@@ -1,50 +1,43 @@
-@import "functions";
 @import "vars";
 
-.selectmenu-toggle:not(:disabled) {
-    cursor: default;
-}
-
 .selectmenu-toggle {
-    padding-right: calc(#{$input-padding-x * 2} + #{$input-select-arrow-size});
-    background-image: $input-select-arrow-background-image;
-    background-repeat: no-repeat;
-    background-position: right $input-padding-x center;
-    background-size: $input-select-arrow-size #{$input-select-arrow-size * .75};
+    &::after {
+        align-self: center;
+        width: $selectmenu-toggle-width;
+        height: $selectmenu-toggle-height;
+        content: "";
+        background-color: currentcolor;
+        mask-image: $selectmenu-toggle-icon;
+        mask-repeat: no-repeat;
+        mask-size: $selectmenu-toggle-width $selectmenu-toggle-height;
+    }
+
+    &:not(:disabled) {
+        cursor: default;
+    }
 }
 
 .selectmenu-multi {
-    padding: $input-padding-y $input-padding-x;
-    cursor: text;
+    align-items: center;
+
+    &:not(:disabled) {
+        cursor: text;
+    }
 
     .btn {
-        padding: $selectmenu-multi-btn-padding-y $selectmenu-multi-btn-padding-x;
-        font-size: $selectmenu-multi-btn-font-size;
+        --ui-btn-padding-y: #{$selectmenu-multi-btn-padding-y};
+        --ui-btn-font-size: #{$selectmenu-multi-btn-font-size};
+        --ui-btn-color: #{$selectmenu-multi-btn-color};
+        --ui-btn-bg: #{$selectmenu-multi-btn-bg};
+        --ui-btn-border-color: #{$selectmenu-multi-btn-border-color};
+        --ui-btn-hover-bg: #{$selectmenu-multi-btn-hover-bg};
+        --ui-btn-hover-border-color: #{$selectmenu-multi-btn-hover-border-color};
+        --ui-btn-active-border-color: #{$selectmenu-multi-btn-active-border-color};
     }
 
-    > * {
+    >* {
         margin-right: $selectmenu-multi-item-spacing;
     }
-
-    &.input-sm {
-        padding: $input-sm-padding-y $input-sm-padding-x;
-        font-size: $input-sm-font-size;
-    }
-
-    &.input-lg .btn {
-        padding: $input-lg-padding-y $input-lg-padding-x;
-        font-size: $input-lg-font-size;
-    }
-
-    &.focus ~ .ripple-line {
-        z-index: 3;
-    }
-}
-
-.selectmenu-placeholder {
-    color: $input-placeholder-color;
-    pointer-events: none;
-    user-select: none;
 }
 
 .selectmenu-multi-input {
@@ -56,68 +49,90 @@
     outline: 0;
 }
 
+.selectmenu-placeholder {
+    color: $selectmenu-placeholder-color;
+    pointer-events: none;
+    user-select: none;
+}
+
 .selectmenu-menu {
+    --ui-selectmenu-z-index: #{$selectmenu-z-index};
+    --ui-selectmenu-color: #{$selectmenu-color};
+    --ui-selectmenu-bg: #{$selectmenu-bg};
+    --ui-selectmenu-border-width: #{$selectmenu-border-width};
+    --ui-selectmenu-border-color: #{$selectmenu-border-color};
+    --ui-selectmenu-item-padding-x: #{$selectmenu-item-padding-x};
+    --ui-selectmenu-item-padding-y: #{$selectmenu-item-padding-y};
+    --ui-selectmenu-item-color: #{$selectmenu-item-color};
+    --ui-selectmenu-item-focus-color: #{$selectmenu-item-focus-color};
+    --ui-selectmenu-item-focus-bg: #{$selectmenu-item-focus-bg};
+    --ui-selectmenu-item-active-color: #{$selectmenu-item-active-color};
+    --ui-selectmenu-item-active-bg: #{$selectmenu-item-active-bg};
+    --ui-selectmenu-group-padding-y: #{$selectmenu-group-padding-y};
+    --ui-selectmenu-group-padding-x: #{$selectmenu-group-padding-x};
+    --ui-selectmenu-group-color: #{$selectmenu-group-color};
+
     position: absolute;
-    z-index: $dropdown-z-index;
+    z-index: var(--ui-selectmenu-z-index);
     width: 100%;
     padding: 0;
     margin: 0;
-    font-size: $selectmenu-menu-font-size;
-    color: $selectmenu-menu-color;
+    font-size: $selectmenu-font-size;
+    color: var(--ui-selectmenu-color);
     text-align: left;
-    list-style: none;
-    background-color: $selectmenu-menu-background-color;
-    border: $selectmenu-menu-border-size $border-style $selectmenu-menu-border-color;
+    background-color: var(--ui-selectmenu-bg);
+    border: var(--ui-selectmenu-border-width) var(--ui-border-style) var(--ui-selectmenu-border-color);
 }
 
 .selectmenu-items {
-    max-height: $selectmenu-items-max-height;
     margin: 0;
     overflow-y: auto;
-    list-style-type: none;
 }
 
 .selectmenu-item {
     display: block;
     width: 100%;
-    padding: $selectmenu-item-padding-y $selectmenu-item-padding-x;
+    padding: var(--ui-selectmenu-item-padding-y) var(--ui-selectmenu-item-padding-x);
     clear: both;
     font-weight: $selectmenu-item-font-weight;
-    color: $selectmenu-item-color;
+    color: var(--ui-selectmenu-item-color);
     text-align: inherit;
     white-space: nowrap;
     background-color: transparent;
     border: 0;
-}
 
-.selectmenu-action {
-    cursor: default;
-}
-
-.selectmenu-focus {
-    &,
-    &.selectmenu-active {
-        color: $selectmenu-item-focus-color;
-        background-color: $selectmenu-item-focus-background-color;
+    &.active {
+        color: var(--ui-selectmenu-item-active-color);
+        background-color: var(--ui-selectmenu-item-active-bg);
     }
-}
 
-.selectmenu-active {
-    color: $selectmenu-item-active-color;
-    text-decoration: none;
-    background-color: $selectmenu-item-active-background-color;
-}
+    &.focus {
+        color: var(--ui-selectmenu-item-focus-color);
+        background-color: var(--ui-selectmenu-item-focus-bg);
+    }
 
-.selectmenu-disabled {
-    pointer-events: none;
-    opacity: $selectmenu-item-disabled-opacity;
+    &.disabled {
+        pointer-events: none;
+        opacity: var(--ui-disabled-opacity);
+    }
+
+    &:not(:disabled) {
+        cursor: default;
+    }
 }
 
 .selectmenu-group {
     display: block;
-    padding: $selectmenu-group-padding-y $selectmenu-group-padding-x;
+    padding: var(--ui-selectmenu-group-padding-y) var(--ui-selectmenu-group-padding-x);
     margin-bottom: 0;
     font-size: $selectmenu-group-font-size;
-    color: $selectmenu-group-color;
+    font-weight: 600;
+    color: var(--ui-selectmenu-group-color);
     white-space: nowrap;
+}
+
+.selectmenu-group-container {
+    .selectmenu-item {
+        padding-left: calc(var(--ui-selectmenu-group-padding-x) + var(--ui-selectmenu-item-padding-x));
+    }
 }

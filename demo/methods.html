@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FrostUI SelectMenu Methods</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/elusivecodes/frostui@1.4.6/dist/frost-ui.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/elusivecodes/frostui@latest/dist/frost-ui.css">
     <link rel="stylesheet" href="../dist/frost-ui-selectmenu.css">
-    <script src="https://cdn.jsdelivr.net/gh/elusivecodes/frostui@1.4.6/dist/frost-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/elusivecodes/frostui@latest/dist/frost-ui-bundle.js"></script>
     <script src="../dist/frost-ui-selectmenu.js"></script>
 </head>
 
@@ -77,109 +77,109 @@
         </div>
     </div>
     <script>
-        const selectDefault = dom.findOne('#selectDefault');
-        const selectMulti = dom.findOne('#selectMulti');
-        const selectInit = dom.findOne('#selectInit');
-        const selectDispose = dom.findOne('#selectDispose');
-        const selectEnable = dom.findOne('#selectEnable');
-        const selectDisable = dom.findOne('#selectDisable');
-        const selectData = dom.findOne('#selectData');
-        const selectGetValue = dom.findOne('#selectGetValue');
-        const selectSetValue = dom.findOne('#selectSetValue');
-        const selectMultiInit = dom.findOne('#selectMultiInit');
-        const selectMultiDispose = dom.findOne('#selectMultiDispose');
-        const selectMultiEnable = dom.findOne('#selectMultiEnable');
-        const selectMultiDisable = dom.findOne('#selectMultiDisable');
-        const selectMultiData = dom.findOne('#selectMultiData');
-        const selectMultiGetMaxSelections = dom.findOne('#selectMultiGetMaxSelections');
-        const selectMultiGetPlaceholder = dom.findOne('#selectMultiGetPlaceholder');
-        const selectMultiGetValue = dom.findOne('#selectMultiGetValue');
-        const selectMultiSetMaxSelections = dom.findOne('#selectMultiSetMaxSelections');
-        const selectMultiSetPlaceholder = dom.findOne('#selectMultiSetPlaceholder');
-        const selectMultiSetValue = dom.findOne('#selectMultiSetValue');
-        const output = dom.findOne('#output');
-        const outputMulti = dom.findOne('#outputMulti');
+        const selectDefault = $.findOne('#selectDefault');
+        const selectMulti = $.findOne('#selectMulti');
+        const selectInit = $.findOne('#selectInit');
+        const selectDispose = $.findOne('#selectDispose');
+        const selectEnable = $.findOne('#selectEnable');
+        const selectDisable = $.findOne('#selectDisable');
+        const selectData = $.findOne('#selectData');
+        const selectGetValue = $.findOne('#selectGetValue');
+        const selectSetValue = $.findOne('#selectSetValue');
+        const selectMultiInit = $.findOne('#selectMultiInit');
+        const selectMultiDispose = $.findOne('#selectMultiDispose');
+        const selectMultiEnable = $.findOne('#selectMultiEnable');
+        const selectMultiDisable = $.findOne('#selectMultiDisable');
+        const selectMultiData = $.findOne('#selectMultiData');
+        const selectMultiGetMaxSelections = $.findOne('#selectMultiGetMaxSelections');
+        const selectMultiGetPlaceholder = $.findOne('#selectMultiGetPlaceholder');
+        const selectMultiGetValue = $.findOne('#selectMultiGetValue');
+        const selectMultiSetMaxSelections = $.findOne('#selectMultiSetMaxSelections');
+        const selectMultiSetPlaceholder = $.findOne('#selectMultiSetPlaceholder');
+        const selectMultiSetValue = $.findOne('#selectMultiSetValue');
+        const output = $.findOne('#output');
+        const outputMulti = $.findOne('#outputMulti');
 
-        dom.addEvent(selectInit, 'click', e => {
+        $.addEvent(selectInit, 'click', e => {
             UI.SelectMenu.init(selectDefault);
         });
 
-        dom.addEvent(selectDispose, 'click', e => {
+        $.addEvent(selectDispose, 'click', e => {
             UI.SelectMenu.init(selectDefault).dispose();
         });
 
-        dom.addEvent(selectEnable, 'click', e => {
+        $.addEvent(selectEnable, 'click', e => {
             UI.SelectMenu.init(selectDefault).enable();
         });
 
-        dom.addEvent(selectDisable, 'click', e => {
+        $.addEvent(selectDisable, 'click', e => {
             UI.SelectMenu.init(selectDefault).disable();
         });
 
-        dom.addEvent(selectData, 'click', e => {
+        $.addEvent(selectData, 'click', e => {
             const data = UI.SelectMenu.init(selectDefault).data();
-            dom.setText(output, `Data: ${JSON.stringify(data)}`);
+            $.setText(output, `Data: ${JSON.stringify(data)}`);
         });
 
-        dom.addEvent(selectGetValue, 'click', e => {
+        $.addEvent(selectGetValue, 'click', e => {
             const value = UI.SelectMenu.init(selectDefault).getValue();
-            dom.setText(output, `Value: ${value}`);
+            $.setText(output, `Value: ${value}`);
         });
 
-        dom.addEvent(selectSetValue, 'click', e => {
+        $.addEvent(selectSetValue, 'click', e => {
             UI.SelectMenu.init(selectDefault).setValue(4);
         });
 
-        dom.addEvent(selectMultiInit, 'click', e => {
+        $.addEvent(selectMultiInit, 'click', e => {
             UI.SelectMenu.init(selectMulti);
         });
 
-        dom.addEvent(selectMultiDispose, 'click', e => {
+        $.addEvent(selectMultiDispose, 'click', e => {
             UI.SelectMenu.init(selectMulti).dispose();
         });
 
-        dom.addEvent(selectMultiEnable, 'click', e => {
+        $.addEvent(selectMultiEnable, 'click', e => {
             UI.SelectMenu.init(selectMulti).enable();
         });
 
-        dom.addEvent(selectMultiDisable, 'click', e => {
+        $.addEvent(selectMultiDisable, 'click', e => {
             UI.SelectMenu.init(selectMulti).disable();
         });
 
-        dom.addEvent(selectMultiData, 'click', e => {
+        $.addEvent(selectMultiData, 'click', e => {
             const data = UI.SelectMenu.init(selectMulti).data();
-            dom.setText(outputMulti, `Data: ${JSON.stringify(data)}`);
+            $.setText(outputMulti, `Data: ${JSON.stringify(data)}`);
         });
 
-        dom.addEvent(selectMultiGetMaxSelections, 'click', e => {
+        $.addEvent(selectMultiGetMaxSelections, 'click', e => {
             const maxSelections = UI.SelectMenu.init(selectMulti).getMaxSelections();
-            dom.setText(outputMulti, `Max Selections: ${maxSelections}`);
+            $.setText(outputMulti, `Max Selections: ${maxSelections}`);
         });
 
-        dom.addEvent(selectMultiGetPlaceholder, 'click', e => {
+        $.addEvent(selectMultiGetPlaceholder, 'click', e => {
             const placeholder = UI.SelectMenu.init(selectMulti).getPlaceholder();
-            dom.setText(outputMulti, `Placeholder: ${placeholder}`);
+            $.setText(outputMulti, `Placeholder: ${placeholder}`);
         });
 
-        dom.addEvent(selectMultiGetValue, 'click', e => {
+        $.addEvent(selectMultiGetValue, 'click', e => {
             const value = UI.SelectMenu.init(selectMulti).getValue();
-            dom.setText(outputMulti, `Value: ${value}`);
+            $.setText(outputMulti, `Value: ${value}`);
         });
 
-        dom.addEvent(selectMultiSetMaxSelections, 'click', e => {
+        $.addEvent(selectMultiSetMaxSelections, 'click', e => {
             UI.SelectMenu.init(selectMulti).setMaxSelections(2);
         });
 
-        dom.addEvent(selectMultiSetPlaceholder, 'click', e => {
+        $.addEvent(selectMultiSetPlaceholder, 'click', e => {
             UI.SelectMenu.init(selectMulti).setPlaceholder('Placeholder');
         });
 
-        dom.addEvent(selectMultiSetValue, 'click', e => {
+        $.addEvent(selectMultiSetValue, 'click', e => {
             UI.SelectMenu.init(selectMulti).setValue([4]);
         });
 
-        dom.triggerEvent(selectInit, 'click');
-        dom.triggerEvent(selectMultiInit, 'click');
+        $.triggerEvent(selectInit, 'click');
+        $.triggerEvent(selectMultiInit, 'click');
     </script>
 </body>
 

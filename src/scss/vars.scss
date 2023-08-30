@@ -1,82 +1,39 @@
-$spacing: 1rem !default;
-
-$disabled-opacity: .5 !default;
-
-// border
-$border-size: 1px !default;
-$border-style: solid !default;
-
-// color
-$white: #fff !default;
-$black: #000 !default;
-$gray: #808080 !default;
-
-$color-variants: (
-    primary: #2b55d4,
-    dark: #1f3333
-) !default;
-
-$text-color: #121212 !default;
-
-$border-color: fade($black, .15) !default;
-
-// text
-$font-size-sm: .875rem !default;
-$font-size-md: 1rem !default;
-$font-size-lg: 1.25rem !default;
-
-$font-weights: (
-    normal: 400
-) !default;
-
-// z index
-$dropdown-z-index: 1000 !default;
-
-// form
-$input-padding-x: $spacing * .5 !default;
-$input-padding-y: $spacing * .5 !default;
-$input-placeholder-color: $gray !default;
-
-$input-select-arrow-size: 16px !default;
-$input-select-arrow-background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='#{svg-color($text-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !default;
-
-$input-sm-padding-x: $spacing * .5 !default;
-$input-sm-padding-y: $spacing * .25 !default;
-$input-sm-font-size: $font-size-sm !default;
-$input-lg-padding-x: $input-padding-x !default;
-$input-lg-padding-y: $input-padding-y !default;
-$input-lg-font-size: $font-size-lg !default;
-
 // selectmenu
-$selectmenu-multi-btn-padding-x: $spacing * .5 !default;
-$selectmenu-multi-btn-padding-y: $spacing * .125 !default;
-$selectmenu-multi-btn-font-size: .75rem !default;
-$selectmenu-multi-item-spacing: $spacing * .25 !default;
+$selectmenu-toggle-width: 16px !default;
+$selectmenu-toggle-height: 12px !default;
+$selectmenu-toggle-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%230008' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !default;
 
-$selectmenu-padding-x: $spacing !default;
-$selectmenu-padding-y: $spacing * .5 !default;
-$selectmenu-color: $text-color !default;
+$selectmenu-multi-btn-padding-y: .125rem !default;
+$selectmenu-multi-btn-font-size: .75em !default;
 
-$selectmenu-menu-font-size: $font-size-md !default;
-$selectmenu-menu-color: $selectmenu-color !default;
-$selectmenu-menu-background-color: $white !default;
-$selectmenu-menu-border-size: $border-size !default;
-$selectmenu-menu-border-color: $border-color !default;
+$selectmenu-multi-btn-color: var(--ui-primary-contrast) !default;
+$selectmenu-multi-btn-bg: var(--ui-primary) !default;
+$selectmenu-multi-btn-border-color: var(--ui-border-color-translucent) !default;
+$selectmenu-multi-btn-hover-bg: var(--ui-primary-highlight) !default;
+$selectmenu-multi-btn-hover-border-color: var(--ui-btn-border-color) !default;
+$selectmenu-multi-btn-active-border-color: var(--ui-btn-border-color) !default;
+$selectmenu-multi-item-spacing: .25rem !default;
 
-$selectmenu-items-max-height: 250px !default;
+$selectmenu-placeholder-color: var(--ui-secondary-color) !default;
 
-$selectmenu-item-padding-x: $selectmenu-padding-x !default;
-$selectmenu-item-padding-y: $spacing * .25 !default;
-$selectmenu-item-font-weight: map-get($font-weights, normal) !default;
-$selectmenu-item-color: $selectmenu-menu-color !default;
+$selectmenu-z-index: 1000 !default;
+$selectmenu-font-size: 1rem !default;
+$selectmenu-color: var(--ui-body-color) !default;
+$selectmenu-bg: var(--ui-body-bg) !default;
+$selectmenu-border-width: var(--ui-border-width) !default;
+$selectmenu-border-color: var(--ui-border-color) !default;
 
-$selectmenu-item-focus-background-color: map-get($color-variants, primary) !default;
-$selectmenu-item-focus-color: text-color($selectmenu-item-focus-background-color) !default;
-$selectmenu-item-active-color: $selectmenu-color !default;
-$selectmenu-item-active-background-color: fade($black, .1) !default;
-$selectmenu-item-disabled-opacity: $disabled-opacity !default;
+$selectmenu-item-padding-x: 1rem !default;
+$selectmenu-item-padding-y: .25rem !default;
+$selectmenu-item-font-weight: 400 !default;
+$selectmenu-item-color: var(--ui-body-color) !default;
 
-$selectmenu-group-padding-x: $selectmenu-padding-x !default;
-$selectmenu-group-padding-y: $selectmenu-padding-y !default;
-$selectmenu-group-font-size: $font-size-sm !default;
-$selectmenu-group-color: map-get($color-variants, dark) !default;
+$selectmenu-item-focus-color: var(--ui-primary-contrast) !default;
+$selectmenu-item-focus-bg: var(--ui-primary) !default;
+$selectmenu-item-active-color: var(--ui-body-color) !default;
+$selectmenu-item-active-bg: var(--ui-secondary-bg) !default;
+
+$selectmenu-group-padding-x: 1rem !default;
+$selectmenu-group-padding-y: .25rem !default;
+$selectmenu-group-font-size: .875em !default;
+$selectmenu-group-color: var(--ui-secondary-color) !default;
