@@ -107,7 +107,7 @@ export function _renderGroup(item) {
         class: this.constructor.classes.groupContainer,
         attributes: {
             role: 'none',
-        }
+        },
     });
 
     $.append(groupContainer, childList);
