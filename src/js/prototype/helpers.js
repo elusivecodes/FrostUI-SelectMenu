@@ -46,6 +46,8 @@ export function _loadValue(value) {
 
         this._getResults({ value })
             .then((_) => this._setValue(value));
+
+        return;
     }
 
     const loadValues = value.filter((val) => !this._findValue(val));
@@ -104,6 +106,8 @@ export function _refreshMulti() {
         return item && !item.disabled;
     });
 
+    this._value = $._unique(this._value);
+
     // check max selections
     if (this._maxSelections && this._value.length > this._maxSelections) {
         this._value = this._value.slice(0, this._maxSelections);
@@ -119,14 +123,12 @@ export function _refreshMulti() {
     this._refreshPlaceholder();
 
     // add values
-    if (this._value.length) {
-        for (const value of this._value) {
-            const item = this._findValue(value);
+    for (const value of this._value) {
+        const item = this._findValue(value);
+        $.append(this._node, item.element);
 
-            $.append(this._node, item.element);
-
-            this._renderMultiSelection(item);
-        }
+        const group = this._renderMultiSelection(item);
+        $.append(this._toggle, group);
     }
 
     $.append(this._toggle, this._searchInput);
@@ -136,10 +138,11 @@ export function _refreshMulti() {
  * Refresh the placeholder.
  */
 export function _refreshPlaceholder() {
-    if (
-        (this._multiple && this._value.length) ||
-        (!this._multiple && this._value)
-    ) {
+    const hasValue = this._multiple ?
+        this._value.length > 0 :
+        !!this._value;
+
+    if (hasValue) {
         $.hide(this._placeholder);
     } else {
         $.show(this._placeholder);

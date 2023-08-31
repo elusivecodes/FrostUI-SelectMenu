@@ -818,6 +818,8 @@
 
             this._getResults({ value })
                 .then((_) => this._setValue(value));
+
+            return;
         }
 
         const loadValues = value.filter((val) => !this._findValue(val));
@@ -873,6 +875,8 @@
             return item && !item.disabled;
         });
 
+        this._value = $._unique(this._value);
+
         // check max selections
         if (this._maxSelections && this._value.length > this._maxSelections) {
             this._value = this._value.slice(0, this._maxSelections);
@@ -888,14 +892,12 @@
         this._refreshPlaceholder();
 
         // add values
-        if (this._value.length) {
-            for (const value of this._value) {
-                const item = this._findValue(value);
+        for (const value of this._value) {
+            const item = this._findValue(value);
+            $.append(this._node, item.element);
 
-                $.append(this._node, item.element);
-
-                this._renderMultiSelection(item);
-            }
+            const group = this._renderMultiSelection(item);
+            $.append(this._toggle, group);
         }
 
         $.append(this._toggle, this._searchInput);
@@ -904,10 +906,11 @@
      * Refresh the placeholder.
      */
     function _refreshPlaceholder() {
-        if (
-            (this._multiple && this._value.length) ||
-            (!this._multiple && this._value)
-        ) {
+        const hasValue = this._multiple ?
+            this._value.length > 0 :
+            !!this._value;
+
+        if (hasValue) {
             $.hide(this._placeholder);
         } else {
             $.show(this._placeholder);
@@ -1378,6 +1381,7 @@
     /**
      * Render a multiple selection item.
      * @param {object} item The item to render.
+     * @return {HTMLElement} The selection group.
      */
     function _renderMultiSelection(item) {
         const group = $.create('div', {
@@ -1419,7 +1423,7 @@
 
         $.append(group, element);
 
-        $.append(this._toggle, group);
+        return group;
     }
     /**
      * Render the placeholder.
@@ -1467,6 +1471,10 @@
         if (focusNode) {
             $.addClass(focusNode, this.constructor.classes.focus);
             $.setDataset(focusNode, { uiFocus: true });
+
+            const id = $.getAttribute(focusNode, 'id');
+            $.setAttribute(this._toggle, { 'aria-activedescendent': id });
+            $.setAttribute(this._searchInput, { 'aria-activedescendent': id });
         }
     }
     /**

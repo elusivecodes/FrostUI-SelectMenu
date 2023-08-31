@@ -252,6 +252,7 @@ export function _renderMenu() {
 /**
  * Render a multiple selection item.
  * @param {object} item The item to render.
+ * @return {HTMLElement} The selection group.
  */
 export function _renderMultiSelection(item) {
     const group = $.create('div', {
@@ -293,7 +294,7 @@ export function _renderMultiSelection(item) {
 
     $.append(group, element);
 
-    $.append(this._toggle, group);
+    return group;
 };
 
 /**
@@ -343,6 +344,10 @@ export function _renderResults(results) {
     if (focusNode) {
         $.addClass(focusNode, this.constructor.classes.focus);
         $.setDataset(focusNode, { uiFocus: true });
+
+        const id = $.getAttribute(focusNode, 'id');
+        $.setAttribute(this._toggle, { 'aria-activedescendent': id });
+        $.setAttribute(this._searchInput, { 'aria-activedescendent': id });
     }
 };
 
