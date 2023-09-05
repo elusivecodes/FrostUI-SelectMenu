@@ -2,7 +2,7 @@ import $ from '@fr0st/query';
 import { initComponent } from '@fr0st/ui';
 import SelectMenu from './select-menu.js';
 import { data, getMaxSelections, getPlaceholder, getValue, setMaxSelections, setPlaceholder, setValue } from './prototype/api.js';
-import { _getDataInit, _getResultsInit, _getResultsCallbackInit } from './prototype/data.js';
+import { _getDataInit, _getResultsInit } from './prototype/data.js';
 import { _events, _eventsMulti, _eventsSingle } from './prototype/events.js';
 import { _cloneItem, _findValue, _loadValue, _refresh, _refreshDisabled, _refreshMulti, _refreshPlaceholder, _refreshSingle, _selectValue, _setValue, _updateSearchWidth } from './prototype/helpers.js';
 import { _buildOption, _getDataFromDOM, _getDataFromObject, _parseData, _parseDataLookup } from './prototype/parsers.js';
@@ -24,17 +24,11 @@ SelectMenu.defaults = {
     searchInputStyle: 'filled',
     data: null,
     getResults: null,
-    getLabel: (value) => value.text,
-    getValue: (value) => value.value,
-    renderResult(data) {
-        return this._options.getLabel(data);
-    },
-    renderSelection(data) {
-        return this._options.getLabel(data);
-    },
+    renderResult: (data) => data.text,
+    renderSelection: (data) => data.text,
     sanitize: (input) => $.sanitize(input),
     isMatch(data, term) {
-        const value = this._options.getLabel(data);
+        const value = data.text;
         const escapedTerm = $._escapeRegExp(term);
         const regExp = new RegExp(escapedTerm, 'i');
 
@@ -47,8 +41,8 @@ SelectMenu.defaults = {
         return regExp.test(normalized);
     },
     sortResults(a, b, term) {
-        const aLower = this._options.getLabel(a).toLowerCase();
-        const bLower = this._options.getLabel(b).toLowerCase();
+        const aLower = a.text.toLowerCase();
+        const bLower = b.text.toLowerCase();
 
         if (term) {
             const diff = aLower.indexOf(term) - bLower.indexOf(term);
@@ -89,7 +83,7 @@ SelectMenu.classes = {
     info: 'selectmenu-item text-body-secondary',
     item: 'selectmenu-item',
     items: 'selectmenu-items list-unstyled',
-    menu: 'selectmenu-menu shadow-sm',
+    menu: 'selectmenu-menu',
     multiClear: 'btn',
     multiClearIcon: 'btn-close pe-none',
     multiGroup: 'btn-group my-n1',
@@ -126,7 +120,6 @@ proto._getDataFromDOM = _getDataFromDOM;
 proto._getDataFromObject = _getDataFromObject;
 proto._getDataInit = _getDataInit;
 proto._getResultsInit = _getResultsInit;
-proto._getResultsCallbackInit = _getResultsCallbackInit;
 proto._loadValue = _loadValue;
 proto._parseData = _parseData;
 proto._parseDataLookup = _parseDataLookup;

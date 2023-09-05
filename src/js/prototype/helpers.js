@@ -33,32 +33,33 @@ export function _findValue(value) {
  * @param {string|number|array} value The value to load.
  */
 export function _loadValue(value) {
-    if (!value || !this._getResults) {
+    if (!value || !this._options.getResults) {
         this._setValue(value);
         return;
     }
 
-    if (!this._multiple) {
-        if (this._findValue(value)) {
+    const isLoaded = this._multiple ?
+        value.every((val) => this._findValue(val)) :
+        this._findValue(value);
+
+    if (isLoaded) {
+        this._setValue(value);
+        return;
+    }
+
+    Promise.resolve(this._options.getResults({ value }))
+        .then((response) => {
+            const newData = this._parseData(response.results);
+
+            // update lookup
+            Object.assign(
+                this._lookup,
+                this._parseDataLookup(newData),
+            );
+
             this._setValue(value);
-            return;
-        }
-
-        this._getResults({ value })
-            .then((_) => this._setValue(value));
-
-        return;
-    }
-
-    const loadValues = value.filter((val) => !this._findValue(val));
-
-    if (!loadValues.length) {
-        this._setValue(value);
-        return;
-    }
-
-    this._getResults({ value: loadValues })
-        .then((_) => this._setValue(value));
+        })
+        .catch((_) => { });
 };
 
 /**
@@ -175,8 +176,6 @@ export function _refreshSingle() {
 
     $.append(this._node, item.element);
 
-    const data = this._cloneItem(item);
-
     const element = $.create('div', {
         class: this.constructor.classes.selectionSingle,
     });
@@ -186,6 +185,8 @@ export function _refreshSingle() {
     if (this._options.allowClear) {
         $.append(this._toggle, this._clear);
     }
+
+    const data = this._cloneItem(item);
 
     const content = this._options.renderSelection.bind(this)(data, element);
 
@@ -208,9 +209,7 @@ export function _selectValue(value) {
         return;
     }
 
-    const data = this._cloneItem(item);
-
-    value = this._options.getValue(data);
+    value = item.value;
 
     // toggle selected values for multiple select
     if (this._multiple) {

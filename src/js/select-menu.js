@@ -27,11 +27,9 @@ export default class SelectMenu extends BaseComponent {
         this._activeItems = [];
 
         this._getData = null;
-        this._getResults = null;
 
         let data;
         if ($._isFunction(this._options.getResults)) {
-            this._getResultsCallbackInit();
             this._getResultsInit();
         } else if ($._isPlainObject(this._options.data)) {
             data = this._getDataFromObject(this._options.data);
@@ -95,7 +93,6 @@ export default class SelectMenu extends BaseComponent {
         this._requests = null;
         this._popperOptions = null;
         this._getData = null;
-        this._getResults = null;
 
         super.dispose();
     }
@@ -162,7 +159,8 @@ export default class SelectMenu extends BaseComponent {
             return;
         }
 
-        this._getData({});
+        const term = $.getValue(this._searchInput);
+        this._getData({ term });
 
         $.setDataset(this._menuNode, { uiAnimating: 'in' });
 

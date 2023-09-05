@@ -94,6 +94,7 @@
   color: var(--ui-selectmenu-item-color);
   text-align: inherit;
   white-space: nowrap;
+  cursor: default;
   background-color: transparent;
   border: 0;
 }
@@ -109,9 +110,6 @@
   pointer-events: none;
   opacity: var(--ui-disabled-opacity);
 }
-.selectmenu-item:not(:disabled) {
-  cursor: default;
-}
 
 .selectmenu-group {
   display: block;
@@ -121,6 +119,7 @@
   font-weight: 600;
   color: var(--ui-selectmenu-group-color);
   white-space: nowrap;
+  cursor: default;
 }
 
 .selectmenu-group-container .selectmenu-item {

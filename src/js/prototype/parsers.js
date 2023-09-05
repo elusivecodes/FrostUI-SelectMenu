@@ -7,8 +7,8 @@ import $ from '@fr0st/query';
  */
 export function _buildOption(item) {
     return $.create('option', {
-        text: this._options.getLabel(item),
-        value: this._options.getValue(item),
+        text: item.text,
+        value: item.value,
         properties: {
             selected: true,
         },
@@ -79,7 +79,7 @@ export function _parseDataLookup(data, lookup = {}) {
         if ('children' in item) {
             this._parseDataLookup(item.children, lookup);
         } else {
-            const key = this._options.getValue(item);
+            const key = item.value;
             lookup[key] = $._extend({}, item);
         }
     }

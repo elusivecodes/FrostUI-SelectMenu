@@ -39,7 +39,7 @@ export function _render() {
 
         this._popperOptions.afterUpdate = (node, reference) => {
             const width = $.width(reference, { boxSize: $.BORDER_BOX });
-            $.setStyle(node, 'width', width);
+            $.setStyle(node, 'width', `${width}px`);
         };
     }
 
@@ -79,19 +79,19 @@ export function _renderClear() {
 export function _renderGroup(item) {
     const id = generateId('selectmenu-group');
 
-    const data = this._cloneItem(item);
-
     const groupContainer = $.create('li', {
         attributes: {
             id,
             'role': 'group',
-            'aria-label': this._options.getLabel(data),
+            'aria-label': item.text,
         },
     });
 
     const element = $.create('div', {
         class: this.constructor.classes.group,
     });
+
+    const data = this._cloneItem(item);
 
     const content = this._options.renderResult.bind(this)(data, element);
 
@@ -112,8 +112,8 @@ export function _renderGroup(item) {
 
     $.append(groupContainer, childList);
 
-    for (const item of data.children) {
-        const element = this._renderItem(item, childList);
+    for (const child of item.children) {
+        const element = this._renderItem(child, childList);
 
         $.append(childList, element);
     }
@@ -143,9 +143,7 @@ export function _renderInfo(text) {
 export function _renderItem(item) {
     const id = generateId('selectmenu-item');
 
-    const data = this._cloneItem(item);
-
-    const value = this._options.getValue(data);
+    const value = item.value;
     const active = this._multiple ?
         this._value.some((otherValue) => otherValue == value) :
         value == this._value;
@@ -155,15 +153,10 @@ export function _renderItem(item) {
         attributes: {
             id,
             'role': 'option',
-            'aria-label': this._options.getLabel(item),
+            'aria-label': item.text,
             'aria-selected': active,
         },
     });
-
-    if (active) {
-        $.addClass(element, this.constructor.classes.active);
-        $.setDataset(element, { uiActive: true });
-    }
 
     if (item.disabled) {
         $.addClass(element, this.constructor.classes.disabledItem);
@@ -175,6 +168,13 @@ export function _renderItem(item) {
             uiValue: value,
         });
     }
+
+    if (active) {
+        $.addClass(element, this.constructor.classes.active);
+        $.setDataset(element, { uiActive: true });
+    }
+
+    const data = this._cloneItem(item);
 
     const content = this._options.renderResult.bind(this)(data, element);
 
@@ -278,11 +278,11 @@ export function _renderMultiSelection(item) {
 
     $.append(closeBtn, closeIcon);
 
-    const data = this._cloneItem(item);
-
     const element = $.create('div', {
         class: this.constructor.classes.multiItem,
     });
+
+    const data = this._cloneItem(item);
 
     const content = this._options.renderSelection.bind(this)(data, element);
 
@@ -314,13 +314,6 @@ export function _renderPlaceholder() {
  * @param {array} results The results to render.
  */
 export function _renderResults(results) {
-    if (!results.length) {
-        const info = this._renderInfo(this._options.lang.noResults);
-        $.append(this._itemsList, info);
-        this.update();
-        return;
-    }
-
     for (const item of results) {
         const element = 'children' in item && $._isArray(item.children) ?
             this._renderGroup(item) :
@@ -329,23 +322,22 @@ export function _renderResults(results) {
         $.append(this._itemsList, element);
     }
 
-    const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
-
-    if (focusedNode) {
+    if (!$.hasChildren(this._itemsList)) {
+        const info = this._renderInfo(this._options.lang.noResults);
+        $.append(this._itemsList, info);
+        this.update();
         return;
     }
 
-    let focusNode = $.findOne('[data-ui-active]', this._itemsList);
+    const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
 
-    if (!focusNode) {
-        focusNode = $.findOne('[data-ui-action="select"]', this._itemsList);
-    }
+    if (!focusedNode && this._activeItems.length) {
+        const element = this._activeItems[0];
 
-    if (focusNode) {
-        $.addClass(focusNode, this.constructor.classes.focus);
-        $.setDataset(focusNode, { uiFocus: true });
+        $.addClass(element, this.constructor.classes.focus);
+        $.setDataset(element, { uiFocus: true });
 
-        const id = $.getAttribute(focusNode, 'id');
+        const id = $.getAttribute(element, 'id');
         $.setAttribute(this._toggle, { 'aria-activedescendent': id });
         $.setAttribute(this._searchInput, { 'aria-activedescendent': id });
     }

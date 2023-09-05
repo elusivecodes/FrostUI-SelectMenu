@@ -12,9 +12,12 @@ export function _getDataInit() {
 
         // check for minimum search length
         if (this._options.minSearch && (!term || term.length < this._options.minSearch)) {
+            $.hide(this._menuNode);
             this.update();
             return;
         }
+
+        $.show(this._menuNode);
 
         // check for max selections
         if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
@@ -47,36 +50,6 @@ export function _getDataInit() {
 };
 
 /**
- * Initialize get data callback.
- */
-export function _getResultsCallbackInit() {
-    this._getResults = (options) => {
-        // reset data for starting offset
-        if (!options.offset) {
-            this._data = [];
-        }
-
-        const request = Promise.resolve(this._options.getResults(options));
-
-        request.then((response) => {
-            const newData = this._parseData(response.results);
-            this._data.push(...newData);
-            this._showMore = response.showMore;
-
-            // update lookup
-            Object.assign(
-                this._lookup,
-                this._parseDataLookup(this._data),
-            );
-
-            return response;
-        }).catch((_) => { });
-
-        return request;
-    };
-};
-
-/**
  * Initialize get data from callback.
  */
 export function _getResultsInit() {
@@ -87,20 +60,32 @@ export function _getResultsInit() {
             options.term = term;
         }
 
-        const request = this._getResults(options);
+        const request = Promise.resolve(this._options.getResults(options));
 
         request.then((response) => {
+            const newData = this._parseData(response.results);
+
+            // update lookup
+            Object.assign(
+                this._lookup,
+                this._parseDataLookup(newData),
+            );
+
             if (this._request !== request) {
                 return;
             }
 
             if (!offset) {
+                this._data = newData;
                 $.empty(this._itemsList);
             } else {
+                this._data.push(...newData);
                 $.detach(this._loader);
             }
 
-            this._renderResults(response.results);
+            this._showMore = response.showMore;
+
+            this._renderResults(newData);
 
             this._request = null;
         }).catch((_) => {
@@ -145,6 +130,8 @@ export function _getResultsInit() {
             this.update();
             return;
         }
+
+        $.show(this._menuNode);
 
         // check for max selections
         if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {

@@ -24,6 +24,10 @@ export function _events() {
     });
 
     $.addEvent(this._node, 'focus.ui.selectmenu', (_) => {
+        if (!$.isSame(this._node, document.activeElement)) {
+            return;
+        }
+
         if (this._multiple) {
             $.focus(this._searchInput);
         } else {
@@ -39,7 +43,7 @@ export function _events() {
     });
 
     $.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '[data-ui-action="select"]', $.debounce((e) => {
-        const focusedNode = $.find('[data-ui-focus]', this._itemsList);
+        const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
         $.removeClass(focusedNode, this.constructor.classes.focus);
         $.removeDataset(focusedNode, 'uiFocus');
 
@@ -54,18 +58,18 @@ export function _events() {
     $.addEvent(this._searchInput, 'input.ui.selectmenu', $.debounce((_) => {
         if (this._multiple) {
             this._updateSearchWidth();
-            this.show();
         }
 
-        const term = $.getValue(this._searchInput);
-        this._getData({ term });
+
+        if (this._multiple && !$.isConnected(this._menuNode)) {
+            this.show();
+        } else {
+            const term = $.getValue(this._searchInput);
+            this._getData({ term });
+        }
     }));
 
     $.addEvent(this._searchInput, 'keydown.ui.selectmenu', (e) => {
-        if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter'].includes(e.code)) {
-            return;
-        }
-
         if (e.code === 'Backspace') {
             if (this._multiple && this._value.length && !$.getValue(this._searchInput)) {
                 e.preventDefault();
@@ -73,8 +77,9 @@ export function _events() {
                 // remove the last selected item and populate the search input with it's value
                 const lastValue = this._value.pop();
                 const lastItem = this._findValue(lastValue);
-                const { element: _, ...lastData } = lastItem;
-                const lastLabel = this._options.getLabel(lastData);
+                const lastLabel = lastItem.text;
+
+                $.setDataset(this._searchInput, { uiKeepFocus: true });
 
                 this._refreshMulti();
                 $.setValue(this._searchInput, lastLabel);
@@ -88,8 +93,13 @@ export function _events() {
             return;
         }
 
-        if (this._multiple && !$.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
-            return this.show();
+        if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
+            return;
+        }
+
+        if (this._multiple && !$.isConnected(this._menuNode)) {
+            this.show();
+            return;
         }
 
         const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
@@ -208,13 +218,16 @@ export function _eventsMulti() {
         $.addClass(this._toggle, 'focus');
     });
 
-    let keepFocus = false;
     $.addEvent(this._searchInput, 'blur.ui.selectmenu', (_) => {
+        if (!$.isConnected(this._searchInput)) {
+            return;
+        }
+
         if ($.isSame(this._searchInput, document.activeElement)) {
             return;
         }
 
-        if (keepFocus) {
+        if ($.getDataset(this._searchInput, 'uiKeepFocus')) {
             // prevent losing focus when toggle element is focused
             return;
         }
@@ -244,14 +257,14 @@ export function _eventsMulti() {
 
         if ($.hasClass(this._toggle, 'focus')) {
             // maintain focus when toggle element is already focused
-            keepFocus = true;
+            $.setDataset(this._searchInput, { uiKeepFocus: true });
         } else {
             $.hide(this._placeholder);
             $.addClass(this._toggle, 'focus');
         }
 
         $.addEventOnce(window, 'mouseup.ui.selectmenu', (_) => {
-            keepFocus = false;
+            $.removeDataset(this._searchInput, 'uiKeepFocus');
             $.focus(this._searchInput);
 
             if (!e.button) {

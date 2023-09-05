@@ -30,11 +30,9 @@
             this._activeItems = [];
 
             this._getData = null;
-            this._getResults = null;
 
             let data;
             if ($._isFunction(this._options.getResults)) {
-                this._getResultsCallbackInit();
                 this._getResultsInit();
             } else if ($._isPlainObject(this._options.data)) {
                 data = this._getDataFromObject(this._options.data);
@@ -98,7 +96,6 @@
             this._requests = null;
             this._popperOptions = null;
             this._getData = null;
-            this._getResults = null;
 
             super.dispose();
         }
@@ -165,7 +162,8 @@
                 return;
             }
 
-            this._getData({});
+            const term = $.getValue(this._searchInput);
+            this._getData({ term });
 
             $.setDataset(this._menuNode, { uiAnimating: 'in' });
 
@@ -286,9 +284,12 @@
 
             // check for minimum search length
             if (this._options.minSearch && (!term || term.length < this._options.minSearch)) {
+                $.hide(this._menuNode);
                 this.update();
                 return;
             }
+
+            $.show(this._menuNode);
 
             // check for max selections
             if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
@@ -320,35 +321,6 @@
         };
     }
     /**
-     * Initialize get data callback.
-     */
-    function _getResultsCallbackInit() {
-        this._getResults = (options) => {
-            // reset data for starting offset
-            if (!options.offset) {
-                this._data = [];
-            }
-
-            const request = Promise.resolve(this._options.getResults(options));
-
-            request.then((response) => {
-                const newData = this._parseData(response.results);
-                this._data.push(...newData);
-                this._showMore = response.showMore;
-
-                // update lookup
-                Object.assign(
-                    this._lookup,
-                    this._parseDataLookup(this._data),
-                );
-
-                return response;
-            }).catch((_) => { });
-
-            return request;
-        };
-    }
-    /**
      * Initialize get data from callback.
      */
     function _getResultsInit() {
@@ -359,20 +331,32 @@
                 options.term = term;
             }
 
-            const request = this._getResults(options);
+            const request = Promise.resolve(this._options.getResults(options));
 
             request.then((response) => {
+                const newData = this._parseData(response.results);
+
+                // update lookup
+                Object.assign(
+                    this._lookup,
+                    this._parseDataLookup(newData),
+                );
+
                 if (this._request !== request) {
                     return;
                 }
 
                 if (!offset) {
+                    this._data = newData;
                     $.empty(this._itemsList);
                 } else {
+                    this._data.push(...newData);
                     $.detach(this._loader);
                 }
 
-                this._renderResults(response.results);
+                this._showMore = response.showMore;
+
+                this._renderResults(newData);
 
                 this._request = null;
             }).catch((_) => {
@@ -418,6 +402,8 @@
                 return;
             }
 
+            $.show(this._menuNode);
+
             // check for max selections
             if (this._multiple && this._maxSelections && this._value.length >= this._maxSelections) {
                 const info = this._renderInfo(this._options.lang.maxSelections);
@@ -459,6 +445,10 @@
         });
 
         $.addEvent(this._node, 'focus.ui.selectmenu', (_) => {
+            if (!$.isSame(this._node, document.activeElement)) {
+                return;
+            }
+
             if (this._multiple) {
                 $.focus(this._searchInput);
             } else {
@@ -474,7 +464,7 @@
         });
 
         $.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '[data-ui-action="select"]', $.debounce((e) => {
-            const focusedNode = $.find('[data-ui-focus]', this._itemsList);
+            const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
             $.removeClass(focusedNode, this.constructor.classes.focus);
             $.removeDataset(focusedNode, 'uiFocus');
 
@@ -489,18 +479,18 @@
         $.addEvent(this._searchInput, 'input.ui.selectmenu', $.debounce((_) => {
             if (this._multiple) {
                 this._updateSearchWidth();
-                this.show();
             }
 
-            const term = $.getValue(this._searchInput);
-            this._getData({ term });
+
+            if (this._multiple && !$.isConnected(this._menuNode)) {
+                this.show();
+            } else {
+                const term = $.getValue(this._searchInput);
+                this._getData({ term });
+            }
         }));
 
         $.addEvent(this._searchInput, 'keydown.ui.selectmenu', (e) => {
-            if (!['ArrowDown', 'ArrowUp', 'Backspace', 'Enter'].includes(e.code)) {
-                return;
-            }
-
             if (e.code === 'Backspace') {
                 if (this._multiple && this._value.length && !$.getValue(this._searchInput)) {
                     e.preventDefault();
@@ -508,8 +498,9 @@
                     // remove the last selected item and populate the search input with it's value
                     const lastValue = this._value.pop();
                     const lastItem = this._findValue(lastValue);
-                    const { element: _, ...lastData } = lastItem;
-                    const lastLabel = this._options.getLabel(lastData);
+                    const lastLabel = lastItem.text;
+
+                    $.setDataset(this._searchInput, { uiKeepFocus: true });
 
                     this._refreshMulti();
                     $.setValue(this._searchInput, lastLabel);
@@ -523,8 +514,13 @@
                 return;
             }
 
-            if (this._multiple && !$.isConnected(this._menuNode) && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
-                return this.show();
+            if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
+                return;
+            }
+
+            if (this._multiple && !$.isConnected(this._menuNode)) {
+                this.show();
+                return;
             }
 
             const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
@@ -642,13 +638,16 @@
             $.addClass(this._toggle, 'focus');
         });
 
-        let keepFocus = false;
         $.addEvent(this._searchInput, 'blur.ui.selectmenu', (_) => {
+            if (!$.isConnected(this._searchInput)) {
+                return;
+            }
+
             if ($.isSame(this._searchInput, document.activeElement)) {
                 return;
             }
 
-            if (keepFocus) {
+            if ($.getDataset(this._searchInput, 'uiKeepFocus')) {
                 // prevent losing focus when toggle element is focused
                 return;
             }
@@ -678,14 +677,14 @@
 
             if ($.hasClass(this._toggle, 'focus')) {
                 // maintain focus when toggle element is already focused
-                keepFocus = true;
+                $.setDataset(this._searchInput, { uiKeepFocus: true });
             } else {
                 $.hide(this._placeholder);
                 $.addClass(this._toggle, 'focus');
             }
 
             $.addEventOnce(window, 'mouseup.ui.selectmenu', (_) => {
-                keepFocus = false;
+                $.removeDataset(this._searchInput, 'uiKeepFocus');
                 $.focus(this._searchInput);
 
                 if (!e.button) {
@@ -805,32 +804,33 @@
      * @param {string|number|array} value The value to load.
      */
     function _loadValue(value) {
-        if (!value || !this._getResults) {
+        if (!value || !this._options.getResults) {
             this._setValue(value);
             return;
         }
 
-        if (!this._multiple) {
-            if (this._findValue(value)) {
+        const isLoaded = this._multiple ?
+            value.every((val) => this._findValue(val)) :
+            this._findValue(value);
+
+        if (isLoaded) {
+            this._setValue(value);
+            return;
+        }
+
+        Promise.resolve(this._options.getResults({ value }))
+            .then((response) => {
+                const newData = this._parseData(response.results);
+
+                // update lookup
+                Object.assign(
+                    this._lookup,
+                    this._parseDataLookup(newData),
+                );
+
                 this._setValue(value);
-                return;
-            }
-
-            this._getResults({ value })
-                .then((_) => this._setValue(value));
-
-            return;
-        }
-
-        const loadValues = value.filter((val) => !this._findValue(val));
-
-        if (!loadValues.length) {
-            this._setValue(value);
-            return;
-        }
-
-        this._getResults({ value: loadValues })
-            .then((_) => this._setValue(value));
+            })
+            .catch((_) => { });
     }
     /**
      * Refresh the selected value(s).
@@ -942,8 +942,6 @@
 
         $.append(this._node, item.element);
 
-        const data = this._cloneItem(item);
-
         const element = $.create('div', {
             class: this.constructor.classes.selectionSingle,
         });
@@ -953,6 +951,8 @@
         if (this._options.allowClear) {
             $.append(this._toggle, this._clear);
         }
+
+        const data = this._cloneItem(item);
 
         const content = this._options.renderSelection.bind(this)(data, element);
 
@@ -974,9 +974,7 @@
             return;
         }
 
-        const data = this._cloneItem(item);
-
-        value = this._options.getValue(data);
+        value = item.value;
 
         // toggle selected values for multiple select
         if (this._multiple) {
@@ -1060,8 +1058,8 @@
      */
     function _buildOption(item) {
         return $.create('option', {
-            text: this._options.getLabel(item),
-            value: this._options.getValue(item),
+            text: item.text,
+            value: item.value,
             properties: {
                 selected: true,
             },
@@ -1128,7 +1126,7 @@
             if ('children' in item) {
                 this._parseDataLookup(item.children, lookup);
             } else {
-                const key = this._options.getValue(item);
+                const key = item.value;
                 lookup[key] = $._extend({}, item);
             }
         }
@@ -1174,7 +1172,7 @@
 
             this._popperOptions.afterUpdate = (node, reference) => {
                 const width = $.width(reference, { boxSize: $.BORDER_BOX });
-                $.setStyle(node, 'width', width);
+                $.setStyle(node, 'width', `${width}px`);
             };
         }
 
@@ -1212,19 +1210,19 @@
     function _renderGroup(item) {
         const id = ui.generateId('selectmenu-group');
 
-        const data = this._cloneItem(item);
-
         const groupContainer = $.create('li', {
             attributes: {
                 id,
                 'role': 'group',
-                'aria-label': this._options.getLabel(data),
+                'aria-label': item.text,
             },
         });
 
         const element = $.create('div', {
             class: this.constructor.classes.group,
         });
+
+        const data = this._cloneItem(item);
 
         const content = this._options.renderResult.bind(this)(data, element);
 
@@ -1245,8 +1243,8 @@
 
         $.append(groupContainer, childList);
 
-        for (const item of data.children) {
-            const element = this._renderItem(item, childList);
+        for (const child of item.children) {
+            const element = this._renderItem(child, childList);
 
             $.append(childList, element);
         }
@@ -1274,9 +1272,7 @@
     function _renderItem(item) {
         const id = ui.generateId('selectmenu-item');
 
-        const data = this._cloneItem(item);
-
-        const value = this._options.getValue(data);
+        const value = item.value;
         const active = this._multiple ?
             this._value.some((otherValue) => otherValue == value) :
             value == this._value;
@@ -1286,15 +1282,10 @@
             attributes: {
                 id,
                 'role': 'option',
-                'aria-label': this._options.getLabel(item),
+                'aria-label': item.text,
                 'aria-selected': active,
             },
         });
-
-        if (active) {
-            $.addClass(element, this.constructor.classes.active);
-            $.setDataset(element, { uiActive: true });
-        }
 
         if (item.disabled) {
             $.addClass(element, this.constructor.classes.disabledItem);
@@ -1306,6 +1297,13 @@
                 uiValue: value,
             });
         }
+
+        if (active) {
+            $.addClass(element, this.constructor.classes.active);
+            $.setDataset(element, { uiActive: true });
+        }
+
+        const data = this._cloneItem(item);
 
         const content = this._options.renderResult.bind(this)(data, element);
 
@@ -1407,11 +1405,11 @@
 
         $.append(closeBtn, closeIcon);
 
-        const data = this._cloneItem(item);
-
         const element = $.create('div', {
             class: this.constructor.classes.multiItem,
         });
+
+        const data = this._cloneItem(item);
 
         const content = this._options.renderSelection.bind(this)(data, element);
 
@@ -1441,13 +1439,6 @@
      * @param {array} results The results to render.
      */
     function _renderResults(results) {
-        if (!results.length) {
-            const info = this._renderInfo(this._options.lang.noResults);
-            $.append(this._itemsList, info);
-            this.update();
-            return;
-        }
-
         for (const item of results) {
             const element = 'children' in item && $._isArray(item.children) ?
                 this._renderGroup(item) :
@@ -1456,23 +1447,22 @@
             $.append(this._itemsList, element);
         }
 
-        const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
-
-        if (focusedNode) {
+        if (!$.hasChildren(this._itemsList)) {
+            const info = this._renderInfo(this._options.lang.noResults);
+            $.append(this._itemsList, info);
+            this.update();
             return;
         }
 
-        let focusNode = $.findOne('[data-ui-active]', this._itemsList);
+        const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
 
-        if (!focusNode) {
-            focusNode = $.findOne('[data-ui-action="select"]', this._itemsList);
-        }
+        if (!focusedNode && this._activeItems.length) {
+            const element = this._activeItems[0];
 
-        if (focusNode) {
-            $.addClass(focusNode, this.constructor.classes.focus);
-            $.setDataset(focusNode, { uiFocus: true });
+            $.addClass(element, this.constructor.classes.focus);
+            $.setDataset(element, { uiFocus: true });
 
-            const id = $.getAttribute(focusNode, 'id');
+            const id = $.getAttribute(element, 'id');
             $.setAttribute(this._toggle, { 'aria-activedescendent': id });
             $.setAttribute(this._searchInput, { 'aria-activedescendent': id });
         }
@@ -1549,17 +1539,11 @@
         searchInputStyle: 'filled',
         data: null,
         getResults: null,
-        getLabel: (value) => value.text,
-        getValue: (value) => value.value,
-        renderResult(data) {
-            return this._options.getLabel(data);
-        },
-        renderSelection(data) {
-            return this._options.getLabel(data);
-        },
+        renderResult: (data) => data.text,
+        renderSelection: (data) => data.text,
         sanitize: (input) => $.sanitize(input),
         isMatch(data, term) {
-            const value = this._options.getLabel(data);
+            const value = data.text;
             const escapedTerm = $._escapeRegExp(term);
             const regExp = new RegExp(escapedTerm, 'i');
 
@@ -1572,8 +1556,8 @@
             return regExp.test(normalized);
         },
         sortResults(a, b, term) {
-            const aLower = this._options.getLabel(a).toLowerCase();
-            const bLower = this._options.getLabel(b).toLowerCase();
+            const aLower = a.text.toLowerCase();
+            const bLower = b.text.toLowerCase();
 
             if (term) {
                 const diff = aLower.indexOf(term) - bLower.indexOf(term);
@@ -1614,7 +1598,7 @@
         info: 'selectmenu-item text-body-secondary',
         item: 'selectmenu-item',
         items: 'selectmenu-items list-unstyled',
-        menu: 'selectmenu-menu shadow-sm',
+        menu: 'selectmenu-menu',
         multiClear: 'btn',
         multiClearIcon: 'btn-close pe-none',
         multiGroup: 'btn-group my-n1',
@@ -1651,7 +1635,6 @@
     proto._getDataFromObject = _getDataFromObject;
     proto._getDataInit = _getDataInit;
     proto._getResultsInit = _getResultsInit;
-    proto._getResultsCallbackInit = _getResultsCallbackInit;
     proto._loadValue = _loadValue;
     proto._parseData = _parseData;
     proto._parseDataLookup = _parseDataLookup;
