@@ -60,7 +60,6 @@ export function _events() {
             this._updateSearchWidth();
         }
 
-
         if (this._multiple && !$.isConnected(this._menuNode)) {
             this.show();
         } else {
@@ -278,6 +277,8 @@ export function _eventsMulti() {
             return;
         }
 
+        e.stopPropagation();
+
         // remove selection
         const element = $.parent(e.currentTarget);
         const index = $.index(element);
@@ -343,6 +344,8 @@ export function _eventsSingle() {
             if (e.button) {
                 return;
             }
+
+            e.stopPropagation();
 
             // remove selection
             this._setValue(null, { triggerEvent: true });

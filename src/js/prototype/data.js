@@ -146,6 +146,7 @@ export function _getResultsInit() {
             $.append(this._itemsList, this._loader);
         }
 
+        this.update();
         load({ offset, term });
     };
 };

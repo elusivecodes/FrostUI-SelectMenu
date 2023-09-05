@@ -417,6 +417,7 @@
                 $.append(this._itemsList, this._loader);
             }
 
+            this.update();
             load({ offset, term });
         };
     }
@@ -480,7 +481,6 @@
             if (this._multiple) {
                 this._updateSearchWidth();
             }
-
 
             if (this._multiple && !$.isConnected(this._menuNode)) {
                 this.show();
@@ -698,6 +698,8 @@
                 return;
             }
 
+            e.stopPropagation();
+
             // remove selection
             const element = $.parent(e.currentTarget);
             const index = $.index(element);
@@ -762,6 +764,8 @@
                 if (e.button) {
                     return;
                 }
+
+                e.stopPropagation();
 
                 // remove selection
                 this._setValue(null, { triggerEvent: true });
