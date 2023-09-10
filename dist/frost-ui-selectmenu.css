@@ -23,7 +23,7 @@
 }
 .selectmenu-multi .btn {
   --ui-btn-padding-y: 0.125rem;
-  --ui-btn-font-size: 0.75em;
+  --ui-btn-font-size: 0.875em;
   --ui-btn-color: var(--ui-primary-contrast);
   --ui-btn-bg: var(--ui-primary);
   --ui-btn-border-color: var(--ui-border-color-translucent);
@@ -58,7 +58,7 @@
   --ui-selectmenu-bg: var(--ui-body-bg);
   --ui-selectmenu-border-width: var(--ui-border-width);
   --ui-selectmenu-border-color: var(--ui-border-color);
-  --ui-selectmenu-item-padding-x: 1rem;
+  --ui-selectmenu-item-padding-x: 0.5rem;
   --ui-selectmenu-item-padding-y: 0.25rem;
   --ui-selectmenu-item-color: var(--ui-body-color);
   --ui-selectmenu-item-focus-color: var(--ui-primary-contrast);
@@ -66,14 +66,14 @@
   --ui-selectmenu-item-active-color: var(--ui-body-color);
   --ui-selectmenu-item-active-bg: var(--ui-secondary-bg);
   --ui-selectmenu-group-padding-y: 0.25rem;
-  --ui-selectmenu-group-padding-x: 1rem;
+  --ui-selectmenu-group-padding-x: 0.5rem;
   --ui-selectmenu-group-color: var(--ui-secondary-color);
   position: absolute;
   z-index: var(--ui-selectmenu-z-index);
   width: 100%;
   padding: 0;
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--ui-font-size);
   color: var(--ui-selectmenu-color);
   text-align: left;
   background-color: var(--ui-selectmenu-bg);
@@ -110,12 +110,18 @@
   pointer-events: none;
   opacity: var(--ui-disabled-opacity);
 }
+.selectmenu-menu-sm .selectmenu-item {
+  font-size: var(--ui-font-size-sm);
+}
+.selectmenu-menu-lg .selectmenu-item {
+  font-size: var(--ui-font-size-lg);
+}
 
 .selectmenu-group {
   display: block;
   padding: var(--ui-selectmenu-group-padding-y) var(--ui-selectmenu-group-padding-x);
   margin-bottom: 0;
-  font-size: 0.875em;
+  font-size: var(--ui-font-size-sm);
   font-weight: 600;
   color: var(--ui-selectmenu-group-color);
   white-space: nowrap;

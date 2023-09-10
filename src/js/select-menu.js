@@ -151,7 +151,6 @@ export default class SelectMenu extends BaseComponent {
     show() {
         if (
             $.is(this._node, ':disabled') ||
-            $.hasAttribute(this._node, 'readonly') ||
             $.isConnected(this._menuNode) ||
             $.getDataset(this._menuNode, 'uiAnimating') ||
             !$.triggerOne(this._node, 'show.ui.selectmenu')

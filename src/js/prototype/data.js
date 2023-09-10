@@ -12,7 +12,9 @@ export function _getDataInit() {
 
         // check for minimum search length
         if (this._options.minSearch && (!term || term.length < this._options.minSearch)) {
-            $.hide(this._menuNode);
+            if (this._multiple) {
+                $.hide(this._menuNode);
+            }
             this.update();
             return;
         }
@@ -126,7 +128,9 @@ export function _getResultsInit() {
 
         // check for minimum search length
         if (this._options.minSearch && (!term || term.length < this._options.minSearch)) {
-            $.hide(this._menuNode);
+            if (this._multiple) {
+                $.hide(this._menuNode);
+            }
             this.update();
             return;
         }

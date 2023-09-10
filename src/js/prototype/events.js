@@ -35,11 +35,19 @@ export function _events() {
         }
     });
 
-    $.addEventDelegate(this._itemsList, 'mouseup.ui.selectmenu', '[data-ui-action="select"]', (e) => {
+    $.addEventDelegate(this._itemsList, 'click.ui.selectmenu', '[data-ui-action="select"]', (e) => {
         e.preventDefault();
+
+        if (this._multiple) {
+            $.setDataset(this._searchInput, { uiKeepFocus: true });
+        }
 
         const value = $.getDataset(e.currentTarget, 'uiValue');
         this._selectValue(value);
+
+        if (this._multiple) {
+            $.removeDataset(this._searchInput, 'uiKeepFocus');
+        }
     });
 
     $.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '[data-ui-action="select"]', $.debounce((e) => {
@@ -78,7 +86,9 @@ export function _events() {
                 const lastItem = this._findValue(lastValue);
                 const lastLabel = lastItem.text;
 
-                $.setDataset(this._searchInput, { uiKeepFocus: true });
+                if (this._multiple) {
+                    $.setDataset(this._searchInput, { uiKeepFocus: true });
+                }
 
                 this._refreshMulti();
                 $.setValue(this._searchInput, lastLabel);
@@ -87,12 +97,16 @@ export function _events() {
 
                 // trigger input
                 $.triggerEvent(this._searchInput, 'input.ui.selectmenu');
+
+                if (this._multiple) {
+                    $.removeDataset(this._searchInput, 'uiKeepFocus');
+                }
             }
 
             return;
         }
 
-        if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
+        if (!['ArrowDown', 'ArrowUp', 'Enter', 'NumpadEnter'].includes(e.code)) {
             return;
         }
 
@@ -103,14 +117,16 @@ export function _events() {
 
         const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
 
-        if (e.code === 'Enter') {
-            // select the focused item
-            if (focusedNode) {
-                const value = $.getDataset(focusedNode, 'uiValue');
-                this._selectValue(value);
-            }
+        switch (e.code) {
+            case 'Enter':
+            case 'NumpadEnter':
+                // select the focused item
+                if (focusedNode) {
+                    const value = $.getDataset(focusedNode, 'uiValue');
+                    this._selectValue(value);
+                }
 
-            return;
+                return;
         }
 
         // focus the previous/next item

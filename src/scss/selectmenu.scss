@@ -116,6 +116,14 @@
         pointer-events: none;
         opacity: var(--ui-disabled-opacity);
     }
+
+    .selectmenu-menu-sm & {
+        font-size: $selectmenu-sm-font-size;
+    }
+
+    .selectmenu-menu-lg & {
+        font-size: $selectmenu-lg-font-size;
+    }
 }
 
 .selectmenu-group {

@@ -43,11 +43,6 @@ export function _render() {
         };
     }
 
-    if ($.hasAttribute(this._node, 'readonly')) {
-        $.addClass(this._toggle, this.constructor.classes.readonly);
-        $.setAttribute(this._toggle, { 'aria-readonly': true });
-    }
-
     // hide the input node
     $.addClass(this._node, this.constructor.classes.hide);
     $.setAttribute(this._node, { tabindex: -1 });
@@ -195,6 +190,12 @@ export function _renderMenu() {
         class: this.constructor.classes.menu,
     });
 
+    if ($.is(this._node, '.input-sm')) {
+        $.addClass(this._menuNode, this.constructor.classes.menuSmall);
+    } else if ($.is(this._node, '.input-lg')) {
+        $.addClass(this._menuNode, this.constructor.classes.menuLarge);
+    }
+
     const id = generateId('selectmenu');
 
     if (!this._multiple) {
@@ -272,7 +273,7 @@ export function _renderMultiSelection(item) {
 
     $.append(group, closeBtn);
 
-    const closeIcon = $.create('span', {
+    const closeIcon = $.create('small', {
         class: this.constructor.classes.multiClearIcon,
     });
 

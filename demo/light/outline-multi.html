@@ -108,6 +108,20 @@
             </div>
         </div>
 
+        <h4>Sizes</h4>
+        <div class="mb-4">
+            <label for="selectSmall">Small</label>
+            <div class="form-input">
+                <select class="input-outline input-sm" id="selectSmall" data-ui-placeholder="Select an item" multiple></select>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="selectLarge">Large</label>
+            <div class="form-input">
+                <select class="input-outline input-lg" id="selectLarge" data-ui-placeholder="Select an item" multiple></select>
+            </div>
+        </div>
+
         <h4>Modal</h4>
         <div class="mb-4">
             <button class="btn btn-primary ripple" data-ui-toggle="modal" data-ui-target="#modal" type="button">Open Modal</button>
@@ -152,6 +166,8 @@
         const selectDisabled = $.findOne('#selectDisabled');
         const selectDisabledOptions = $.findOne('#selectDisabledOptions');
         const selectDiacratics = $.findOne('#selectDiacratics');
+        const selectSmall = $.findOne('#selectSmall');
+        const selectLarge = $.findOne('#selectLarge');
         const selectModal = $.findOne('#selectModal');
 
         const sampleData = {
@@ -325,6 +341,14 @@
                 3: 'Optiön 3',
                 4: 'Optiön 4'
             }
+        });
+
+        UI.SelectMenu.init(selectSmall, {
+            data: sampleDataArray
+        });
+
+        UI.SelectMenu.init(selectLarge, {
+            data: sampleDataArray
         });
 
         UI.SelectMenu.init(selectModal);

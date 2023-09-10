@@ -154,7 +154,6 @@
         show() {
             if (
                 $.is(this._node, ':disabled') ||
-                $.hasAttribute(this._node, 'readonly') ||
                 $.isConnected(this._menuNode) ||
                 $.getDataset(this._menuNode, 'uiAnimating') ||
                 !$.triggerOne(this._node, 'show.ui.selectmenu')
@@ -284,7 +283,9 @@
 
             // check for minimum search length
             if (this._options.minSearch && (!term || term.length < this._options.minSearch)) {
-                $.hide(this._menuNode);
+                if (this._multiple) {
+                    $.hide(this._menuNode);
+                }
                 this.update();
                 return;
             }
@@ -397,7 +398,9 @@
 
             // check for minimum search length
             if (this._options.minSearch && (!term || term.length < this._options.minSearch)) {
-                $.hide(this._menuNode);
+                if (this._multiple) {
+                    $.hide(this._menuNode);
+                }
                 this.update();
                 return;
             }
@@ -457,11 +460,19 @@
             }
         });
 
-        $.addEventDelegate(this._itemsList, 'mouseup.ui.selectmenu', '[data-ui-action="select"]', (e) => {
+        $.addEventDelegate(this._itemsList, 'click.ui.selectmenu', '[data-ui-action="select"]', (e) => {
             e.preventDefault();
+
+            if (this._multiple) {
+                $.setDataset(this._searchInput, { uiKeepFocus: true });
+            }
 
             const value = $.getDataset(e.currentTarget, 'uiValue');
             this._selectValue(value);
+
+            if (this._multiple) {
+                $.removeDataset(this._searchInput, 'uiKeepFocus');
+            }
         });
 
         $.addEventDelegate(this._itemsList, 'mouseover.ui.selectmenu', '[data-ui-action="select"]', $.debounce((e) => {
@@ -500,7 +511,9 @@
                     const lastItem = this._findValue(lastValue);
                     const lastLabel = lastItem.text;
 
-                    $.setDataset(this._searchInput, { uiKeepFocus: true });
+                    if (this._multiple) {
+                        $.setDataset(this._searchInput, { uiKeepFocus: true });
+                    }
 
                     this._refreshMulti();
                     $.setValue(this._searchInput, lastLabel);
@@ -509,12 +522,16 @@
 
                     // trigger input
                     $.triggerEvent(this._searchInput, 'input.ui.selectmenu');
+
+                    if (this._multiple) {
+                        $.removeDataset(this._searchInput, 'uiKeepFocus');
+                    }
                 }
 
                 return;
             }
 
-            if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) {
+            if (!['ArrowDown', 'ArrowUp', 'Enter', 'NumpadEnter'].includes(e.code)) {
                 return;
             }
 
@@ -525,14 +542,16 @@
 
             const focusedNode = $.findOne('[data-ui-focus]', this._itemsList);
 
-            if (e.code === 'Enter') {
-                // select the focused item
-                if (focusedNode) {
-                    const value = $.getDataset(focusedNode, 'uiValue');
-                    this._selectValue(value);
-                }
+            switch (e.code) {
+                case 'Enter':
+                case 'NumpadEnter':
+                    // select the focused item
+                    if (focusedNode) {
+                        const value = $.getDataset(focusedNode, 'uiValue');
+                        this._selectValue(value);
+                    }
 
-                return;
+                    return;
             }
 
             // focus the previous/next item
@@ -1180,11 +1199,6 @@
             };
         }
 
-        if ($.hasAttribute(this._node, 'readonly')) {
-            $.addClass(this._toggle, this.constructor.classes.readonly);
-            $.setAttribute(this._toggle, { 'aria-readonly': true });
-        }
-
         // hide the input node
         $.addClass(this._node, this.constructor.classes.hide);
         $.setAttribute(this._node, { tabindex: -1 });
@@ -1327,6 +1341,12 @@
             class: this.constructor.classes.menu,
         });
 
+        if ($.is(this._node, '.input-sm')) {
+            $.addClass(this._menuNode, this.constructor.classes.menuSmall);
+        } else if ($.is(this._node, '.input-lg')) {
+            $.addClass(this._menuNode, this.constructor.classes.menuLarge);
+        }
+
         const id = ui.generateId('selectmenu');
 
         if (!this._multiple) {
@@ -1403,7 +1423,7 @@
 
         $.append(group, closeBtn);
 
-        const closeIcon = $.create('span', {
+        const closeIcon = $.create('small', {
             class: this.constructor.classes.multiClearIcon,
         });
 
@@ -1603,14 +1623,15 @@
         item: 'selectmenu-item',
         items: 'selectmenu-items list-unstyled',
         menu: 'selectmenu-menu',
-        multiClear: 'btn',
-        multiClearIcon: 'btn-close pe-none',
+        menuSmall: 'selectmenu-menu-sm',
+        menuLarge: 'selectmenu-menu-lg',
+        multiClear: 'btn d-flex',
+        multiClearIcon: 'btn-close p-0 my-auto pe-none',
         multiGroup: 'btn-group my-n1',
         multiItem: 'btn',
         multiSearchInput: 'selectmenu-multi-input',
         multiToggle: 'selectmenu-multi d-flex flex-wrap position-relative text-start',
         placeholder: 'selectmenu-placeholder',
-        readonly: 'readonly',
         searchContainer: 'form-input',
         searchInputFilled: 'input-filled',
         searchInputOutline: 'input-outline',
