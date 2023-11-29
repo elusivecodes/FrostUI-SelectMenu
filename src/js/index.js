@@ -8,8 +8,6 @@ import { _cloneItem, _findValue, _loadValue, _refresh, _refreshDisabled, _refres
 import { _buildOption, _getDataFromDOM, _getDataFromObject, _parseData, _parseDataLookup } from './prototype/parsers.js';
 import { _render, _renderClear, _renderGroup, _renderInfo, _renderItem, _renderMenu, _renderMultiSelection, _renderPlaceholder, _renderResults, _renderToggleMulti, _renderToggleSingle } from './prototype/render.js';
 
-initComponent('selectmenu', SelectMenu);
-
 // SelectMenu default options
 SelectMenu.defaults = {
     placeholder: '',
@@ -70,7 +68,7 @@ SelectMenu.defaults = {
     minContact: false,
 };
 
-// Default classes
+// SelectMenu classes
 SelectMenu.classes = {
     active: 'active',
     clear: 'btn-close mx-2 lh-base',
@@ -102,6 +100,7 @@ SelectMenu.classes = {
     toggle: 'selectmenu-toggle d-flex position-relative justify-content-between text-start',
 };
 
+// SelectMenu prototype
 const proto = SelectMenu.prototype;
 
 proto.data = data;
@@ -143,5 +142,8 @@ proto._renderToggleSingle = _renderToggleSingle;
 proto._selectValue = _selectValue;
 proto._setValue = _setValue;
 proto._updateSearchWidth = _updateSearchWidth;
+
+// SelectMenu init
+initComponent('selectmenu', SelectMenu);
 
 export default SelectMenu;

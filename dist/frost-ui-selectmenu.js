@@ -1547,8 +1547,6 @@
         });
     }
 
-    ui.initComponent('selectmenu', SelectMenu);
-
     // SelectMenu default options
     SelectMenu.defaults = {
         placeholder: '',
@@ -1609,7 +1607,7 @@
         minContact: false,
     };
 
-    // Default classes
+    // SelectMenu classes
     SelectMenu.classes = {
         active: 'active',
         clear: 'btn-close mx-2 lh-base',
@@ -1641,6 +1639,7 @@
         toggle: 'selectmenu-toggle d-flex position-relative justify-content-between text-start',
     };
 
+    // SelectMenu prototype
     const proto = SelectMenu.prototype;
 
     proto.data = data;
@@ -1682,6 +1681,9 @@
     proto._selectValue = _selectValue;
     proto._setValue = _setValue;
     proto._updateSearchWidth = _updateSearchWidth;
+
+    // SelectMenu init
+    ui.initComponent('selectmenu', SelectMenu);
 
     exports.SelectMenu = SelectMenu;
 
