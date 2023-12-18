@@ -1,6 +1,6 @@
 {
     "name": "@fr0st/ui-selectmenu",
-    "version": "3.1.2",
+    "version": "3.1.3",
     "description": "FrostUI-SelectMenu is a free, open-source SelectMenu component for Javascript.",
     "keywords": [
         "ui",
@@ -52,7 +52,7 @@
         "find-unused-sass-variables": "^5.0.0",
         "postcss": "^8.4.32",
         "postcss-cli": "^11.0.0",
-        "rollup": "^4.9.0",
+        "rollup": "^4.9.1",
         "sass": "^1.69.5",
         "stylelint": "^15.11.0",
         "stylelint-config-twbs-bootstrap": "^12.0.0",

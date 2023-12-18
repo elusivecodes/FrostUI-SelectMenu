@@ -41,7 +41,7 @@
             });
             $.append(events, div);
 
-            const scrollHeight = $.height(events, $.SCROLL_BOX);
+            const scrollHeight = $.height(events, { boxSize: $.SCROLL_BOX });
             $.setScrollY(events, scrollHeight);
         });
     </script>
