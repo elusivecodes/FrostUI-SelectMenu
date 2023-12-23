@@ -118,6 +118,8 @@ export function _events() {
             } else {
                 $.focus(this._toggle);
             }
+
+            return;
         }
 
         if (!['ArrowDown', 'ArrowUp', 'Enter', 'NumpadEnter'].includes(e.code)) {
