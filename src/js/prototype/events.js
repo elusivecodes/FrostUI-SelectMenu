@@ -106,6 +106,20 @@ export function _events() {
             return;
         }
 
+        if (e.code === 'Escape' && $.isConnected(this._menuNode)) {
+            e.stopPropagation();
+
+            // close the menu
+            this.hide();
+
+            if (this._multiple) {
+                $.blur(this._searchInput);
+                $.focus(this._searchInput);
+            } else {
+                $.focus(this._toggle);
+            }
+        }
+
         if (!['ArrowDown', 'ArrowUp', 'Enter', 'NumpadEnter'].includes(e.code)) {
             return;
         }
@@ -170,24 +184,6 @@ export function _events() {
             $.setScrollY(this._itemsList, itemsScrollY + nodeRect.top - itemsRect.top);
         } else if (nodeRect.bottom > itemsRect.bottom) {
             $.setScrollY(this._itemsList, itemsScrollY + nodeRect.bottom - itemsRect.bottom);
-        }
-    });
-
-    $.addEvent(this._searchInput, 'keyup.ui.selectmenu', (e) => {
-        if (e.code !== 'Escape' || !$.isConnected(this._menuNode)) {
-            return;
-        }
-
-        e.stopPropagation();
-
-        // close the menu
-        this.hide();
-
-        if (this._multiple) {
-            $.blur(this._searchInput);
-            $.focus(this._searchInput);
-        } else {
-            $.focus(this._toggle);
         }
     });
 
@@ -347,8 +343,14 @@ export function _eventsSingle() {
     });
 
     $.addEvent(this._toggle, 'keydown.ui.selectmenu', (e) => {
-        if (!/^.$/u.test(e.key)) {
+        const searching = /^.$/u.test(e.key);
+
+        if (!searching && !['ArrowDown', 'ArrowUp', 'Enter', 'NumpadEnter'].includes(e.code)) {
             return;
+        }
+
+        if (!searching) {
+            e.preventDefault();
         }
 
         this.show();
