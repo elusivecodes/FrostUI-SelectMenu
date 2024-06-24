@@ -1,6 +1,6 @@
 {
     "name": "@fr0st/ui-selectmenu",
-    "version": "3.1.7",
+    "version": "3.1.8",
     "description": "FrostUI-SelectMenu is a free, open-source SelectMenu component for Javascript.",
     "keywords": [
         "ui",
@@ -27,7 +27,7 @@
         "build": "npm run css && npm run js",
         "css": "npm run css-compile && npm run css-prefix && npm run css-minify",
         "css-compile": "sass --style expanded --source-map --embed-sources --no-error-css src/scss/selectmenu.scss dist/frost-ui-selectmenu.css",
-        "css-lint": "stylelint \"src/scss/**/*.scss\" --fix",
+        "css-lint": "stylelint \"src/scss/**/*.scss\"",
         "css-minify": "cleancss -O1 --format breakWith=lf --with-rebase --source-map --source-map-inline-sources --output dist/frost-ui-selectmenu.min.css dist/frost-ui-selectmenu.css",
         "css-prefix": "postcss --replace dist/frost-ui-selectmenu.css",
         "js": "npm run js-compile && npm run js-minify",
